@@ -1,0 +1,20 @@
+{
+  "name": "docutils-ts",
+  "version": "1.0.0",
+  "description": "Port of the Python Docutils library to TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [
+    "docutils",
+    "typescript"
+  ],
+  "author": "Félix Malboeuf",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
