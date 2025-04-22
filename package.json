@@ -2,6 +2,14 @@
   "name": "docutils-ts",
   "version": "1.0.0",
   "description": "Port of the Python Docutils library to TypeScript",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boltex/docutils-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/boltex/docutils-ts/issues"
+  },
+  "homepage": "https://github.com/boltex/docutils-ts#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
