@@ -38,4 +38,4 @@ Currently, this will return:
 
 ## 📄 License
 
-MIT
+[MIT](./LICENSE)
