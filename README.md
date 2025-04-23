@@ -17,7 +17,7 @@ npm install docutils-ts
 ## 🚀 Usage
 
 ```ts
-import { publishString } from "docutils-ts";
+import { core } from "docutils-ts";
 
 const rst = `
 My Header
@@ -26,7 +26,7 @@ My Header
 Some **bold** text and *italic* text.
 `;
 
-const html = publishString(rst);
+const html = core.publish_string({ source: rst });
 console.log(html);
 ```
 
@@ -34,6 +34,27 @@ Currently, this will return:
 
 ```html
 <p>[docutils-ts] received: My Header...</p>
+```
+
+**Note**: You can import docutils as a whole or its components separately:
+
+```ts
+import * as docutils from "docutils-ts";
+docutils.core.publish_string({ source: "Hello world" });
+```
+
+```ts
+import { core, frontend, writers, nodes } from "docutils-ts";
+core.publish_string({ source: "Hello world" });
+```
+
+### Sub components usage example
+
+```ts
+import { LanguageImporter } from "docutils-ts/languages";
+
+const lang = new LanguageImporter("en");
+console.log(lang.labels.note); // ➜ "Note"
 ```
 
 ## 📄 License

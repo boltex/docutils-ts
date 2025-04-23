@@ -1,7 +1,4 @@
-/**
- * Dummy implementation of publishString for testing
- */
-export function publishString(input: string): string {
-    return `<p>[docutils-ts] received: ${input}</p>`;
-  }
-  
+import * as core from './core';
+// In the future you can import parsers, readers, etc., similarly.
+
+export { core };
