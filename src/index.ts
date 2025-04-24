@@ -1,4 +1,5 @@
-import * as core from './core';
-// In the future you can import parsers, readers, etc., similarly.
+import * as core from './core.js';
+import * as languages from './languages/index.js';
+// TODO: import parsers, readers, etc.
 
-export { core };
+export { core, languages };

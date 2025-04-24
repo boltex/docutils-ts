@@ -1,6 +1,6 @@
 {
   "name": "docutils-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Port of the Python Docutils library to TypeScript",
   "repository": {
     "type": "git",
@@ -10,8 +10,23 @@
     "url": "https://github.com/boltex/docutils-ts/issues"
   },
   "homepage": "https://github.com/boltex/docutils-ts#readme",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./core": {
+      "import": "./dist/core.js",
+      "types": "./dist/core.d.ts"
+    },
+    "./languages": {
+      "import": "./dist/languages/index.js",
+      "types": "./dist/languages/index.d.ts"
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"

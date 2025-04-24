@@ -40,21 +40,31 @@ Currently, this will return:
 
 ```ts
 import * as docutils from "docutils-ts";
-docutils.core.publish_string({ source: "Hello world" });
+const html = docutils.core.publish_string({ source: "Hello world" });
 ```
 
 ```ts
 import { core, frontend, writers, nodes } from "docutils-ts";
-core.publish_string({ source: "Hello world" });
+const html = core.publish_string({ source: "Hello world" });
 ```
 
 ### Sub components usage example
 
-```ts
-import { LanguageImporter } from "docutils-ts/languages";
+All following import usage examples are valid:
 
-const lang = new LanguageImporter("en");
-console.log(lang.labels.note); // ➜ "Note"
+```ts
+import { get_language } from "docutils-ts/languages";
+const lang = get_language("en");
+```
+
+```ts
+import { languages } from "docutils-ts";
+const lang = languages.get_language("en");
+```
+
+```ts
+import * as docutils from "docutils-ts";
+const lang = docutils.languages.get_language("en");
 ```
 
 ## 📄 License

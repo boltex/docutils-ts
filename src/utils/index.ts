@@ -7,6 +7,10 @@ export class Reporter {
     warning(message: string): void {
         console.warn('[WARNING]', message);
     }
+
+    protected log(prefix: string, message: string): void {
+        console.log(prefix, message);
+    }
 }
 
 // Equivalent to the Python normalize_language_tag function
