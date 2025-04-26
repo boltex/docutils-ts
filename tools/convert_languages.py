@@ -1,4 +1,4 @@
-# Place this in the original python docutils languages folder to generate the typescript files
+# Place this in the original python docutils languages folder to generate the typescript files for docutils-ts.
 # This script converts Python language files to TypeScript files.
 
 import os
