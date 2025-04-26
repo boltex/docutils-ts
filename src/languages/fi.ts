@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'Tekijä',
+    authors: 'Tekijät',
+    organization: 'Yhteisö',
+    address: 'Osoite',
+    contact: 'Yhteystiedot',
+    version: 'Versio',
+    revision: 'Vedos',
+    status: 'Tila',
+    date: 'Päiväys',
+    copyright: 'Tekijänoikeudet',
+    dedication: 'Omistuskirjoitus',
+    abstract: 'Tiivistelmä',
+    attention: 'Huomio!',
+    caution: 'Varo!',
+    danger: '!VAARA!',
+    error: 'Virhe',
+    hint: 'Vihje',
+    important: 'Tärkeää',
+    note: 'Huomautus',
+    tip: 'Neuvo',
+    warning: 'Varoitus',
+    contents: 'Sisällys',
+};
+
+export const bibliographic_fields = {
+    'tekijä': 'author',
+    'tekijät': 'authors',
+    'yhteisö': 'organization',
+    osoite: 'address',
+    yhteystiedot: 'contact',
+    versio: 'version',
+    vedos: 'revision',
+    tila: 'status',
+    'päiväys': 'date',
+    'tekijänoikeudet': 'copyright',
+    omistuskirjoitus: 'dedication',
+    'tiivistelmä': 'abstract',
+};
+
+export const author_separators = [';', ','];

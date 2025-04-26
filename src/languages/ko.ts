@@ -1,0 +1,41 @@
+export const labels = {
+    author: '저자',
+    authors: '저자들',
+    organization: '조직',
+    address: '주소',
+    contact: '연락처',
+    version: '버전',
+    revision: '리비전',
+    status: '상태',
+    date: '날짜',
+    copyright: '저작권',
+    dedication: '헌정',
+    abstract: '요약',
+    attention: '집중!',
+    caution: '주의!',
+    danger: '!위험!',
+    error: '오류',
+    hint: '실마리',
+    important: '중요한',
+    note: '비고',
+    tip: '팁',
+    warning: '경고',
+    contents: '목차',
+};
+
+export const bibliographic_fields = {
+    '저자': 'author',
+    '저자들': 'authors',
+    '조직': 'organization',
+    '주소': 'address',
+    '연락처': 'contact',
+    '버전': 'version',
+    '리비전': 'revision',
+    '상태': 'status',
+    '날짜': 'date',
+    '저작권': 'copyright',
+    '헌정': 'dedication',
+    '요약': 'abstract',
+};
+
+export const author_separators = [';', ','];

@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'المؤلف',
+    authors: 'المؤلفون',
+    organization: 'التنظيم',
+    address: 'العنوان',
+    contact: 'اتصل',
+    version: 'نسخة',
+    revision: 'مراجعة',
+    status: 'الحالة',
+    date: 'تاریخ',
+    copyright: 'الحقوق',
+    dedication: 'إهداء',
+    abstract: 'ملخص',
+    attention: 'تنبيه',
+    caution: 'احتیاط',
+    danger: 'خطر',
+    error: 'خطأ',
+    hint: 'تلميح',
+    important: 'مهم',
+    note: 'ملاحظة',
+    tip: 'نصيحة',
+    warning: 'تحذير',
+    contents: 'المحتوى',
+};
+
+export const bibliographic_fields = {
+    'مؤلف': 'author',
+    'مؤلفون': 'authors',
+    'التنظيم': 'organization',
+    'العنوان': 'address',
+    'اتصل': 'contact',
+    'نسخة': 'version',
+    'مراجعة': 'revision',
+    'الحالة': 'status',
+    'تاریخ': 'date',
+    'الحقوق': 'copyright',
+    'إهداء': 'dedication',
+    'ملخص': 'abstract',
+};
+
+export const author_separators = ['؛', '،'];

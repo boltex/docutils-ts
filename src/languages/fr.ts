@@ -30,12 +30,12 @@ export const bibliographic_fields = {
     adresse: 'address',
     contact: 'contact',
     version: 'version',
-    révision: 'revision',
+    'révision': 'revision',
     statut: 'status',
     date: 'date',
     copyright: 'copyright',
-    dédicace: 'dedication',
-    résumé: 'abstract',
+    'dédicace': 'dedication',
+    'résumé': 'abstract',
 };
 
 export const author_separators = [';', ','];

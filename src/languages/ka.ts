@@ -1,0 +1,41 @@
+export const labels = {
+    abstract: 'ანოტაცია',
+    address: 'მისამართი',
+    attention: 'ყურადღება!',
+    author: 'ავტორი',
+    authors: 'ავტორები',
+    caution: 'ფრთხილად!',
+    contact: 'კონტაქტი',
+    contents: 'შემცველობა',
+    copyright: 'საავტორო უფლებები',
+    danger: 'საშიშია!',
+    date: 'თარიღი',
+    dedication: 'მიძღვნა',
+    error: 'შეცდომა',
+    hint: 'რჩევა',
+    important: 'მნიშვნელოვანია',
+    note: 'შენიშვნა',
+    organization: 'ორგანიზაცია',
+    revision: 'რევიზია',
+    status: 'სტატუსი',
+    tip: 'მინიშნება',
+    version: 'ვერსია',
+    warning: 'გაფრთხილება',
+};
+
+export const bibliographic_fields = {
+    'ანოტაცია': 'abstract',
+    'მისამართი': 'address',
+    'ავტორი': 'author',
+    'ავტორები': 'authors',
+    'კონტაქტი': 'contact',
+    'საავტორო უფლებები': 'copyright',
+    'თარიღი': 'date',
+    'მიძღვნა': 'dedication',
+    'ორგანიზაცია': 'organization',
+    'რევიზია': 'revision',
+    'სტატუსი': 'status',
+    'ვერსია': 'version',
+};
+
+export const author_separators = [';', ','];

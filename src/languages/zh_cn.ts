@@ -1,0 +1,41 @@
+export const labels = {
+    author: '作者',
+    authors: '作者群',
+    organization: '组织',
+    address: '地址',
+    contact: '联系',
+    version: '版本',
+    revision: '修订',
+    status: '状态',
+    date: '日期',
+    copyright: '版权',
+    dedication: '献辞',
+    abstract: '摘要',
+    attention: '注意',
+    caution: '小心',
+    danger: '危险',
+    error: '错误',
+    hint: '提示',
+    important: '重要',
+    note: '注解',
+    tip: '技巧',
+    warning: '警告',
+    contents: '目录',
+};
+
+export const bibliographic_fields = {
+    '作者': 'author',
+    '作者群': 'authors',
+    '组织': 'organization',
+    '地址': 'address',
+    '联系': 'contact',
+    '版本': 'version',
+    '修订': 'revision',
+    '状态': 'status',
+    '时间': 'date',
+    '版权': 'copyright',
+    '献辞': 'dedication',
+    '摘要': 'abstract',
+};
+
+export const author_separators = [';', ',', '；', '，', '、'];

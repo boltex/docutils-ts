@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'Autorius',
+    authors: 'Autoriai',
+    organization: 'Organizacija',
+    address: 'Adresas',
+    contact: 'Kontaktas',
+    version: 'Versija',
+    revision: 'Revizija',
+    status: 'Būsena',
+    date: 'Data',
+    copyright: 'Autoriaus teisės',
+    dedication: 'Dedikacija',
+    abstract: 'Santrauka',
+    attention: 'Dėmesio!',
+    caution: 'Atsargiai!',
+    danger: '!PAVOJINGA!',
+    error: 'Klaida',
+    hint: 'Užuomina',
+    important: 'Svarbu',
+    note: 'Pastaba',
+    tip: 'Patarimas',
+    warning: 'Įspėjimas',
+    contents: 'Turinys',
+};
+
+export const bibliographic_fields = {
+    autorius: 'author',
+    autoriai: 'authors',
+    organizacija: 'organization',
+    adresas: 'address',
+    kontaktas: 'contact',
+    versija: 'version',
+    revizija: 'revision',
+    'būsena': 'status',
+    data: 'date',
+    'autoriaus teisės': 'copyright',
+    dedikacija: 'dedication',
+    santrauka: 'abstract',
+};
+
+export const author_separators = [';', ','];

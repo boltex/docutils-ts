@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'מחבר',
+    authors: 'מחברי',
+    organization: 'ארגון',
+    address: 'כתובת',
+    contact: 'איש קשר',
+    version: 'גרסה',
+    revision: 'מהדורה',
+    status: 'סטטוס',
+    date: 'תאריך',
+    copyright: 'זכויות שמורות',
+    dedication: 'הקדשה',
+    abstract: 'תקציר',
+    attention: 'תשומת לב',
+    caution: 'זהירות',
+    danger: 'סכנה',
+    error: 'שגיאה',
+    hint: 'רמז',
+    important: 'חשוב',
+    note: 'הערה',
+    tip: 'טיפ',
+    warning: 'אזהרה',
+    contents: 'תוכן',
+};
+
+export const bibliographic_fields = {
+    'מחבר': 'author',
+    'מחברי': 'authors',
+    'ארגון': 'organization',
+    'כתובת': 'address',
+    'איש קשר': 'contact',
+    'גרסה': 'version',
+    'מהדורה': 'revision',
+    'סטטוס': 'status',
+    'תאריך': 'date',
+    'זכויות שמורות': 'copyright',
+    'הקדשה': 'dedication',
+    'תקציר': 'abstract',
+};
+
+export const author_separators = [';', ','];

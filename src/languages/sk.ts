@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'Autor',
+    authors: 'Autori',
+    organization: 'Organizácia',
+    address: 'Adresa',
+    contact: 'Kontakt',
+    version: 'Verzia',
+    revision: 'Revízia',
+    status: 'Stav',
+    date: 'Dátum',
+    copyright: 'Copyright',
+    dedication: 'Venovanie',
+    abstract: 'Abstraktne',
+    attention: 'Pozor!',
+    caution: 'Opatrne!',
+    danger: '!NEBEZPEČENSTVO!',
+    error: 'Chyba',
+    hint: 'Rada',
+    important: 'Dôležité',
+    note: 'Poznámka',
+    tip: 'Tip',
+    warning: 'Varovanie',
+    contents: 'Obsah',
+};
+
+export const bibliographic_fields = {
+    autor: 'author',
+    autori: 'authors',
+    'organizácia': 'organization',
+    adresa: 'address',
+    kontakt: 'contact',
+    verzia: 'version',
+    'revízia': 'revision',
+    stav: 'status',
+    'dátum': 'date',
+    copyright: 'copyright',
+    venovanie: 'dedication',
+    abstraktne: 'abstract',
+};
+
+export const author_separators = [';', ','];

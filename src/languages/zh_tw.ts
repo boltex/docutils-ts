@@ -1,0 +1,41 @@
+export const labels = {
+    author: '作者',
+    authors: '作者群',
+    organization: '組織',
+    address: '地址',
+    contact: '連絡',
+    version: '版本',
+    revision: '修訂',
+    status: '狀態',
+    date: '日期',
+    copyright: '版權',
+    dedication: '題獻',
+    abstract: '摘要',
+    attention: '注意！',
+    caution: '小心！',
+    danger: '！危險！',
+    error: '錯誤',
+    hint: '提示',
+    important: '重要',
+    note: '註釋',
+    tip: '秘訣',
+    warning: '警告',
+    contents: '目錄',
+};
+
+export const bibliographic_fields = {
+    'author (translation required)': 'author',
+    'authors (translation required)': 'authors',
+    'organization (translation required)': 'organization',
+    'address (translation required)': 'address',
+    'contact (translation required)': 'contact',
+    'version (translation required)': 'version',
+    'revision (translation required)': 'revision',
+    'status (translation required)': 'status',
+    'date (translation required)': 'date',
+    'copyright (translation required)': 'copyright',
+    'dedication (translation required)': 'dedication',
+    'abstract (translation required)': 'abstract',
+};
+
+export const author_separators = [';', ',', '；', '，', '、'];

@@ -1,7 +1,34 @@
 import { normalize_language_tag, Reporter } from '../utils/index.js';
+import * as af from './af.js';
+import * as ar from './ar.js';
+import * as ca from './ca.js';
+import * as cs from './cs.js';
+import * as da from './da.js';
+import * as de from './de.js';
 import * as en from './en.js';
-import * as fr from './fr.js';
+import * as eo from './eo.js';
 import * as es from './es.js';
+import * as fa from './fa.js';
+import * as fi from './fi.js';
+import * as fr from './fr.js';
+import * as gl from './gl.js';
+import * as he from './he.js';
+import * as it from './it.js';
+import * as ja from './ja.js';
+import * as ka from './ka.js';
+import * as ko from './ko.js';
+import * as lt from './lt.js';
+import * as lv from './lv.js';
+import * as nl from './nl.js';
+import * as pl from './pl.js';
+import * as pt_br from './pt_br.js';
+import * as ru from './ru.js';
+import * as sk from './sk.js';
+import * as sv from './sv.js';
+import * as uk from './uk.js';
+import * as zh_cn from './zh_cn.js';
+import * as zh_tw from './zh_tw.js';
+
 // Add more languages as needed
 
 export interface LanguageModule {
@@ -11,10 +38,35 @@ export interface LanguageModule {
 }
 
 const allLanguages: Record<string, LanguageModule> = {
+    af,
+    ar,
+    ca,
+    cs,
+    da,
+    de,
     en,
-    fr,
+    eo,
     es,
-    // Add more preloaded modules here
+    fa,
+    fi,
+    fr,
+    gl,
+    he,
+    it,
+    ja,
+    ka,
+    ko,
+    lt,
+    lv,
+    nl,
+    pl,
+    pt_br,
+    ru,
+    sk,
+    sv,
+    uk,
+    zh_cn,
+    zh_tw,
 };
 
 function check_content(module: any): void {

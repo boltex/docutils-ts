@@ -1,0 +1,41 @@
+export const labels = {
+    abstract: 'Анотація',
+    address: 'Адреса',
+    attention: 'Увага!',
+    author: 'Автор',
+    authors: 'Автори',
+    caution: 'Обережно!',
+    contact: 'Контакт',
+    contents: 'Зміст',
+    copyright: 'Права копіювання',
+    danger: 'НЕБЕЗПЕЧНО!',
+    date: 'Дата',
+    dedication: 'Посвячення',
+    error: 'Помилка',
+    hint: 'Порада',
+    important: 'Важливо',
+    note: 'Примітка',
+    organization: 'Організація',
+    revision: 'Редакція',
+    status: 'Статус',
+    tip: 'Підказка',
+    version: 'Версія',
+    warning: 'Попередження',
+};
+
+export const bibliographic_fields = {
+    'анотація': 'abstract',
+    'адреса': 'address',
+    'автор': 'author',
+    'автори': 'authors',
+    'контакт': 'contact',
+    'права копіювання': 'copyright',
+    'дата': 'date',
+    'посвячення': 'dedication',
+    'організація': 'organization',
+    'редакція': 'revision',
+    'статус': 'status',
+    'версія': 'version',
+};
+
+export const author_separators = [';', ','];

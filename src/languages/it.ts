@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'Autore',
+    authors: 'Autori',
+    organization: 'Organizzazione',
+    address: 'Indirizzo',
+    contact: 'Contatti',
+    version: 'Versione',
+    revision: 'Revisione',
+    status: 'Status',
+    date: 'Data',
+    copyright: 'Copyright',
+    dedication: 'Dedica',
+    abstract: 'Riassunto',
+    attention: 'Attenzione!',
+    caution: 'Cautela!',
+    danger: '!PERICOLO!',
+    error: 'Errore',
+    hint: 'Suggerimento',
+    important: 'Importante',
+    note: 'Nota',
+    tip: 'Consiglio',
+    warning: 'Avvertenza',
+    contents: 'Indice',
+};
+
+export const bibliographic_fields = {
+    autore: 'author',
+    autori: 'authors',
+    organizzazione: 'organization',
+    indirizzo: 'address',
+    contatto: 'contact',
+    versione: 'version',
+    revisione: 'revision',
+    status: 'status',
+    data: 'date',
+    copyright: 'copyright',
+    dedica: 'dedication',
+    riassunto: 'abstract',
+};
+
+export const author_separators = [';', ','];

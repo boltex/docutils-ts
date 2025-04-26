@@ -1,0 +1,41 @@
+export const labels = {
+    author: 'Autors',
+    authors: 'Autori',
+    organization: 'Organizācija',
+    address: 'Adrese',
+    contact: 'Kontakti',
+    version: 'Versija',
+    revision: 'Revīzija',
+    status: 'Statuss',
+    date: 'Datums',
+    copyright: 'Copyright',
+    dedication: 'Veltījums',
+    abstract: 'Atreferējums',
+    attention: 'Uzmanību!',
+    caution: 'Piesardzību!',
+    danger: '!BĪSTAMI!',
+    error: 'Kļūda',
+    hint: 'Ieteikums',
+    important: 'Svarīgi',
+    note: 'Piezīme',
+    tip: 'Padoms',
+    warning: 'Brīdinājums',
+    contents: 'Saturs',
+};
+
+export const bibliographic_fields = {
+    autors: 'author',
+    autori: 'authors',
+    'organizācija': 'organization',
+    adrese: 'address',
+    kontakti: 'contact',
+    versija: 'version',
+    'revīzija': 'revision',
+    statuss: 'status',
+    datums: 'date',
+    copyright: 'copyright',
+    'veltījums': 'dedication',
+    'atreferējums': 'abstract',
+};
+
+export const author_separators = [';', ','];

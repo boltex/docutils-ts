@@ -1,0 +1,41 @@
+export const labels = {
+    author: '著者',
+    authors: '著者',
+    organization: '組織',
+    address: '住所',
+    contact: '連絡先',
+    version: 'バージョン',
+    revision: 'リビジョン',
+    status: 'ステータス',
+    date: '日付',
+    copyright: '著作権',
+    dedication: '献辞',
+    abstract: '概要',
+    attention: '注目!',
+    caution: '注意!',
+    danger: '!危険!',
+    error: 'エラー',
+    hint: 'ヒント',
+    important: '重要',
+    note: '備考',
+    tip: '通報',
+    warning: '警告',
+    contents: '目次',
+};
+
+export const bibliographic_fields = {
+    '著者': 'author',
+    ' n/a': 'authors',
+    '組織': 'organization',
+    '住所': 'address',
+    '連絡先': 'contact',
+    'バージョン': 'version',
+    'リビジョン': 'revision',
+    'ステータス': 'status',
+    '日付': 'date',
+    '著作権': 'copyright',
+    '献辞': 'dedication',
+    '概要': 'abstract',
+};
+
+export const author_separators = [';', ','];
