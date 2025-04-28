@@ -1,5 +1,7 @@
 # Specification
 
+This document is the design specifications for the **docutils-ts** library, the TypeScript port of Docutils Python library.
+
 ## Docutils Project Model
 
 Project components and data flow:
