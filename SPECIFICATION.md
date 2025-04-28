@@ -41,7 +41,7 @@ Calling the "publish" function (or instantiating a "Publisher" object) with comp
 
 Readers understand the input context (where the data is coming from), send the whole input or discrete "chunks" to the parser, and provide the context to bind the chunks together back into a cohesive whole.
 
-Each reader is a module or package exporting a "Reader" class with a "read" method. The base "Reader" class can be found in the docutils/readers/**init**.py module.
+Each reader is a module or package exporting a "Reader" class with a "read" method. The base "Reader" class can be found in the docutils/readers/**index**.ts module.
 
 Most Readers will have to be told what parser to use. So far (see the list of examples below), only the Python Source Reader ("PySource"; still incomplete) will be able to determine the parser on its own.
 
@@ -72,7 +72,7 @@ Examples:
 
 Parsers analyze their input and produce a Docutils [document tree](#document-tree). They don't know or care anything about the source or destination of the data.
 
-Each input parser is a module or package exporting a "Parser" class with a "parse" method. The base "Parser" class can be found in the docutils/parsers/**init**.py module.
+Each input parser is a module or package exporting a "Parser" class with a "parse" method. The base "Parser" class can be found in the docutils/parsers/**index**.ts module.
 
 Responsibilities: Given raw input text and a doctree root node, populate the doctree by parsing the input text.
 
@@ -82,7 +82,7 @@ The development and integration of other parsers is possible and encouraged.
 
 ## Transformer
 
-The Transformer class, in docutils/transforms/**init**.py, stores transforms and applies them to documents. A transformer object is attached to every new document tree. The [Publisher](#publisher) calls Transformer.apply_transforms() to apply all stored transforms to the document tree. Transforms change the document tree from one form to another, add to the tree, or prune it. Transforms resolve references and footnote numbers, process interpreted text, and do other context-sensitive processing.
+The Transformer class, in docutils/transforms/**index**.ts, stores transforms and applies them to documents. A transformer object is attached to every new document tree. The [Publisher](#publisher) calls Transformer.apply_transforms() to apply all stored transforms to the document tree. Transforms change the document tree from one form to another, add to the tree, or prune it. Transforms resolve references and footnote numbers, process interpreted text, and do other context-sensitive processing.
 
 Some transforms are specific to components (Readers, Parser, Writers, Input, Output). Standard component-specific transforms are specified in the default_transforms attribute of component classes. After the Reader has finished processing, the [Publisher](#publisher) calls Transformer.populate_from_components() with a list of components and all default transforms are stored.
 
@@ -108,11 +108,11 @@ Examples of transforms (in the docutils/transforms/ package):
 
 ## Writers
 
-Writers produce the final output (HTML, XML, TeX, etc.). Writers translate the internal document tree structure into the final data format, possibly running Writer-specific transforms first.
+Writers produce the final output (HTML, XML, TeX, etc.). Writers translate the internal [document tree](#document-tree) structure into the final data format, possibly running Writer-specific [transforms](#transformer) first.
 
 By the time the document gets to the Writer, it should be in final form. The Writer's job is simply (and only) to translate from the Docutils doctree structure to the target format. Some small transforms may be required, but they should be local and format-specific.
 
-Each writer is a module or package exporting a "Writer" class with a "write" method. The base "Writer" class can be found in the docutils/writers/**init**.py module.
+Each writer is a module or package exporting a "Writer" class with a "write" method. The base "Writer" class can be found in the docutils/writers/**index**.ts module.
 
 Responsibilities:
 
@@ -134,12 +134,7 @@ Examples:
 
 ## Input/Output
 
-I/O classes provide a uniform API for low-level input and output. Subclasses will exist for a variety of input/output mechanisms. However, they can be considered an implementation detail. Most applications should be satisfied using one of the convenience functions associated with the Publisher.
-
-I/O classes are currently in the preliminary stages; there's a lot of work yet to be done. Issues:
-
-- How to represent multi-file input (files & directories) in the API?
-- How to represent multi-file output? Perhaps "Writer" variants, one for each output distribution type? Or Output objects with associated transforms?
+I/O classes provide a uniform API for low-level input and output. Subclasses will exist for a variety of input/output mechanisms. However, they can be considered an implementation detail. Most applications should be satisfied using one of the convenience functions associated with the [Publisher](#publisher).
 
 Responsibilities:
 
@@ -148,8 +143,6 @@ Responsibilities:
 Examples of input sources:
 
 - A single file on disk or a stream (implemented as docutils.io.FileInput).
-- Multiple files on disk (MultiFileInput?).
-- Python source files: modules and packages.
 - Python strings, as received from a client application (implemented as docutils.io.StringInput).
 
 Examples of output destinations:
@@ -165,43 +158,43 @@ Examples of output destinations:
 
 - Package "docutils".
 
-  - Module "**init**.py" contains: class "Component", a base class for Docutils components; class "SettingsSpec", a base class for specifying runtime settings (used by docutils.frontend); and class "TransformSpec", a base class for specifying transforms.
+  - Module "**index**.ts" contains: class "Component", a base class for Docutils components; class "SettingsSpec", a base class for specifying runtime settings (used by docutils.frontend); and class "TransformSpec", a base class for specifying transforms.
 
-  - Module "docutils.core" contains facade class "Publisher" and convenience functions. See Publisher above.
+  - Module "docutils.core" contains facade class "Publisher" and convenience functions. See [Publisher](#publisher) above.
 
   - Module "docutils.frontend" provides runtime settings support, for programmatic use and front-end tools (including configuration file support, and command-line argument and option processing).
 
-  - Module "docutils.io" provides a uniform API for low-level input and output. See Input/Output above.
+  - Module "docutils.io" provides a uniform API for low-level input and output. See [Input/Output](#inputoutput) above.
 
-  - Module "docutils.nodes" contains the Docutils document tree element class library plus tree-traversal Visitor pattern base classes. See Document Tree below.
+  - Module "docutils.nodes" contains the Docutils document tree element class library plus tree-traversal Visitor pattern base classes. See [Document Tree](#document-tree) below.
 
   - Module "docutils.statemachine" contains a finite state machine specialized for regular-expression-based text filters and parsers. The reStructuredText parser implementation is based on this module.
 
   - Module "docutils.urischemes" contains a mapping of known URI schemes ("http", "ftp", "mail", etc.).
 
-  - Module "docutils.utils" contains utility functions and classes, including a logger class ("Reporter"; see Error Handling below).
+  - Module "docutils.utils" contains utility functions and classes, including a logger class ("Reporter"; see [Error Handling](#error-handling) below).
 
-  - Package "docutils.parsers": markup parsers.
+  - Package "docutils.parsers": markup [parsers](#parsers).
 
-    - Function "get_parser_class(parser_name)" returns a parser module by name. Class "Parser" is the base class of specific parsers. (docutils/parsers/**init**.py)
+    - Function "get_parser_class(parser_name)" returns a parser module by name. Class "Parser" is the base class of specific parsers. (docutils/parsers/**index**.ts)
     - Package "docutils.parsers.rst": the reStructuredText parser.
     - Alternate markup parsers may be added.
 
-    See Parsers above.
+    See [Parsers](#parsers) above.
 
   - Package "docutils.readers": context-aware input readers.
 
-    - Function "get_reader_class(reader_name)" returns a reader module by name or alias. Class "Reader" is the base class of specific readers. (docutils/readers/**init**.py)
+    - Function "get_reader_class(reader_name)" returns a reader module by name or alias. Class "Reader" is the base class of specific readers. (docutils/readers/**index**.ts)
     - Module "docutils.readers.standalone" reads independent document files.
     - Module "docutils.readers.pep" reads PEPs (Python Enhancement Proposals).
     - Module "docutils.readers.doctree" is used to re-read a previously stored document tree for reprocessing.
     - Readers to be added for: Python source code (structure & docstrings), email, FAQ, and perhaps Wiki and others.
 
-    See Readers above.
+    See [Readers](#readers) above.
 
   - Package "docutils.writers": output format writers.
 
-    - Function "get_writer_class(writer_name)" returns a writer module by name. Class "Writer" is the base class of specific writers. (docutils/writers/**init**.py)
+    - Function "get_writer_class(writer_name)" returns a writer module by name. Class "Writer" is the base class of specific writers. (docutils/writers/**index**.ts)
     - Package "docutils.writers.html4css1" is a simple HyperText Markup Language document tree writer for HTML 4.01 and CSS1.
     - Package "docutils.writers.pep_html" generates HTML from reStructuredText PEPs.
     - Package "docutils.writers.s5_html" generates S5/HTML slide shows.
@@ -214,46 +207,45 @@ Examples of output destinations:
 
     Subpackages of "docutils.writers" contain modules and data files (such as stylesheets) that support the individual writers.
 
-    See Writers above.
+    See [Writers](#writers) above.
 
   - Package "docutils.transforms": tree transform classes.
 
-    - Class "Transformer" stores transforms and applies them to document trees. (docutils/transforms/**init**.py)
-    - Class "Transform" is the base class of specific transforms. (docutils/transforms/**init**.py)
+    - Class "Transformer" stores transforms and applies them to document trees. (docutils/transforms/**index**.ts)
+    - Class "Transform" is the base class of specific transforms. (docutils/transforms/**index**.ts)
     - Each module contains related transform classes.
 
-    See Transforms above.
+    See [Transforms](#transformer) above.
 
-  - Package "docutils.languages": Language modules contain language-dependent strings and mappings. They are named for their language identifier (as defined in Choice of Docstring Format below), converting dashes to underscores.
+  - Package "docutils.languages": Language modules contain language-dependent strings and mappings. They are named for their language identifier converting dashes to underscores.
 
-    - Function "get_language(language_code)", returns matching language module. (docutils/languages/**init**.py)
-    - Modules: en.py (English), de.py (German), fr.py (French), it.py (Italian), sk.py (Slovak), sv.py (Swedish).
+    - Function "get_language(language_code)", returns matching language module. (docutils/languages/**index**.ts)
+    - Modules: en.ts (English), de.ts (German), fr.ts (French), it.ts (Italian), sk.ts (Slovak), sv.ts (Swedish).
     - Other languages to be added.
 
 # Document Tree
 
-A single intermediate data structure is used internally by Docutils, in the interfaces between components; it is defined in the docutils.nodes module. It is not required that this data structure be used internally by any of the components, just between components as outlined in the diagram in the Docutils Project Model above.
+A single intermediate data structure is used internally by Docutils, in the interfaces between components; it is defined in the docutils.nodes module. It is not required that this data structure be used internally by any of the components, just between components as outlined in the diagram in the [Docutils Project Model](#docutils-project-model) above.
 
-Custom node types are allowed, provided that either (a) a transform converts them to standard Docutils nodes before they reach the Writer proper, or (b) the custom node is explicitly supported by certain Writers, and is wrapped in a filtered "pending" node. An example of condition (a) is the Python Source Reader (see below), where a "stylist" transform converts custom nodes. The HTML <meta> tag is an example of condition (b); it is supported by the HTML Writer but not by others. The reStructuredText "meta" directive creates a "pending" node, which contains knowledge that the embedded "meta" node can only be handled by HTML-compatible writers. The "pending" node is resolved by the docutils.transforms.components.Filter transform, which checks that the calling writer supports HTML; if it doesn't, the "pending" node (and enclosed "meta" node) is removed from the document.
+Custom node types are allowed, provided that either (a) a transform converts them to standard Docutils nodes before they reach the Writer proper, or (b) the custom node is explicitly supported by certain Writers, and is wrapped in a filtered "pending" node. The HTML \<meta\> tag is an example of condition (b); it is supported by the HTML Writer but not by others. The reStructuredText "meta" directive creates a "pending" node, which contains knowledge that the embedded "meta" node can only be handled by HTML-compatible writers. The "pending" node is resolved by the docutils.transforms.components.Filter transform, which checks that the calling writer supports HTML; if it doesn't, the "pending" node (and enclosed "meta" node) is removed from the document.
 
 The document tree data structure is similar to a DOM tree, but with specific node names (classes) instead of DOM's generic nodes. The schema is documented in an XML DTD (eXtensible Markup Language Document Type Definition), which comes in two parts:
 
-- the Docutils Generic DTD, docutils.dtd [5], and
-- the OASIS Exchange Table Model, soextbl.dtd [6].
+- the Docutils Generic DTD, [docutils.dtd](https://docutils.sourceforge.io/docs/ref/docutils.dtd), and
+- the OASIS Exchange Table Model, [soextbl.dtd](https://docutils.sourceforge.io/docs/ref/soextblx.dtd).
 
 The DTD defines a rich set of elements, suitable for many input and output formats. The DTD retains all information necessary to reconstruct the original input text, or a reasonable facsimile thereof.
 
-See The Docutils Document Tree [7] for details (incomplete).
+See The [Docutils Document Tree](https://docutils.sourceforge.io/docs/ref/doctree.html) for details (incomplete).
 
 # Error Handling
 
 When the parser encounters an error in markup, it inserts a system message (DTD element "system_message"). There are five levels of system messages:
 
-Level-0, "DEBUG": an internal reporting issue. There is no effect on the processing. Level-0 system messages are handled separately from the others.
-Level-1, "INFO": a minor issue that can be ignored. There is little or no effect on the processing. Typically level-1 system messages are not reported.
-Level-2, "WARNING": an issue that should be addressed. If ignored, there may be minor problems with the output. Typically level-2 system messages are reported but do not halt processing.
-Level-3, "ERROR": a major issue that should be addressed. If ignored, the output will contain unpredictable errors. Typically level-3 system messages are reported but do not halt processing.
-Level-4, "SEVERE": a critical error that must be addressed. Typically level-4 system messages are turned into exceptions which do halt processing. If ignored, the output will contain severe errors.
-Although the initial message levels were devised independently, they have a strong correspondence to VMS error condition severity levels [8]; the names in quotes for levels 1 through 4 were borrowed from VMS. Error handling has since been influenced by the log4j project [9].
+- Level-0, "DEBUG": an internal reporting issue. There is no effect on the processing. Level-0 system messages are handled separately from the others.
+- Level-1, "INFO": a minor issue that can be ignored. There is little or no effect on the processing. Typically level-1 system messages are not reported.
+- Level-2, "WARNING": an issue that should be addressed. If ignored, there may be minor problems with the output. Typically level-2 system messages are reported but do not halt processing.
+- Level-3, "ERROR": a major issue that should be addressed. If ignored, the output will contain unpredictable errors. Typically level-3 system messages are reported but do not halt processing.
+- Level-4, "SEVERE": a critical error that must be addressed. Typically level-4 system messages are turned into exceptions which do halt processing. If ignored, the output will contain severe errors.
 
-Python Source Reader
+Although the initial message levels were devised independently, they have a strong correspondence to VMS error condition severity levels; the names in quotes for levels 1 through 4 were borrowed from VMS. Error handling has since been influenced by the log4j project.
