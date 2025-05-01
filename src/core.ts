@@ -4,15 +4,16 @@ import { Writer } from "./writers";
 import { Node } from "./nodes";
 import * as io from "./io";
 import { SettingsSpec } from ".";
+import { OptionParser } from "./frontend";
 
 interface PublisherOptions {
   reader: string | Reader;
   parser: string | Parser;
   writer: string | Writer;
-  source?: string | Buffer;
-  source_class: io.StringInput | io.FileInput;
+  source?: io.Input;
+  source_class: { new(): io.Input };
   destination?: any;
-  destination_class: io.FileOutput | io.StringOutput;
+  destination_class: { new(): io.Output };
   settings: any;
 
 }
@@ -27,10 +28,10 @@ export class Publisher {
   reader: Reader;
   parser: Parser;
   writer: Writer;
-  source: string | Buffer;
-  source_class: io.StringInput | io.FileInput;
-  destination: any;
-  destination_class: io.FileOutput | io.StringOutput;
+  source: io.Input;
+  source_class: { new(options: io.InputOptions): io.Input };
+  destination: io.Output;
+  destination_class: { new(): io.Output };
   settings: any;
   private _stderr: any;
 
@@ -128,8 +129,27 @@ export class Publisher {
   }
 
 
-  set_source(source: string | Buffer, source_path: string): void {
-    // todo
+  set_source(source?: string | Buffer, source_path?: string): void {
+    let effective_source_path: string | null | undefined = source_path;
+
+    if (effective_source_path === null || effective_source_path === undefined) {
+      // If source_path argument is not provided, fall back to the setting
+      effective_source_path = this.settings._source;
+    } else {
+      // If source_path argument *is* provided,
+      // update the corresponding setting.
+      // os.fspath equivalent: In TS/JS, paths are typically strings already.
+      // No direct conversion needed unless dealing with URL objects or similar.
+      this.settings._source = effective_source_path;
+    }
+
+    // Instantiate the source object using the source_class constructor
+    this.source = new this.source_class({
+      source: source, // Pass the source string directly
+      source_path: effective_source_path, // Pass the determined path
+      encoding: this.settings.input_encoding,
+      error_handler: this.settings.input_encoding_error_handler
+    });
   }
 
   set_destination(destination: any, destination_path: string): void {
@@ -138,7 +158,7 @@ export class Publisher {
 
   publish(options: { enable_exit_status?: boolean }): string {
     // todo
-    return '';
+    return 'An output string sent from the publisher.';
   }
 
 }
@@ -164,7 +184,7 @@ export interface publishProgramaticallyOptions {
   source_class: any; // Class for the source input
   source: string | Buffer; // Input source
   source_path?: string; // Path to the source file
-  destination_class: io.FileOutput | io.StringOutput; // Class for the destination output
+  destination_class: typeof io.FileOutput | typeof io.StringOutput; // Class for the destination output
   destination?: any; // First argument for fs.writeFile, string in node, URI in vscode. Not used for string output
   destination_path?: string; // Path to the destination file
   reader?: Reader | string; // Reader instance or class
