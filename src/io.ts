@@ -8,6 +8,13 @@ export interface InputOptions {
     error_handler?: string | null
 }
 
+export interface OutputOptions {
+    destination?: any,
+    destination_path?: string,
+    encoding?: string | null,
+    error_handler?: string | null
+}
+
 export class Input extends TransformSpec {
     // Class variables (static properties)
     static readonly component_type: string = 'input';
@@ -259,23 +266,133 @@ export class Input extends TransformSpec {
 
 }
 
+/**
+ * Abstract base class for output wrappers.
+ * 
+ * Docutils output objects must provide a `write()` method that
+ * expects and handles one argument (the output).
+ * 
+ * Inheriting `TransformSpec` allows output objects to add
+ * "transforms" and "unknown_reference_resolvers" to the "Transformer".
+ * (Optional for custom output objects since Docutils 0.19.)
+ */
 export class Output extends TransformSpec {
-    constructor() {
+    // Class properties
+    static readonly component_type: string = 'output';
+    static readonly default_destination_path: string | null = null;
+
+    // Instance properties
+    encoding: string | null;
+    error_handler: string;
+    destination: any;  // Using any as it can be multiple types
+    destination_path: string | null;
+
+    /**
+     * Constructor for Output class
+     */
+    constructor(options: OutputOptions) {
         super();
 
+        /**
+         * Text encoding for the output destination.
+         */
+        this.encoding = options.encoding;
+
+        /**
+         * Text encoding error handler.
+         */
+        this.error_handler = options.error_handler || 'strict';
+
+        /**
+         * The destination for output data.
+         */
+        this.destination = options.destination;
+
+        /**
+         * A text reference to the destination.
+         */
+        this.destination_path = options.destination_path;
+
+        if (!options.destination_path) {
+            this.destination_path = Output.default_destination_path;
+        }
+    }
+
+    /**
+     * String representation of the instance
+     */
+    toString(): string {
+        return `${this.constructor.name}: destination=${this.destination}, destination_path=${this.destination_path}`;
+    }
+
+    /**
+     * Write `data`. Define in subclasses.
+     */
+    write(data: string | Uint8Array): string | Uint8Array | null {
+        throw new Error('NotImplementedError: Subclasses must implement write()');
+    }
+
+    /**
+     * Encode and return `data`.
+     * 
+     * If `data` is a `Uint8Array` instance, it is returned unchanged.
+     * Otherwise it is encoded with `this.encoding`.
+     * 
+     * Provisional: If `this.encoding` is set to the pseudo encoding name
+     * "unicode", `data` must be a `string` instance and is returned unchanged.
+     */
+    encode(data: string | Uint8Array): string | Uint8Array {
+        if (this.encoding && this.encoding.toLowerCase() === 'unicode') {
+            if (typeof data !== 'string') {
+                throw new Error('output encoding is "unicode" but `data` is not a string instance');
+            }
+            return data;
+        }
+
+        if (typeof data !== 'string') {
+            // Non-string (e.g. Uint8Array) output
+            return data;
+        } else {
+            // In a browser environment we'd use TextEncoder
+            // In Node.js we could use Buffer.from(data, this.encoding)
+            // For a universal solution:
+            return this.encodeString(data);
+        }
+    }
+
+    /**
+     * Helper method to encode a string to bytes using the specified encoding
+     */
+    private encodeString(data: string): Uint8Array {
+        // If in a browser environment:
+        if (typeof TextEncoder !== 'undefined') {
+            // Note: TextEncoder only supports UTF-8 in most browsers
+            // This is a simplification - real implementation would need to handle different encodings
+            const encoder = new TextEncoder();
+            return encoder.encode(data);
+        }
+
+        // If in Node.js environment (simplified):
+        // const buffer = Buffer.from(data, this.encoding || 'utf-8');
+        // return new Uint8Array(buffer);
+
+        // Fallback implementation for example purposes
+        // This is a very naive implementation that only works for ASCII
+        // A real implementation would need to handle encodings properly
+        const bytes = new Uint8Array(data.length);
+        for (let i = 0; i < data.length; i++) {
+            bytes[i] = data.charCodeAt(i) & 0xff;
+        }
+        return bytes;
     }
 }
 
 export class FileInput extends Input {
-    constructor(options: InputOptions) {
-        super(options);
-    }
+
 }
 
 export class FileOutput extends Output {
-    constructor() {
-        super();
-    }
+
 }
 
 /**
@@ -298,9 +415,36 @@ export class StringInput extends Input {
     }
 }
 
+/**
+ * Output to a `Uint8Array` or `string` instance.
+ * 
+ * Provisional.
+ */
 export class StringOutput extends Output {
-    constructor() {
-        super();
+    // Class properties
+    static readonly default_destination_path: string = '<string>';
+
+    // Type declaration for destination
+    declare destination: string | Uint8Array;
+
+    /**
+     * Store `data` in `this.destination`, and return it.
+     * 
+     * If `this.encoding` is set to the pseudo encoding name "unicode",
+     * `data` must be a `string` instance and is stored/returned unchanged
+     * (cf. `Output.encode`).
+     * 
+     * Otherwise, `data` can be a `Uint8Array` or `string` instance and is
+     * stored/returned as a `Uint8Array` instance
+     * (`string` data is encoded with `this.encode()`).
+     * 
+     * Attention: the `output_encoding` setting may affect the content
+     * of the output (e.g. an encoding declaration in HTML or XML or the
+     * representation of characters as LaTeX macro vs. literal character).
+     */
+    write(data: string | Uint8Array): string | Uint8Array {
+        this.destination = this.encode(data);
+        return this.destination;
     }
 }
 
@@ -308,9 +452,6 @@ export class StringOutput extends Output {
  * Degenerate output: write nothing.
  */
 export class NullOutput extends Output {
-    constructor() {
-        super();
-    }
 
     destination: undefined;
 
@@ -319,8 +460,8 @@ export class NullOutput extends Output {
     /**
      * Do nothing, return None.
      */
-    public write(data: string | Buffer): void {
-        // pass
+    public write(data: string | Buffer): null {
+        return null;
     }
 
 
