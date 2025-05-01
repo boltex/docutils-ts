@@ -11,9 +11,9 @@ interface PublisherOptions {
   parser: string | Parser;
   writer: string | Writer;
   source?: io.Input;
-  source_class: { new(options: io.InputOptions): io.Input };
+  source_class: typeof io.Input;
   destination?: any;
-  destination_class: { new(options: io.OutputOptions): io.Output };
+  destination_class: typeof io.Output;
   settings: any;
 
 }
@@ -29,9 +29,9 @@ export class Publisher {
   parser: Parser;
   writer: Writer;
   source: io.Input;
-  source_class: { new(options: io.InputOptions): io.Input };
+  source_class: typeof io.Input;
   destination: io.Output;
-  destination_class: { new(options: io.OutputOptions): io.Output };
+  destination_class: typeof io.Output;
   settings: any;
   private _stderr: any;
 
@@ -181,10 +181,10 @@ export interface PublishOptions {
 }
 
 export interface publishProgramaticallyOptions {
-  source_class: { new(options: io.InputOptions): io.Input }; // Class for the source input // TODO : Fix this type to be more specific
+  source_class: typeof io.Input; // Class for the source input // TODO : Fix this type to be more specific
   source: string | Buffer; // Input source
   source_path?: string; // Path to the source file
-  destination_class: { new(options: io.OutputOptions): io.Output }; // Class for the destination output // TODO : Fix this type to be more specific
+  destination_class: typeof io.Output; // Class for the destination output // TODO : Fix this type to be more specific
   destination?: any; // First argument for fs.writeFile, string in node, URI in vscode. Not used for string output
   destination_path?: string; // Path to the destination file
   reader?: Reader | string; // Reader instance or class
