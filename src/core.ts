@@ -18,6 +18,28 @@ interface PublisherOptions {
 
 }
 
+interface publishOptions {
+  argv?: string[],
+  usage?: string,
+  description?: string,
+  settings_spec?: any,
+  settings_overrides?: Record<string, any>,
+  config_section?: string,
+  enable_exit_status?: boolean,
+}
+
+/**
+ * Custom error class to simulate Python's SystemExit
+ */
+export class ExitError extends Error {
+  code: number;
+
+  constructor(message: string, code: number = 0) {
+    super(message);
+    this.name = 'ExitError';
+    this.code = code;
+  }
+}
 
 /**
  * A facade encapsulating the high-level logic of a Docutils system.
@@ -33,7 +55,7 @@ export class Publisher {
   destination: io.Output;
   destination_class: typeof io.Output;
   settings: any;
-  private _stderr: any;
+  // private _stderr: any; // TODO ? Use console.error instead for now
 
 
   /**
@@ -152,13 +174,159 @@ export class Publisher {
     });
   }
 
-  set_destination(destination: any, destination_path: string): void {
-    // todo
+  /**
+   * Set up the destination for output.
+   * 
+   * @param destination - A file-like object for output
+   * @param destination_path - Path to the output file
+   */
+  set_destination(
+    destination: any = null,
+    destination_path: string | null = null
+  ): void {
+    // Provisional: the "_destination" and "output" settings
+    // are deprecated and will be ignored in Docutils 2.0.
+    if (destination_path !== null) {
+      this.settings.output_path = destination_path;
+    } else {
+      // check 'output_path' and legacy settings
+      if (
+        this.settings.output &&
+        !this.settings.output_path
+      ) {
+        this.settings.output_path = this.settings.output;
+      }
+
+      if (
+        this.settings.output_path &&
+        this.settings._destination &&
+        this.settings.output_path !== this.settings._destination
+      ) {
+        throw new Error(
+          'The --output-path option obsoletes the ' +
+          'second positional argument (DESTINATION). ' +
+          'You cannot use them together.'
+        );
+      }
+
+      if (this.settings.output_path === null) {
+        this.settings.output_path = this.settings._destination;
+      }
+
+      if (this.settings.output_path === '-') {  // use stdout
+        this.settings.output_path = null;
+      }
+    }
+
+    // Update legacy settings
+    this.settings._destination = this.settings.output = this.settings.output_path;
+
+    // Create the destination object
+    this.destination = new this.destination_class(
+      {
+        destination: destination,
+        destination_path: this.settings.output_path,
+        encoding: this.settings.output_encoding,
+        error_handler: this.settings.output_encoding_error_handler
+      }
+    );
   }
 
-  publish(options: { enable_exit_status?: boolean }): string {
-    // todo
-    return 'An output string sent from the publisher.';
+  /**
+   * Process command line options and arguments (if `this.settings` not
+   * already set), run `this.reader` and then `this.writer`. Return
+   * `this.writer`'s output.
+   */
+  publish(
+    options: publishOptions
+  ): string | Uint8Array {
+    const {
+      argv,
+      usage,
+      description,
+      settings_spec,
+      settings_overrides,
+      config_section,
+      enable_exit_status = false
+    } = options;
+
+    let exit_: boolean | null = null;
+    let exit_status: number = 0;
+    let output: string | null = null;
+
+    try {
+      if (this.settings === null) {
+        // No command line for now, skip this part and error out.
+        throw new Error(
+          'Command line processing is not implemented yet. '
+          + 'Please provide settings directly.'
+        );
+
+        // TODO: Implement command line processing first to uncomment this part.
+        // this.process_command_line(
+        //   argv,
+        //   usage,
+        //   description,
+        //   settings_spec,
+        //   config_section,
+        //   ...(settings_overrides || {})
+        // );
+      }
+
+      this.set_io();
+      this.prompt();
+
+      this.document = this.reader.read(this.source, this.parser, this.settings);
+      this.apply_transforms();
+
+      output = this.writer.write(this.document, this.destination);
+      this.writer.assemble_parts();
+    } catch (error) {
+      if (error instanceof ExitError) {
+        exit_ = true;
+        exit_status = (error as ExitError).code;
+      } else {
+        if (!this.settings) {
+          // Exception too early to report nicely
+          throw error;
+        }
+
+        if (this.settings.traceback) {
+          // Propagate exceptions?
+          this.debugging_dumps();
+          throw error;
+        }
+
+        this.report_Exception(error);
+        exit_ = true;
+        exit_status = 1;
+      }
+    }
+
+    this.debugging_dumps();
+
+    if (
+      enable_exit_status &&
+      this.document &&
+      this.document.reporter.max_level >= this.settings.exit_status_level
+    ) {
+      if (typeof process !== 'undefined' && process.exit) {
+        process.exit(this.document.reporter.max_level + 10);
+      } else {
+        throw new ExitError(
+          `Exit status level reached: ${this.document.reporter.max_level}`,
+          this.document.reporter.max_level + 10
+        );
+      }
+    } else if (exit_) {
+      if (typeof process !== 'undefined' && process.exit) {
+        process.exit(exit_status);
+      } else {
+        throw new ExitError(`Exiting with status: ${exit_status}`, exit_status);
+      }
+    }
+
+    return output || '';
   }
 
 }

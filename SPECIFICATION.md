@@ -2,6 +2,10 @@
 
 This document is the design specifications for the **docutils-ts** library, the TypeScript port of Docutils Python library.
 
+## TypeScript Implementation Workaround
+
+In the nodes.ts source, the multiple inheritance for nodes classes distinctions is to be implemented instead with the 'classTypes' technique from [Kay McCormick docutils-typescript project's nodes source](https://github.com/kaymccormick/docutils-typescript/blob/master/src/nodes.ts)
+
 ## Docutils Project Model
 
 Project components and data flow:
