@@ -117,6 +117,10 @@ export class TransformSpec {
         }
         return [];
     }
+
+    public toString(): string {
+        return `TransformSpec<${this.constructor.name}>`;
+    }
 }
 
 /**

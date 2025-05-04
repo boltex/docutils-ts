@@ -1,5 +1,8 @@
 // A simplistic Reporter that logs to console
 export class Reporter {
+
+    public max_level: number;
+
     info(message: string): void {
         console.log('[INFO]', message);
     }

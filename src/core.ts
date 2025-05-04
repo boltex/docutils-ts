@@ -1,7 +1,7 @@
 import { Parser } from "./parsers";
 import { Reader } from "./readers";
 import { Writer } from "./writers";
-import { Node } from "./nodes";
+import { document } from "./nodes";
 import * as io from "./io";
 import { SettingsSpec } from ".";
 import { OptionParser } from "./frontend";
@@ -46,7 +46,7 @@ export class ExitError extends Error {
  */
 export class Publisher {
 
-  document: Node | undefined;
+  document: document | undefined;
   reader: Reader;
   parser: Parser;
   writer: Writer;
@@ -252,7 +252,7 @@ export class Publisher {
 
     let exit_: boolean | null = null;
     let exit_status: number = 0;
-    let output: string | null = null;
+    let output: string | Uint8Array | null = null;
 
     try {
       if (this.settings === null) {
@@ -329,6 +329,23 @@ export class Publisher {
     return output || '';
   }
 
+  public set_io(): void {
+    // TODO
+  }
+  public prompt(): void {
+    // TODO
+  }
+  public apply_transforms(): void {
+    // TODO
+  }
+  public debugging_dumps(): void {
+    // TODO
+  }
+  public report_Exception(error: Error): void {
+    // TODO
+  }
+
+
 }
 
 export interface PublishOptions {
@@ -393,7 +410,7 @@ export interface publishProgramaticallyOptions {
  * https://docutils.sourceforge.io/docs/user/config.html#output-encoding
 */
 
-export function publish_string(options: PublishOptions): string {
+export function publish_string(options: PublishOptions): string | Uint8Array {
 
   // The "*_name" arguments are deprecated.
   _name_arg_warning(options.reader_name, options.parser_name, options.writer_name)
@@ -517,7 +534,7 @@ function _name_arg_warning(...name_args: Array<string | null | undefined>): void
 
     * `enable_exit_status`: Boolean; enable exit status at end of processing?
  */
-function publish_programmatically(options: publishProgramaticallyOptions): [string, Publisher] {
+function publish_programmatically(options: publishProgramaticallyOptions): [string | Uint8Array, Publisher] {
 
   const reader = options.reader || options.reader_name || 'standalone'
   const parser = options.parser || options.parser_name || 'restructuredtext'
