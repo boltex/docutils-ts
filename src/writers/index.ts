@@ -1,6 +1,6 @@
-import { Component } from "..";
-import { Output } from "../io";
-import * as nodes from "../nodes";
+import { Component } from "../index.js";
+import { Output } from "../io.js";
+import * as nodes from "../nodes.js";
 
 
 export class Writer extends Component {

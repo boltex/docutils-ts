@@ -1,4 +1,4 @@
-import { Component } from "..";
+import { Component } from "../index.js";
 
 export class Parser extends Component {
     constructor() {

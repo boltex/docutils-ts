@@ -1,22 +1,8 @@
-import { Parser } from "./parsers";
-import { Reader } from "./readers";
-import { Writer } from "./writers";
-import { document } from "./nodes";
-import * as io from "./io";
-import { SettingsSpec } from ".";
-import { OptionParser } from "./frontend";
-
-interface PublisherOptions {
-  reader: string | Reader;
-  parser: string | Parser;
-  writer: string | Writer;
-  source?: io.Input;
-  source_class: typeof io.Input;
-  destination?: any;
-  destination_class: typeof io.Output;
-  settings: any;
-
-}
+import { document } from "./nodes.js";
+import * as io from "./io.js";
+import { SettingsSpec } from "./index.js";
+import { OptionParser } from "./frontend.js";
+import { readers, writers, parsers } from "./index.js";
 
 interface publishOptions {
   argv?: string[],
@@ -41,20 +27,60 @@ export class ExitError extends Error {
   }
 }
 
+export interface PublisherArgs {
+  reader: string | readers.Reader;
+  parser: string | parsers.Parser;
+  writer: string | writers.Writer;
+  source?: io.Input;
+  source_class?: typeof io.Input;
+  destination?: io.Output;
+  destination_class?: typeof io.Output;
+  settings?: any; // Settings;
+}
+
+interface ErrorArgs {
+  error?: Error | undefined;
+}
+
+export class ApplicationError extends Error {
+  public error: Error | undefined;
+  public args: ErrorArgs;
+  public constructor(message: string, args: ErrorArgs = {}) {
+    super(message);
+    this.args = args;
+    if (args !== undefined) {
+      this.error = args.error;
+    }
+    /* instanbul ignore else */
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApplicationError);
+    }
+  }
+}
+export class InvalidStateError extends Error {
+  public constructor(message?: string) {
+    super(message);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, InvalidStateError);
+    }
+    this.message = message || '';
+  }
+}
+
 /**
  * A facade encapsulating the high-level logic of a Docutils system.
  */
 export class Publisher {
 
-  document: document | undefined;
-  reader: Reader;
-  parser: Parser;
-  writer: Writer;
-  source: io.Input;
+  document?: document;
+  reader?: readers.Reader;
+  parser?: parsers.Parser;
+  writer?: writers.Writer;
+  source?: io.Input;
   source_class: typeof io.Input;
-  destination: io.Output;
+  destination?: io.Output;
   destination_class: typeof io.Output;
-  settings: any;
+  settings?: any; // TODO: Should be type Settings;
   // private _stderr: any; // TODO ? Use console.error instead for now
 
 
@@ -64,16 +90,46 @@ export class Publisher {
    * The components `reader`, `parser`, or `writer` should all be
    * specified, either as instances or via their names.
    */
-  constructor(options: PublisherOptions) {
+  public constructor(args: PublisherArgs) {
+    let {
+      reader, parser, writer, source, destination,
+      settings, source_class, destination_class
+    } = args;
 
+    // get component instances from their names:
+    if (typeof reader === "string") {
+      reader = new (readers.get_reader_class(reader))(parser);
+    }
+    if (typeof parser === "string") {
+      if (reader instanceof readers.Reader) {
+        if (reader.parser == null) {
+          reader.set_parser(parser);
+        }
+        parser = reader.parser;
+      } else {
+        parser = parsers.get_parser_class(parser)();
+      }
+    }
+    if (typeof writer === "string") {
+      writer = writers.get_writer_class(writer)();
+    }
 
+    this.reader = reader as readers.Reader;
+    this.parser = parser as parsers.Parser;
+    this.writer = writer as writers.Writer;
+    this.source = source;
+    this.destination = destination;
+
+    this.source_class = source_class || io.FileInput;
+
+    this.destination_class = destination_class || io.FileOutput;
+    this.settings = settings;
   }
-
 
   process_programmatic_settings(
     settings_spec: any,
     settings_overrides: Record<string, any> | null,
-    config_section: string
+    config_section?: string
   ): void {
     if (this.settings == null) {
       const defaults = settings_overrides ? { ...settings_overrides } : {};
@@ -131,7 +187,7 @@ export class Publisher {
       ...defaults
     } = options;
 
-    if (config_section) {
+    if (config_section && settings_spec) {
       settings_spec.config_section = config_section;
 
       const parts = config_section.split(/\s+/);
@@ -140,9 +196,22 @@ export class Publisher {
       }
     }
 
-    // NOTE: This assumes `this.parser`, `this.reader`, and `this.writer` exist and conform to `SettingsSpec`
+    const componentsParam: SettingsSpec[] = [];
+    if (this.parser) {
+      componentsParam.push(this.parser);
+    }
+    if (this.reader) {
+      componentsParam.push(this.reader);
+    }
+    if (this.writer) {
+      componentsParam.push(this.writer);
+    }
+    if (settings_spec) {
+      componentsParam.push(settings_spec);
+    }
+
     return new OptionParser({
-      components: [this.parser, this.reader, this.writer, settings_spec],
+      components: componentsParam,
       defaults,
       read_config_files: true,
       usage,
@@ -151,8 +220,8 @@ export class Publisher {
   }
 
 
-  set_source(source?: string | Buffer, source_path?: string): void {
-    let effective_source_path: string | null | undefined = source_path;
+  set_source(source?: string | Uint8Array, source_path?: string): void {
+    let effective_source_path: string | undefined = source_path;
 
     if (effective_source_path === null || effective_source_path === undefined) {
       // If source_path argument is not provided, fall back to the setting
@@ -232,6 +301,8 @@ export class Publisher {
     );
   }
 
+
+
   /**
    * Process command line options and arguments (if `this.settings` not
    * already set), run `this.reader` and then `this.writer`. Return
@@ -276,7 +347,22 @@ export class Publisher {
       this.set_io();
       this.prompt();
 
+      if (this.reader === undefined) {
+        throw new ApplicationError('Need defined reader with "read" method');
+      }
+      if (this.writer === undefined || this.source === undefined || this.parser === undefined) {
+        throw new InvalidStateError('need Writer and source');
+      }
+
       this.document = this.reader.read(this.source, this.parser, this.settings);
+
+      if (this.document === undefined) {
+        throw new InvalidStateError('need document');
+      }
+      if (this.destination === undefined) {
+        throw new InvalidStateError('need destination');
+      }
+
       this.apply_transforms();
 
       output = this.writer.write(this.document, this.destination);
@@ -297,7 +383,7 @@ export class Publisher {
           throw error;
         }
 
-        this.report_Exception(error);
+        this.report_Exception(error as Error);
         exit_ = true;
         exit_status = 1;
       }
@@ -349,14 +435,14 @@ export class Publisher {
 }
 
 export interface PublishOptions {
-  source: string | Buffer; // Input source
+  source: string | Uint8Array; // Input source
   source_path?: string; // Path to the source file
   destination_path?: string; // Path to the destination file
-  reader?: Reader | string; // Reader instance or class
+  reader?: readers.Reader | string; // Reader instance or class
   reader_name?: string; // Name of the reader (Deprecated)
-  parser?: Parser | string; // Parser instance or class
+  parser?: parsers.Parser | string; // Parser instance or class
   parser_name?: string; // Name of the parser (Deprecated)
-  writer?: Writer | string; // Writer instance or class
+  writer?: writers.Writer | string; // Writer instance or class
   writer_name?: string; // Name of the writer (Deprecated)
   settings?: any; // Settings for the publisher
   settings_spec?: any; // Specification for settings
@@ -367,16 +453,16 @@ export interface PublishOptions {
 
 export interface publishProgramaticallyOptions {
   source_class: typeof io.Input; // Class for the source input // TODO : Fix this type to be more specific
-  source: string | Buffer; // Input source
+  source: string | Uint8Array; // Input source
   source_path?: string; // Path to the source file
   destination_class: typeof io.Output; // Class for the destination output // TODO : Fix this type to be more specific
   destination?: any; // First argument for fs.writeFile, string in node, URI in vscode. Not used for string output
   destination_path?: string; // Path to the destination file
-  reader?: Reader | string; // Reader instance or class
+  reader?: readers.Reader | string; // Reader instance or class
   reader_name?: string; // Name of the reader (Deprecated)
-  parser?: Parser | string; // Parser instance or class
+  parser?: parsers.Parser | string; // Parser instance or class
   parser_name?: string; // Name of the parser (Deprecated)
-  writer?: Writer | string; // Writer instance or class
+  writer?: writers.Writer | string; // Writer instance or class
   writer_name?: string; // Name of the writer (Deprecated)
   settings?: any; // Settings for the publisher
   settings_spec?: any; // Specification for settings

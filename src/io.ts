@@ -1,5 +1,5 @@
-import { TransformSpec } from ".";
-import * as nodes from "./nodes";
+import { TransformSpec } from "./__init__.js";
+import * as nodes from "./nodes.js";
 
 export interface InputOptions {
     source?: any,
@@ -68,7 +68,7 @@ export class Input extends TransformSpec {
         /**
          * A text reference to the source.
          */
-        this.source_path = options.source_path;
+        this.source_path = options.source_path || null;
 
         if (!options.source_path) {
             this.source_path = Input.default_source_path;
@@ -296,7 +296,7 @@ export class Output extends TransformSpec {
         /**
          * Text encoding for the output destination.
          */
-        this.encoding = options.encoding;
+        this.encoding = options.encoding || null;
 
         /**
          * Text encoding error handler.
@@ -311,7 +311,7 @@ export class Output extends TransformSpec {
         /**
          * A text reference to the destination.
          */
-        this.destination_path = options.destination_path;
+        this.destination_path = options.destination_path || null;
 
         if (!options.destination_path) {
             this.destination_path = Output.default_destination_path;
@@ -460,7 +460,7 @@ export class NullOutput extends Output {
     /**
      * Do nothing, return None.
      */
-    public write(data: string | Buffer): null {
+    public write(data: string | Uint8Array): null {
         return null;
     }
 
@@ -475,7 +475,9 @@ export class DocTreeInput extends Input {
     constructor(options: InputOptions) {
         super(options);
     }
-    source: nodes.document;
+
+    // Force the type to be nodes.document as the constructor of Input class sets it to any
+    source!: nodes.document;
 
     readonly default_source_path = 'doctree input';
 

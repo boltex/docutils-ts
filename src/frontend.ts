@@ -1,4 +1,4 @@
-import { SettingsSpec } from ".";
+import { SettingsSpec } from "./index.js";
 
 interface OptionParserOptions {
     /** List of components providing settings specifications. */

@@ -1,7 +1,13 @@
 // A simplistic Reporter that logs to console
 export class Reporter {
 
+    // TODO !
+
     public max_level: number;
+
+    constructor() {
+        this.max_level = -1;
+    }
 
     info(message: string): void {
         console.log('[INFO]', message);
