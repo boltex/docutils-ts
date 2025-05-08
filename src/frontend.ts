@@ -15,11 +15,10 @@ interface OptionParserOptions {
 }
 
 
-export class OptionParser extends SettingsSpec {
+export class OptionParser {
     constructor(options: OptionParserOptions) {
-        super();
-    }
 
+    }
 
     /** Returns the default values based on components and overrides. */
     get_default_values(): any {

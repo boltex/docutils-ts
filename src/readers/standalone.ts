@@ -1,5 +1,5 @@
-import { readers } from "../index.js";
+import { Reader } from "../reader.js";
 
-export class Reader extends readers.Reader {
+export class StandaloneReader extends Reader {
 
 }

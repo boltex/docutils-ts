@@ -12,7 +12,7 @@ This API is in flux, because a straight port of the docutils interfaces is not a
 
 Further, moving the IO responsibilities up the stack ensures that deferred/asynchronous execution is handled outside of the docutils-ts module itself, improving the developer experience.
 
-📝 See `SPECIFICATION.md` for detailed project goals and design decisions.
+📝 See `SPECIFICATION.md` for detailed project goals and design decisions, and `TODO.md` for short-term planning of features implementation.
 
 > ⚠️ **Work in Progress**: This is an early-stage port and currently includes only a basic dummy version of `publishString()` for testing and scaffolding purposes.
 

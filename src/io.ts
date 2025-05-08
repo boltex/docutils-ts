@@ -1,4 +1,4 @@
-import { TransformSpec } from "./__init__.js";
+import { TransformSpec } from "./transformSpec.js";
 import * as nodes from "./nodes.js";
 
 export interface InputOptions {
