@@ -16,9 +16,19 @@ export interface OutputOptions {
 }
 
 export class Input extends TransformSpec {
+
     // Class variables (static properties)
     static readonly component_type: string = 'input';
+    get component_type(): string {
+        return (this.constructor as typeof Input).component_type;
+    }
+
     static readonly default_source_path: string | null = null;
+    get default_source_path(): string | null {
+        return (this.constructor as typeof Input).default_source_path;
+    }
+
+    supported: string[] = [];
 
     // Instance properties
     encoding: string | 'unicode' | null;
@@ -29,6 +39,9 @@ export class Input extends TransformSpec {
 
     // Regular expression for encoding detection
     static readonly coding_slug: RegExp = /coding[:=]\s*([-\w.]+)/;
+    get coding_slug(): RegExp {
+        return (this.constructor as typeof Input).coding_slug;
+    }
 
     // Sequence of (start_bytes, encoding) tuples for encoding detection
     static readonly byte_order_marks: Array<[Uint8Array, string]> = [
@@ -41,6 +54,10 @@ export class Input extends TransformSpec {
         [new Uint8Array([0xFE, 0xFF]), 'utf-16'],
         [new Uint8Array([0xFF, 0xFE]), 'utf-16'],
     ];
+
+    get byte_order_marks(): Array<[Uint8Array, string]> {
+        return (this.constructor as typeof Input).byte_order_marks;
+    }
 
     /**
       * Constructor for Input class
@@ -277,9 +294,21 @@ export class Input extends TransformSpec {
  * (Optional for custom output objects since Docutils 0.19.)
  */
 export class Output extends TransformSpec {
+    // component_type, supported
+    public supported: string[] = [];
+
     // Class properties
     static readonly component_type: string = 'output';
+
+    get component_type(): string {
+        return (this.constructor as typeof Output).component_type;
+    }
+
     static readonly default_destination_path: string | null = null;
+
+    get default_destination_path(): string | null {
+        return (this.constructor as typeof Output).default_destination_path;
+    }
 
     // Instance properties
     encoding: string | null;
@@ -455,7 +484,7 @@ export class NullOutput extends Output {
 
     destination: undefined;
 
-    readonly default_destination_path = 'null output'
+    static readonly default_destination_path = 'null output'
 
     /**
      * Do nothing, return None.
@@ -479,7 +508,7 @@ export class DocTreeInput extends Input {
     // Force the type to be nodes.document as the constructor of Input class sets it to any
     source!: nodes.document;
 
-    readonly default_source_path = 'doctree input';
+    static readonly default_source_path = 'doctree input';
 
     /**
      * Return the document tree.

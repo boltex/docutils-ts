@@ -1,4 +1,5 @@
 import { Reporter } from "./utils/index.js";
+import { Transformer } from "./transformer.js";
 
 // ========
 //  Mixins
@@ -115,13 +116,16 @@ export class document extends Element {
 
     // TODO : implement the classTypes list!
 
+    transformer: Transformer;
     reporter: Reporter;
 
-    constructor() {
+    constructor(
+    ) {
         // TODO: implement the real constructor!
         super();
 
         // Initialize the Document instance
+        this.transformer = new Transformer(); // Placeholder for the transformer instance!
         this.reporter = new Reporter(); // Placeholder for the reporter instance!
     }
 }

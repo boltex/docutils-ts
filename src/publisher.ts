@@ -307,7 +307,6 @@ export class Publisher {
       }
 
       this.set_io();
-      this.prompt();
 
       if (this.reader === undefined) {
         throw new ApplicationError('Need defined reader with "read" method');
@@ -377,18 +376,37 @@ export class Publisher {
     return output || '';
   }
 
-  public set_io(): void {
-    // TODO
+  public set_io(source_path?: string, destination_path?: string): void {
+    if (this.source === undefined) {
+      this.set_source(source_path);
+    }
+    if (this.destination === undefined) {
+      this.set_destination(destination_path);
+    }
   }
-  public prompt(): void {
-    // TODO
-  }
+
   public apply_transforms(): void {
-    // TODO
+    const document = this.document;
+    if (document == null) {
+      throw new InvalidStateError('Document undefined');
+    }
+    if (this.source == null ||
+      this.reader == null ||
+      this.reader.parser == null
+      || this.writer == null || this.destination == null) {
+      throw new InvalidStateError('Component undefined');
+    }
+    document.transformer.populate_from_components(
+      this.source, this.reader, this.reader.parser,
+      this.writer, this.destination,
+    );
+    document.transformer.apply_transforms();
   }
+
   public debugging_dumps(): void {
     // TODO
   }
+
   public report_Exception(error: Error): void {
     // TODO
   }

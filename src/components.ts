@@ -1,5 +1,6 @@
 import { SettingsSpec } from './settingsSpec.js';
 import { TransformSpec } from './transformSpec.js';
+import { _Components } from './types.js';
 
 /**
  * Base class for Docutils components.
@@ -24,7 +25,7 @@ export class Component extends SettingsSpec {
     }
 
     // * Rest of Component from the original code
-    component_type: any = undefined;
+    component_type!: _Components;
 
     // Name of the component type ('reader', 'parser', 'writer'). Override in subclasses.
 
