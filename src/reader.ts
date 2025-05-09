@@ -5,6 +5,8 @@ import { Parser } from "./parser.js";
 import { document } from "./nodes.js";
 import { Transform } from "./transforms/index.js";
 import * as universal from "./transforms/universal.js";
+import { InvalidStateError } from "./exceptions.js";
+import * as utils from "./utils/index.js";
 
 export class Reader extends Component {
 
@@ -67,8 +69,58 @@ export class Reader extends Component {
     }
 
     public read(source: Input, parser: Parser, settings: any): document {
-        // TODO: Implement the read method to parse the source and return a document object
-        return new document(); // Placeholder
+        this.source = source;
+        if (!this.parser) {
+            this.parser = parser;
+        }
+        this.settings = settings;
+        if (!this.source) {
+            throw new Error('Need source');
+        }
+
+        // SYNC FOR NOW 
+
+
+        this.input = this.source.read();
+        this.parse();
+        return this.document!;
+
+        // return this.source.read().then((input) => {
+        //     this.input = input;
+        //     this.parse();
+        //     return this.document!;
+        // });
+    }
+
+    public parse(): void {
+        const input = Array.isArray(this.input) ? this.input.join('') : this.input;
+
+        if (this.parser) {
+            const document = this.new_document();
+            this.parser.parse(input, document);
+            this.document = document;
+            if (this.input === undefined) {
+                throw new Error(`need input, i have ${this.input}`);
+            }
+            // } else if(this.parseFn !== undefined) {
+            //     const document = this.parseFn(input);
+            //     this.document = document;
+        } else {
+            throw new InvalidStateError();
+        }
+        //this.document!.currentSource = '';
+        //this.document!.currentLine = 0;
+    }
+
+    public new_document(): document {
+        if (!this.settings) {
+            throw new InvalidStateError("need settings");
+        }
+        const document = utils.new_document(
+            this.source && this.source.source_path || '',
+            this.settings
+        );
+        return document;
     }
 
 }

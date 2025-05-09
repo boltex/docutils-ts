@@ -1,3 +1,7 @@
+import { InvalidStateError } from "../exceptions";
+import { OptionParser } from "../frontend";
+import { document } from "../nodes.js";
+
 // A simplistic Reporter that logs to console
 export class Reporter {
 
@@ -44,4 +48,24 @@ export function normalize_language_tag(tag: string): string[] {
 
     combinations.push(base);
     return combinations;
+}
+
+export function new_document(sourcePath: string, settings?: Settings): document {
+
+    if (settings === undefined) {
+        settings = new OptionParser(RSTParser.settingsSpec).get_default_values();
+    }
+    if (settings === undefined) {
+        throw new InvalidStateError('settings should not be undefined');
+    }
+    const reporter = newReporter({ sourcePath }, settings);
+    const attrs: { source?: string } = {};
+    if (typeof sourcePath !== 'undefined') {
+        attrs.source = sourcePath;
+    }
+
+    // eslint-disable-next-line new-cap
+    const myDocument = new document(settings, reporter, '', [], attrs);
+    myDocument.noteSource(sourcePath, -1);
+    return myDocument;
 }
