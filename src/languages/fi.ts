@@ -1,4 +1,4 @@
-export const labels = {
+export const labels: Record<string, string> = {
     author: 'Tekijä',
     authors: 'Tekijät',
     organization: 'Yhteisö',
@@ -23,7 +23,7 @@ export const labels = {
     contents: 'Sisällys',
 };
 
-export const bibliographic_fields = {
+export const bibliographic_fields: Record<string, string> = {
     'tekijä': 'author',
     'tekijät': 'authors',
     'yhteisö': 'organization',
@@ -38,4 +38,4 @@ export const bibliographic_fields = {
     'tiivistelmä': 'abstract',
 };
 
-export const author_separators = [';', ','];
+export const author_separators: Array<string> = [';', ','];

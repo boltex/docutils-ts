@@ -1,4 +1,4 @@
-export const labels = {
+export const labels: Record<string, string> = {
     author: '저자',
     authors: '저자들',
     organization: '조직',
@@ -23,7 +23,7 @@ export const labels = {
     contents: '목차',
 };
 
-export const bibliographic_fields = {
+export const bibliographic_fields: Record<string, string> = {
     '저자': 'author',
     '저자들': 'authors',
     '조직': 'organization',
@@ -38,4 +38,4 @@ export const bibliographic_fields = {
     '요약': 'abstract',
 };
 
-export const author_separators = [';', ','];
+export const author_separators: Array<string> = [';', ','];

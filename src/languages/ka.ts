@@ -1,4 +1,4 @@
-export const labels = {
+export const labels: Record<string, string> = {
     abstract: 'ანოტაცია',
     address: 'მისამართი',
     attention: 'ყურადღება!',
@@ -23,7 +23,7 @@ export const labels = {
     warning: 'გაფრთხილება',
 };
 
-export const bibliographic_fields = {
+export const bibliographic_fields: Record<string, string> = {
     'ანოტაცია': 'abstract',
     'მისამართი': 'address',
     'ავტორი': 'author',
@@ -38,4 +38,4 @@ export const bibliographic_fields = {
     'ვერსია': 'version',
 };
 
-export const author_separators = [';', ','];
+export const author_separators: Array<string> = [';', ','];

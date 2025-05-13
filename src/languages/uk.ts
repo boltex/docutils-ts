@@ -1,4 +1,4 @@
-export const labels = {
+export const labels: Record<string, string> = {
     abstract: 'Анотація',
     address: 'Адреса',
     attention: 'Увага!',
@@ -23,7 +23,7 @@ export const labels = {
     warning: 'Попередження',
 };
 
-export const bibliographic_fields = {
+export const bibliographic_fields: Record<string, string> = {
     'анотація': 'abstract',
     'адреса': 'address',
     'автор': 'author',
@@ -38,4 +38,4 @@ export const bibliographic_fields = {
     'версія': 'version',
 };
 
-export const author_separators = [';', ','];
+export const author_separators: Array<string> = [';', ','];
