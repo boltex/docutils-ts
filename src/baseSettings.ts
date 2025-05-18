@@ -1,3 +1,5 @@
+import { Settings } from "./settings.js";
+
 const defaultErrorEncodingErrorHandler = 'backslashreplace';
 
 /**
@@ -8,10 +10,9 @@ const defaultErrorEncodingErrorHandler = 'backslashreplace';
  * Defaults from various components have been extracted and placed into the
  * default export which is your basic Object container.
  */
-const defaultSettings = {
+const defaultSettings: Settings = {
     tocBacklinks: 'entry',
     footnoteBacklinks: true,
-    sectionNumbering: true,
     reportLevel: 2,
     haltLevel: 4,
     exitStatusLevel: 5,
@@ -30,9 +31,8 @@ const defaultSettings = {
     dumpInternals: null,
     dumpTransforms: null,
     dumpPseudoXml: null,
-    exposeInternalAttribute: null,
     strictVisitor: null,
-    warningStream: null,
+    warningStream: undefined,
     // html writer
     mathOutput: 'HTML math.css',
     initialHeaderLevel: 1,

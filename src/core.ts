@@ -1,18 +1,25 @@
-import * as io from "./io.js";
-import { Reader } from "./reader.js";
-import { Parser } from "./parser.js";
-import { Publisher } from "./publisher.js";
-import { Writer } from "./writer.js";
+import Input from './io/input.js';
+import Output from './io/output.js';
+import { StringInput, StringOutput } from './io.js';
+import { Publisher } from './publisher.js';
+import { ConfigSettings, SettingsSpecType, LoggerType } from './types.js';
+import Writer from './writer.js';
+import Parser from './parser.js';
+import Reader from './reader.js';
+import { Settings } from './settings.js';
+import { defaultPublisherOptions, defaultUsage, defaultDescription } from './constants.js';
+import { NoOpLogger } from './noOpLogger.js';
+export { Publisher };
 
 export interface PublishStringOptions {
   source: string | Uint8Array; // Input source
-  source_path?: string; // Path to the source file
-  destination_path?: string; // Path to the destination file
-  reader?: Reader | string; // Reader instance or class
+  sourcePath?: string; // Path to the source file
+  destinationPath?: string; // Path to the destination file
+  reader?: Reader; // Reader instance or class
   reader_name?: string; // Name of the reader (Deprecated)
-  parser?: Parser | string; // Parser instance or class
+  parser?: Parser; // Parser instance or class
   parser_name?: string; // Name of the parser (Deprecated)
-  writer?: Writer | string; // Writer instance or class
+  writer?: Writer; // Writer instance or class
   writer_name?: string; // Name of the writer (Deprecated)
   settings?: any; // Settings for the publisher
   settings_spec?: any; // Specification for settings
@@ -22,17 +29,17 @@ export interface PublishStringOptions {
 }
 
 export interface publishProgramaticallyOptions {
-  source_class: typeof io.Input; // Class for the source input // TODO : Fix this type to be more specific
+  sourceClass: any; // Class for the source input // TODO : Fix this type to be more specific
   source: string | Uint8Array; // Input source
-  source_path?: string; // Path to the source file
-  destination_class: typeof io.Output; // Class for the destination output // TODO : Fix this type to be more specific
+  sourcePath?: string; // Path to the source file
+  destinationClass: any; // Class for the destination output // TODO : Fix this type to be more specific
   destination?: any; // First argument for fs.writeFile, string in node, URI in vscode. Not used for string output
-  destination_path?: string; // Path to the destination file
-  reader?: Reader | string; // Reader instance or class
+  destinationPath?: string; // Path to the destination file
+  reader?: Reader; // Reader instance or class
   reader_name?: string; // Name of the reader (Deprecated)
-  parser?: Parser | string; // Parser instance or class
+  parser?: Parser; // Parser instance or class
   parser_name?: string; // Name of the parser (Deprecated)
-  writer?: Writer | string; // Writer instance or class
+  writer?: Writer; // Writer instance or class
   writer_name?: string; // Name of the writer (Deprecated)
   settings?: any; // Settings for the publisher
   settings_spec?: any; // Specification for settings
@@ -41,6 +48,77 @@ export interface publishProgramaticallyOptions {
   enable_exit_status?: boolean; // Enable exit status
 }
 
+
+export function publish(args: any): void {
+  const myArgs = { ...defaultPublisherOptions, ...args };
+  const {
+    reader, readerName, parser, parserName, writer, writerName,
+    settings,
+  } = myArgs;
+  const pub = new Publisher({
+    reader, parser, writer, settings, logger: myArgs.logger,
+  });
+  pub.setComponents(readerName, parserName, writerName);
+}
+
+export interface PublishCmdLineArgs {
+  reader?: Reader;
+  readerName?: string;
+  parser?: Parser;
+  parserName?: string;
+  writer?: Writer;
+  writerName?: string;
+  settings?: Settings;
+  settingsSpec?: SettingsSpecType[];
+  settingsOverrides?: ConfigSettings;
+  configSection?: string;
+  enableExitStatus?: boolean;
+  argv?: string[];
+  usage?: string;
+  description?: string;
+  logger?: LoggerType;
+}
+
+/**
+ *  Set up & run a `Publisher` for command-line-based file I/O (input and
+ *  output file paths taken automatically from the command line).  Return the
+ *  encoded string output also.
+ *
+ *  Parameters: see `publish_programmatically` for the remainder.
+ *
+ *  - `argv`: Command-line argument list to use instead of ``sys.argv[1:]``.
+ *  - `usage`: Usage string, output if there's a problem parsing the command
+ *    line.
+ *  - `description`: Program description, output for the "--help" option
+ *    (along with command-line option descriptions).
+ *
+ */
+export function publishCmdLine(args: PublishCmdLineArgs): Promise<any> {
+  const _defaults = {
+    readerName: 'standalone',
+    parserName: 'restructuredtext',
+    usage: defaultUsage,
+    description: defaultDescription,
+    enableExitStatus: true,
+  };
+  args = { ..._defaults, ...args };
+  if (args.logger === undefined) {
+    args.logger = new NoOpLogger();
+  }
+  args.logger.silly('publishCmdLine');
+  const {
+    reader, readerName, parser, parserName, writer, writerName,
+    settings, settingsSpec, settingsOverrides, configSection,
+    enableExitStatus, argv, usage, description,
+  } = args;
+  const pub = new Publisher({
+    reader, parser, writer, settings, logger: args.logger,
+  });
+  pub.setComponents(readerName, parserName, writerName);
+  return pub.publish({
+    argv, usage, description, settingsSpec, settingsOverrides, configSection, enableExitStatus
+  });
+}
 
 // export function publish_string(options: any): string {
 //     const input = options?.source || "";
@@ -66,16 +144,16 @@ export interface publishProgramaticallyOptions {
  * https://docutils.sourceforge.io/docs/user/config.html#output-encoding
 */
 
-export function publish_string(options: PublishStringOptions): string | Uint8Array {
+export async function publish_string(options: PublishStringOptions): Promise<string | Uint8Array> {
 
   // The "*_name" arguments are deprecated.
   _name_arg_warning(options.reader_name, options.parser_name, options.writer_name)
 
   // The default is set in publish_programmatically().
-  const [output, _publisher] = publish_programmatically(
+  const [output, _publisher] = await publish_programmatically(
     {
-      source_class: io.StringInput,
-      destination_class: io.StringOutput,
+      sourceClass: StringInput,
+      destinationClass: StringOutput,
       ...options
     })
 
@@ -94,7 +172,6 @@ function _name_arg_warning(...name_args: Array<string | null | undefined>): void
     }
   }
 }
-
 
 /**
  *     Set up & run a `Publisher` for custom programmatic use.
@@ -190,28 +267,27 @@ function _name_arg_warning(...name_args: Array<string | null | undefined>): void
 
     * `enable_exit_status`: Boolean; enable exit status at end of processing?
  */
-function publish_programmatically(options: publishProgramaticallyOptions): [string | Uint8Array, Publisher] {
+async function publish_programmatically(options: publishProgramaticallyOptions): Promise<[string | Uint8Array, Publisher]> {
 
-  const reader = options.reader || options.reader_name || 'standalone'
-  const parser = options.parser || options.parser_name || 'restructuredtext'
-  const writer = options.writer || options.writer_name || 'xml'
+  // TODO : Get better logger!
 
   const publisher = new Publisher({
-    reader: reader,
-    parser: parser,
-    writer: writer,
+    reader: options.reader,
+    parser: options.parser,
+    writer: options.writer,
     settings: options.settings,
-    source_class: options.source_class,
-    destination_class: options.destination_class
+    sourceClass: options.sourceClass,
+    destinationClass: options.destinationClass,
+    logger: new NoOpLogger()
   });
 
   publisher.process_programmatic_settings(
     options.settings_spec, options.settings_overrides, options.config_section
   );
 
-  publisher.set_source(options.source, options.source_path)
-  publisher.set_destination(options.destination, options.destination_path)
-  const output = publisher.publish({ enable_exit_status: options.enable_exit_status })
+  publisher.setSource({ source: options.source, sourcePath: options.sourcePath })
+  publisher.setDestination({ destination: options.destination, destinationPath: options.destinationPath })
+  const output = await publisher.publish({ enable_exit_status: options.enable_exit_status })
 
   return [output, publisher];
 }

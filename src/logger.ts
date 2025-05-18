@@ -52,3 +52,6 @@ export class Logger {
 export function createLogger(options?: any): Logger {
   return new Logger(options);
 }
+
+export const logger = createLogger();
+export const child = () => { throw new Error('redo logger'); }

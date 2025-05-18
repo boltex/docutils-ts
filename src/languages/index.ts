@@ -1,4 +1,4 @@
-import { normalize_language_tag, Reporter } from '../utils/index.js';
+import { CoreLanguage, ReporterInterface } from '../types.js';
 import * as af from './af.js';
 import * as ar from './ar.js';
 import * as ca from './ca.js';
@@ -29,15 +29,7 @@ import * as uk from './uk.js';
 import * as zh_cn from './zh_cn.js';
 import * as zh_tw from './zh_tw.js';
 
-// Add more languages as needed
-
-export interface LanguageModule {
-    labels: Record<string, string>;
-    bibliographic_fields: Record<string, string>;
-    author_separators: string[];
-}
-
-const allLanguages: Record<string, LanguageModule> = {
+const allLanguages: Record<string, CoreLanguage> = {
     af,
     ar,
     ca,
@@ -79,10 +71,33 @@ function check_content(module: any): void {
     }
 }
 
-export function get_language(
-    language_code: string,
-    reporter?: Reporter
-): LanguageModule | undefined {
+function normalize_language_tag(tag: string): string[] {
+    // Normalize the tag: lowercase and replace hyphens with underscores
+    tag = tag.toLowerCase().replace(/-/g, '_');
+
+    // Replace single character subtags (e.g., _x_) with valid BCP 47 interpretation
+    tag = tag.replace(/_([a-zA-Z0-9])_/g, '_$1-');
+
+    const subtags = tag.split('_');
+    const base = subtags.shift()!;
+    const combinations: string[] = [];
+
+    // Generate all combinations of subtags from longest to shortest
+    for (let i = subtags.length; i > 0; i--) {
+        for (let j = 0; j <= subtags.length - i; j++) {
+            const slice = subtags.slice(j, j + i);
+            combinations.push([base, ...slice].join('-'));
+        }
+    }
+
+    combinations.push(base);
+    return combinations;
+}
+
+export function getLanguage(
+    language_code: string = 'en',
+    reporter?: ReporterInterface
+): CoreLanguage | undefined {
     for (let tag of normalize_language_tag(language_code)) {
         tag = tag.replace(/-/g, '_');
         const module = allLanguages[tag];

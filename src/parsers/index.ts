@@ -1,22 +1,16 @@
-import { Parser } from "../parser.js";
-import { RestructuredtextParser } from "./restructuredtext.js";
+import Parser from '../parser.js';
+import RestructuredTextParser from './restructuredtext.js';
+import { ParserConsructor } from "../types.js";
 
-// Type alias for the Parser constructor
-type ParserClass = typeof Parser;
-
-// Registry mapping lowercase names to Parser class constructors
-const available_parsers: Map<string, ParserClass> = new Map([
-    ['restructuredtext', RestructuredtextParser],
-    // ... add entries for all other imported parsers ...
-]);
-
-export function get_parser_class(parser_name: string): ParserClass {
-    const name = parser_name.toLowerCase();
-    const parser_class = available_parsers.get(name);
-
-    if (!parser_class) {
-        throw new Error(`Parser "${parser_name}" not found. Available: [${Array.from(available_parsers.keys()).join(', ')}]`);
+function getParserClass(parserName: string): ParserConsructor {
+    if (parserName === 'restructuredtext') {
+        return RestructuredTextParser;
     }
-
-    return parser_class;
+    throw new Error('');
+    //    return require(`./${parserName}.js`).default;
 }
+
+export default {
+    getParserClass,
+    Parser,
+};

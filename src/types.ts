@@ -3,17 +3,17 @@ export type _Components = 'reader' | 'parser' | 'writer' | 'input' | 'output';
 
 import { citation, decoration, Element, footnote, reference, substitution_definition } from "./nodes.js";
 
-import { Logger } from "./browserLogger.js";
+import { Logger } from "./logger.js";
 
 import { Settings } from "./settings.js";
 export { Settings };
 
 import Transformer from "./transformer.js";
-import StringList from "./stringlist.js";
+import StringList from "./stringList.js";
 import { InlinerInterface } from "./parsers/rst/types.js";
 import Parser from "./parser.js";
 import Output from "./io/output.js";
-import RSTStateMachine from "./parsers/rst/rststatemachine.js";
+import RSTStateMachine from "./parsers/rst/rstStateMachine.js";
 import Input from './io/input.js';
 import Writer from "./writer.js";
 import Reader from "./reader.js";
@@ -103,7 +103,7 @@ export interface NodeInterface extends SourceLocation {
      * 
      * Override in subclasses.
      */
-    pformat(indent: string, level: number): string;
+    pformat(indent?: string, level?: number): string;
 
     /** Return a copy of self. */
     copy(): NodeInterface;
@@ -137,7 +137,7 @@ export interface NodeInterface extends SourceLocation {
     walkabout(visitor: {}): boolean;
 
     tagname: string;
-    classTypes: {}[];
+    classTypes: any[];
     getChild(index: number): NodeInterface;
     hasChildren(): boolean;
     getNumChildren(): number;
@@ -146,7 +146,6 @@ export interface NodeInterface extends SourceLocation {
     append(item: NodeInterface): void;
     removeChild(index: number): void;
 
-    // eslint-disable-next-line max-len
     traverse(args: TraverseArgs): NodeInterface[];
 
     astext(): string;
@@ -194,19 +193,16 @@ export interface NodeInterface extends SourceLocation {
 }
 
 export interface Attributes {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [propName: string]: any;
 }
 
 export interface ElementInterface extends NodeInterface {
     nodeName: string;
     listAttributes: string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     firstChildNotMatchingClass(childClass: any | any[], start?: number, end?: number): number | undefined;
     attlist(): Attributes;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface TextElementInterface extends ElementInterface {
 }
 
@@ -215,7 +211,6 @@ export interface SubstitutionNames {
 }
 
 export interface SubstitutionDefs {
-    // eslint-disable-next-line @typescript-eslint/camelcase
     [name: string]: substitution_definition;
 }
 
@@ -228,7 +223,6 @@ export interface RefIds {
 }
 
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface NameTypes {
     [name: string]: boolean;
 }
@@ -249,7 +243,6 @@ export interface Document extends ElementInterface {
     reporter: ReporterInterface;
     settings: Settings;
     uuid?: string;
-    // eslint-disable-next-line @typescript-eslint/camelcase,camelcase
     transformer: Transformer;
 
     noteTransformMessage(message: Systemmessage): void;
@@ -274,7 +267,6 @@ export interface Document extends ElementInterface {
 
     noteSubstitutionRef(subrefNode: NodeInterface, subrefText: string): void;
 
-    // eslint-disable-next-line @typescript-eslint/camelcase
     noteSubstitutionDef(substitutionNode: substitution_definition, subname: string, parent: ElementInterface): void;
 
     noteAnonymousTarget(target: NodeInterface): void;
@@ -291,6 +283,11 @@ export interface Document extends ElementInterface {
 
     noteSource(source: string | undefined, offset: number | undefined): void;
 }
+
+export interface ReferenceResolver {
+    priority: number;
+}
+
 
 export interface TransformSpecInterface {
     /**
@@ -317,7 +314,7 @@ export interface TransformSpecInterface {
      * 
      * Override in subclasses.
      */
-    unknownReferenceResolvers: {}[];
+    unknownReferenceResolvers: ReferenceResolver[];
 
     getTransforms(): TransformType[];
 }
@@ -355,25 +352,20 @@ export interface ReporterInterface {
 
     attachObserver(observer: {}): void;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     debug(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface | undefined;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     info(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     warning(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     error(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     severe(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface;
 }
 
 export interface Statefactory {
     withStateClasses(stateClasses: (StateConstructor | string)[]): this;
-    createState(stateName: string, stateMachine: Statemachine): StateInterface;
+    createState(stateName: string, stateMachine: StatemachineInterface): StateInterface;
     getStateClasses(): StateConstructor[];
 }
 
@@ -381,11 +373,11 @@ export interface States {
     [stateName: string]: StateInterface;
 }
 
-export interface Statemachine {
+export interface StatemachineInterface {
     logger: LoggerType;
     stateFactory?: Statefactory;
 
-    createStateMachine(rstStateMachine: RSTStateMachine, initialState?: string, stateFactory?: Statefactory): Statemachine;
+    createStateMachine(rstStateMachine: RSTStateMachine, initialState?: string, stateFactory?: Statefactory): StatemachineInterface;
     runtimeInit(): void;
     addState(stateClass: StateInterface): void;
     addStates(stateClasses: StateInterface[]): void;
@@ -393,7 +385,7 @@ export interface Statemachine {
     run(inputLines: StringList,
         inputOffset?: number,
         runContext?: ContextKind,
-        inputSource?: {},
+        inputSource?: string,
         initialState?: string | StateInterface, ...rest: any[]): (string | {})[];
     /**
      * Return current state object; set it first if
@@ -447,13 +439,13 @@ export interface StateInterface {
     bof(context: (string | {})[]): string[][];
     eof(context: (string | {})[]): string[];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     noMatch(context: any[], transitions: TransitionsArray | undefined): [{}[], (string | StateInterface | undefined), {}[]];
+
+    unlink(): void;
 
     transitions: Transitions;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 
 export interface StateMachineRunArgs {
     inputLines: StringList | string | string[];
@@ -481,7 +473,6 @@ export interface GetIndentedArgs {
 export interface Visitor {
     document: Document;
 
-    // eslint-disable-next-line @typescript-eslint/camelcase
     dispatchVisit(node: NodeInterface): void;
 
     dispatchDeparture(node: NodeInterface): void;
@@ -492,7 +483,6 @@ export interface FastTraverseArg {
 }
 
 export interface TraverseArgs {
-    // @ts-ignore
     condition?: any;
     includeSelf?: boolean;
     descend?: boolean;
@@ -501,7 +491,7 @@ export interface TraverseArgs {
 }
 
 
-export interface WhitespaceStatemachine extends Statemachine {
+export interface WhitespaceStatemachine extends StatemachineInterface {
     getIndented(labeled: GetIndentedArgs): [StringList, number, number, boolean];
 
     getKnownIndented(labeled: GetIndentedArgs): [StringList, number, boolean];
@@ -544,11 +534,10 @@ export interface SourceArgs {
 }
 
 export interface CoreLanguage {
-    labels: {};
-    bibliographicFields: {};
-    authorSeparators: string[];
+    labels: Record<string, string>;
+    bibliographic_fields: Record<string, string>;
+    author_separators: string[];
 }
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Systemmessage extends NodeInterface {
 }
 
@@ -575,31 +564,31 @@ export interface ReadInputCallback<T> {
 
 export interface TransformType {
     defaultPriority: number;
+    new(document: Document, startNode?: NodeInterface | null): TransformType;
+    apply(kwargs?: any): void;
 }
 
 export interface Components {
     [componentName: string]: ComponentInterface;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface TransformInterface {
-    apply(): void;
+    apply(kwargs?: any): void;
 }
 
 export interface TransitionsArray {
     [index: number]: string | string[];
+    length: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface TransitionFunction {
-
+    (arg: any, context: any[], nextState: any): any;
 }
 
 export interface ParserConsructor {
     new(args: ParserArgs): Parser;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface WriterParts {
     [partName: string]: string | undefined;
 }
@@ -639,7 +628,6 @@ export type ParseResult2 = any[];
 export type ParseMethodReturnType = [ContextArray, StateType, ParseResult2]
 export type ParseResult = [NodeInterface[], boolean];
 export type IsolateTableResult = [StringList, NodeInterface[], boolean]
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface StateConstructor {
     stateName?: string;
 }

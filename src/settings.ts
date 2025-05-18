@@ -1,3 +1,5 @@
+import { WritableStream } from "./types.js";
+
 export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Specify the document title as metadata. */
     title?: string;
@@ -28,13 +30,13 @@ export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Halt at the slightest problem.  Same as "--halt=info". */
     haltLevel?: number;
     /** DocutilsCoreOptionParser: Enable a non-zero exit status for non-halting system messages at or above <level>.  Default: 5 (disabled). */
-    exitStatusLevel?: number   ;
+    exitStatusLevel?: number;
     /** DocutilsCoreOptionParser: Disable debug output.  (default) */
     debug?: boolean;
     /** DocutilsCoreOptionParser: Send the output of system messages to <file>. */
-    warningStream?: string|null;
+    warningStream?: WritableStream; // TODO : Maybe should be string or some other implementation for browser
     /** DocutilsCoreOptionParser: Disable Python tracebacks.  (default) */
-    traceback?: boolean|null;
+    traceback?: boolean | null;
     /** DocutilsCoreOptionParser: Specify the encoding and optionally the error handler of input text.  Default: <locale-dependent>:strict. */
     inputEncoding?: string;
     /** DocutilsCoreOptionParser: Specify the error handler for undecodable characters.  Choices: "strict" (default), "ignore", and "replace". */
@@ -50,7 +52,7 @@ export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Specify the language (as BCP 47 language tag).  Default: en. */
     languageCode?: string;
     /** DocutilsCoreOptionParser: Write output file dependencies to <file>. */
-    recordDependencies?: string|null;
+    recordDependencies?: string | null;
     /** DocutilsCoreOptionParser: Read configuration settings from <file>, if it exists. */
     config?: string;
     /** DocutilsCoreOptionParser: Show this program's version number and exit. */
@@ -62,17 +64,17 @@ export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
     autoIdPrefix?: string;
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
-    dumpSettings?: string|null;
+    dumpSettings?: string | null;
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
-    dumpInternals?: string|null;
+    dumpInternals?: string | null;
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
-    dumpTransforms?: string|null;
+    dumpTransforms?: string | null;
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
-    dumpPseudoXml?: string;
+    dumpPseudoXml?: string | null;
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
     exposeInternals?: string;
     /** DocutilsCoreOptionParser: SUPPRESSHELP */
-    strictVisitor?: boolean|null;
+    strictVisitor?: boolean | null;
 }
 
 export interface DocutilsFrontendOptionParser {
@@ -109,9 +111,9 @@ export interface DocutilsFrontendOptionParser {
     /** DocutilsFrontendOptionParser: Disable debug output.  (default) */
     debug?: boolean;
     /** DocutilsFrontendOptionParser: Send the output of system messages to <file>. */
-    warningStream?: string|null;
+    warningStream?: WritableStream; // TODO : Maybe should be string or some other implementation for browser
     /** DocutilsFrontendOptionParser: Disable Python tracebacks.  (default) */
-    traceback?: boolean|null;
+    traceback?: boolean | null;
     /** DocutilsFrontendOptionParser: Specify the encoding and optionally the error handler of input text.  Default: <locale-dependent>:strict. */
     inputEncoding?: string;
     /** DocutilsFrontendOptionParser: Specify the error handler for undecodable characters.  Choices: "strict" (default), "ignore", and "replace". */
@@ -127,7 +129,7 @@ export interface DocutilsFrontendOptionParser {
     /** DocutilsFrontendOptionParser: Specify the language (as BCP 47 language tag).  Default: en. */
     languageCode?: string;
     /** DocutilsFrontendOptionParser: Write output file dependencies to <file>. */
-    recordDependencies?: string|null;
+    recordDependencies?: string | null;
     /** DocutilsFrontendOptionParser: Read configuration settings from <file>, if it exists. */
     config?: string;
     /** DocutilsFrontendOptionParser: Show this program's version number and exit. */
@@ -139,17 +141,17 @@ export interface DocutilsFrontendOptionParser {
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
     autoIdPrefix?: string;
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
-    dumpSettings?: string|null;
+    dumpSettings?: string | null;
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
-    dumpInternals?: string|null;
+    dumpInternals?: string | null;
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
-    dumpTransforms?: string|null;
+    dumpTransforms?: string | null;
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
-    dumpPseudoXml?: string;
+    dumpPseudoXml?: string | null;
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
     exposeInternals?: string;
     /** DocutilsFrontendOptionParser: SUPPRESSHELP */
-    strictVisitor?: boolean|null;
+    strictVisitor?: boolean | null;
 }
 
 export interface DocutilsParsersRstParser {
@@ -218,7 +220,7 @@ export interface DocutilsWritersPepHtmlWriter {
     /** DocutilsWritersPepHtmlWriter: Disable compact simple field lists. */
     compactFieldLists?: number;
     /** DocutilsWritersPepHtmlWriter: Added to standard table classes. Defined styles: "borderless". Default: "" */
-    tableStyle?: string[]|string;
+    tableStyle?: string[] | string;
     /** DocutilsWritersPepHtmlWriter: Math output format, one of "MathML", "HTML", "MathJax" or "LaTeX". Default: "HTML math.css" */
     mathOutput?: string;
     /** DocutilsWritersPepHtmlWriter: Omit the XML declaration.  Use with caution. */
@@ -275,7 +277,7 @@ export interface DocutilsWritersLatex2EWriter {
     /** DocutilsWritersLatex2EWriter: When possible, use verbatim for literal-blocks. Compatibility alias for "--literal-block-env=verbatim". */
     useVerbatimWhenPossible?: boolean;
     /** DocutilsWritersLatex2EWriter: Table style. "standard" with horizontal and vertical lines, "booktabs" (LaTeX booktabs style) only horizontal lines above and below the table and below the header or "borderless".  Default: "standard" */
-    tableStyle?: string[]|string;
+    tableStyle?: string[] | string;
     /** DocutilsWritersLatex2EWriter: LaTeX graphicx package option. Possible values are "dvips", "pdftex". "auto" includes LaTeX code to use "pdftex" if processing with pdf(la)tex and dvips otherwise. Default is no option. */
     graphicxOption?: string;
     /** DocutilsWritersLatex2EWriter: LaTeX font encoding. Possible values are "", "T1" (default), "OT1", "LGR,T1" or any other combination of options to the `fontenc` package.  */
@@ -346,7 +348,7 @@ export interface DocutilsWritersHtml4Css1Writer {
     /** DocutilsWritersHtml4Css1Writer: Disable compact simple field lists. */
     compactFieldLists?: number;
     /** DocutilsWritersHtml4Css1Writer: Added to standard table classes. Defined styles: "borderless". Default: "" */
-    tableStyle?: string|string[];
+    tableStyle?: string | string[];
     /** DocutilsWritersHtml4Css1Writer: Math output format, one of "MathML", "HTML", "MathJax" or "LaTeX". Default: "HTML math.css" */
     mathOutput?: string;
     /** DocutilsWritersHtml4Css1Writer: Omit the XML declaration.  Use with caution. */
@@ -403,7 +405,7 @@ export interface DocutilsWritersXetexWriter {
     /** DocutilsWritersXetexWriter: When possible, use verbatim for literal-blocks. Compatibility alias for "--literal-block-env=verbatim". */
     useVerbatimWhenPossible?: boolean;
     /** DocutilsWritersXetexWriter: Table style. "standard" with horizontal and vertical lines, "booktabs" (LaTeX booktabs style) only horizontal lines above and below the table and below the header or "borderless".  Default: "standard" */
-    tableStyle?: string|string[];
+    tableStyle?: string | string[];
     /** DocutilsWritersXetexWriter: LaTeX graphicx package option. Possible values are "dvips", "pdftex". "auto" includes LaTeX code to use "pdftex" if processing with pdf(la)tex and dvips otherwise. Default is no option. */
     graphicxOption?: string;
     /** DocutilsWritersXetexWriter: Per default the latex-writer puts the reference title into hyperreferences. Specify "ref*" or "pageref*" to get the section number or the page number. */
@@ -469,7 +471,7 @@ export interface DocutilsWritersS5HtmlWriter {
     /** DocutilsWritersS5HtmlWriter: Disable compact simple field lists. */
     compactFieldLists?: string;
     /** DocutilsWritersS5HtmlWriter: Added to standard table classes. Defined styles: "borderless". Default: "" */
-    tableStyle?: string|string[];
+    tableStyle?: string | string[];
     /** DocutilsWritersS5HtmlWriter: Math output format, one of "MathML", "HTML", "MathJax" or "LaTeX". Default: "HTML math.css" */
     mathOutput?: string;
     /** DocutilsWritersS5HtmlWriter: Omit the XML declaration.  Use with caution. */
@@ -478,7 +480,6 @@ export interface DocutilsWritersS5HtmlWriter {
     cloakEmailAddresses?: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface DocutilsReadersPepReader {
 }
 
