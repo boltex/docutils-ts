@@ -1,16 +1,16 @@
-import RSTState from "./rstState";
-import * as RegExps from "../regExps";
-import nodesFactory from '../../../nodesFactory';
-import * as nodes from "../../../nodes";
-import MarkupError from "../markupError";
-import { escape2null, extractExtensionOptions, isIterable, pySplit, splitEscapedWhitespace } from "../../../utils";
-import StringList from "../../../stringList";
-import * as tableparser from "../tableparser";
-import { ApplicationError, InvalidStateError } from "../../../exceptions";
-import TransitionCorrection from "../../../transitionCorrection";
-import * as directives from "../directives";
-import UnexpectedIndentationError from "../../../error/unexpectedIndentationError";
-import RSTStateMachine from "../rstStateMachine";
+import RSTState from "./rstState.js";
+import * as RegExps from "../regExps.js";
+import nodesFactory from '../../../nodesFactory.js';
+import * as nodes from "../../../nodes.js";
+import MarkupError from "../markupError.js";
+import { escape2null, extractExtensionOptions, isIterable, pySplit, splitEscapedWhitespace } from "../../../utils.js";
+import StringList from "../../../stringList.js";
+import * as tableparser from "../tableparser.js";
+import { ApplicationError, InvalidStateError } from "../../../exceptions.js";
+import TransitionCorrection from "../../../transitionCorrection.js";
+import * as directives from "../directives.js";
+import UnexpectedIndentationError from "../../../error/unexpectedIndentationError.js";
+import RSTStateMachine from "../rstStateMachine.js";
 import {
     Options,
     OptionSpec,
@@ -22,12 +22,12 @@ import {
     StateInterface,
     StateType,
     IsolateTableResult,
-} from "../../../types";
+} from "../../../types.js";
 import {
     BodyState,
     ParserConstructor, DirectiveConstructor, TableData
-} from '../types';
-import { fullyNormalizeName } from "../../../nodeUtils";
+} from '../types.js';
+import { fullyNormalizeName } from "../../../nodeUtils.js";
 
 const nonWhitespaceEscapeBefore = RegExps.nonWhitespaceEscapeBefore;
 const simplename = RegExps.simplename;

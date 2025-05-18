@@ -1,4 +1,4 @@
-import { NodeInterface } from "./types";
+import { NodeInterface } from "./types.js";
 
 /**
  * Custom error class to simulate Python's SystemExit

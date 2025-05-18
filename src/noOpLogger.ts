@@ -1,4 +1,4 @@
-import { LoggerType, LeveledLogMethod } from './types';
+import { LoggerType, LeveledLogMethod } from './types.js';
 import { Logger } from './logger.js';
 
 export class NoOpLogger implements LoggerType {
