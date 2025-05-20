@@ -1,6 +1,6 @@
 # docutils-ts
 
-**Docutils for TypeScript** – a TypeScript port of the core functionality of Python's [Docutils](https://docutils.sourceforge.io/) based on [Kay McCormick's original work](#🙏-acknowledgements).
+**Docutils for TypeScript** – a TypeScript port of the core functionality of Python's [Docutils](https://docutils.sourceforge.io/) based on [Kay McCormick's original work](#-acknowledgements).
 
 This library aims to bring [reStructuredText](https://docutils.sourceforge.io/rst.html) processing and publishing capabilities to the JavaScript/TypeScript ecosystem — useful for documentation tools, markdown-like text processing and more.
 
