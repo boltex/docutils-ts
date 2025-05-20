@@ -1,14 +1,23 @@
-import * as core from './core.js';
-import * as languages from './languages/index.js';
-import * as utils from './utils/index.js';
-import * as parsers from './parsers/index.js';
-import * as readers from './readers/index.js';
-import * as writers from './writers/index.js';
+export { parse } from './parse.js';
+export { NodeInterface, Settings, Document } from './types.js';
+export { getDefaultSettings } from './settingsHelper.js';
+export { StringOutput, StringInput } from './io.js';
+export { StandaloneReader } from './readers/standalone.js';
+export { newDocument } from './newDocument.js';
 import * as nodes from './nodes.js';
-import * as transforms from './transforms/index.js';
-import { SettingsSpec, TransformSpec, Component } from './__init__.js';
+import Writer from './writer.js';
+import Transform from './transform.js';
+export { Reader } from './reader.js';
+export { Publisher } from './publisher.js';
+export { pojoTranslate } from './fn/pojoTranslate.js';
+export { htmlTranslate } from './fn/htmlTranslate.js';
+export { RSTParser } from './parsers/restructuredtext.js';
+export { XMLWriter } from './writers/xml.js'
+export * as core from './core.js';
+export * as languages from './languages/index.js';
 
-// Re-export all the core classes and modules
+export const __version__ = '0.15ts';
+
 export {
-    SettingsSpec, TransformSpec, Component, core, languages, utils, parsers, readers, writers, nodes, transforms
+  nodes, Writer, Transform,
 };

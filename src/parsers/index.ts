@@ -1,7 +1,16 @@
-import { Component } from "../index.js";
+import Parser from '../parser.js';
+import RestructuredTextParser from './restructuredtext.js';
+import { ParserConsructor } from "../types.js";
 
-export class Parser extends Component {
-    constructor() {
-        super();
+function getParserClass(parserName: string): ParserConsructor {
+    if (parserName === 'restructuredtext') {
+        return RestructuredTextParser;
     }
+    throw new Error('');
+    //    return require(`./${parserName}.js`).default;
 }
+
+export default {
+    getParserClass,
+    Parser,
+};

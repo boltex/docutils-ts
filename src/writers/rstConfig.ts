@@ -1,0 +1,3 @@
+const defaultSections = [['=', '='], ['-', '-'], ['='], ['-'], ['`'], ['.']];
+
+export { defaultSections };

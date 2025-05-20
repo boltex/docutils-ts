@@ -1,4 +1,4 @@
-export const labels = {
+export const labels: Record<string, string> = {
     author: '作者',
     authors: '作者群',
     organization: '組織',
@@ -23,7 +23,7 @@ export const labels = {
     contents: '目錄',
 };
 
-export const bibliographic_fields = {
+export const bibliographic_fields: Record<string, string> = {
     'author (translation required)': 'author',
     'authors (translation required)': 'authors',
     'organization (translation required)': 'organization',
@@ -38,4 +38,4 @@ export const bibliographic_fields = {
     'abstract (translation required)': 'abstract',
 };
 
-export const author_separators = [';', ',', '；', '，', '、'];
+export const author_separators: Array<string> = [';', ',', '；', '，', '、'];
