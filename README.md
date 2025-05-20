@@ -1,6 +1,6 @@
 # docutils-ts
 
-**Docutils for TypeScript** – a TypeScript port of the core functionality of Python's [Docutils](https://docutils.sourceforge.io/), starting with `publishString()`.
+**Docutils for TypeScript** – a TypeScript port of the core functionality of Python's [Docutils](https://docutils.sourceforge.io/) based on [Kay McCormick's original work](#🙏-acknowledgements).
 
 This library aims to bring [reStructuredText](https://docutils.sourceforge.io/rst.html) processing and publishing capabilities to the JavaScript/TypeScript ecosystem — useful for documentation tools, markdown-like text processing and more.
 
@@ -13,8 +13,6 @@ This API is in flux, because a straight port of the docutils interfaces is not a
 Further, moving the IO responsibilities up the stack ensures that deferred/asynchronous execution is handled outside of the docutils-ts module itself, improving the developer experience.
 
 📝 See `SPECIFICATION.md` for detailed project goals and design decisions, and `TODO.md` for short-term planning of features implementation.
-
-> ⚠️ **Work in Progress**: This is an early-stage port and currently includes only a basic dummy version of `publishString()` for testing and scaffolding purposes.
 
 To contribute, modify and/or build this project yourself, clone it, and with node installed, run `npm install` to get all dependencies, and then run `tsc` to build.
 
@@ -42,12 +40,6 @@ Some **bold** text and *italic* text.
 
 const html = core.publish_string({ source: rst });
 console.log(html);
-```
-
-Currently, this will return:
-
-```html
-<p>[docutils-ts] received: My Header...</p>
 ```
 
 **Note**: You can import docutils as a whole or its components separately:

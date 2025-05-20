@@ -9,6 +9,7 @@ abstract class Output<T> extends TransformSpec {
     public encoding?: string;
     public destination?: T;
     private errorHandler: string;
+
     public constructor(logger: LoggerType, destination?: T, destinationPath?: string, encoding?: string, errorHandler?: string) {
         super({ logger });
         if (encoding !== undefined) {

@@ -10,8 +10,8 @@ abstract class Input extends TransformSpec {
     private errorHandler?: string;
     public sourcePath?: string;
     protected source?: any;
-    public constructor(
-        args: InputConstructorArgs) {
+
+    public constructor(args: InputConstructorArgs) {
         super({ logger: args.logger });
         const { source, sourcePath, encoding, errorHandler } = args;
         this.encoding = encoding;

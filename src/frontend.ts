@@ -32,6 +32,8 @@ import { dateDatestampFormat, timeAndDateDatestampFormat } from './constants.js'
 import { _getCallerFileAndLine } from './utils.js';
 import { Settings } from './index.js';
 import { InvalidStateError } from './exceptions.js';
+import { ActionCallback } from './callback.js';
+import { ActionValidating } from './validating.js';
 
 /*
     """Check/normalize boolean settings:
@@ -1048,9 +1050,11 @@ export class OptionParser extends ArgumentParser {
         super({ usage: args.usage, description: args.description });
         this.logger = args.logger;
 
-        // TODO ? What are those 'register' calls?
-        // this.register('action', 'callback', ActionCallback);
-        // this.register('action', 'validating', ActionValidating);
+        // TODO ? What are those 'register' calls? ('register' exist on ArgumentParser!)
+        //@ts-ignore
+        this.register('action', 'callback', ActionCallback);
+        //@ts-ignore
+        this.register('action', 'validating', ActionValidating);
 
         /** Set of list-type settings. */
         this.lists = {}
@@ -1059,7 +1063,7 @@ export class OptionParser extends ArgumentParser {
         this.configFiles = []
 
         // TODO : unused argParser
-        // const argParser = new ArgumentParser({ description: args.description });
+        const argParser = new ArgumentParser({ description: args.description });
         if (!this.version) {
             // is this correct?
             this.version = this.versionTemplate;
@@ -1159,8 +1163,28 @@ export class OptionParser extends ArgumentParser {
                             action = 'store';
                         }
                         newArgs.action = action;
-                        for (const opt of optionStrings) {
-                            this.add_argument(opt, newArgs);
+                        this.addArgument(optionStrings, newArgs);
+
+                        // addArgument does not implement the following from 'add_option ' in optparse.py, so implement it here
+                        /*
+                                if option.dest is not None:     # option has a dest, we need a default
+                                    if option.default is not NO_DEFAULT:
+                                        self.defaults[option.dest] = option.default
+                                    elif option.dest not in self.defaults:
+                                        self.defaults[option.dest] = None
+                        */
+                        if (newArgs.dest) {
+                            if (newArgs.defaultValue != null) {
+                                this.logger.silly(`setting default for ${newArgs.dest} is ${newArgs.defaultValue}`);
+                                this.defaults[newArgs.dest] = newArgs.defaultValue;
+                            }
+                            else if (newArgs.dest in this.defaults) {
+                                this.logger.silly(`setting default for ${newArgs.dest} is ${this.defaults[newArgs.dest]}`);
+                            }
+                            else {
+                                this.logger.silly(`setting default for ${newArgs.dest} is undefined`);
+                                this.defaults[newArgs.dest] = undefined;
+                            }
                         }
                     }
                 });

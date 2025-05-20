@@ -16,16 +16,16 @@ export interface PublishStringOptions {
   sourcePath?: string; // Path to the source file
   destinationPath?: string; // Path to the destination file
   reader?: Reader; // Reader instance or class
-  reader_name?: string; // Name of the reader (Deprecated)
+  readerName?: string; // Name of the reader (Deprecated)
   parser?: Parser; // Parser instance or class
-  parser_name?: string; // Name of the parser (Deprecated)
+  parserName?: string; // Name of the parser (Deprecated)
   writer?: Writer; // Writer instance or class
-  writer_name?: string; // Name of the writer (Deprecated)
+  writerName?: string; // Name of the writer (Deprecated)
   settings?: any; // Settings for the publisher
-  settings_spec?: any; // Specification for settings
-  settings_overrides?: any; // Overrides for settings
-  config_section?: string; // Configuration section
-  enable_exit_status?: boolean; // Enable exit status
+  settingsSpec?: any; // Specification for settings
+  settingsOverrides?: any; // Overrides for settings
+  configSection?: string; // Configuration section
+  enableExitStatus?: boolean; // Enable exit status
 }
 
 export interface publishProgramaticallyOptions {
@@ -36,16 +36,16 @@ export interface publishProgramaticallyOptions {
   destination?: any; // First argument for fs.writeFile, string in node, URI in vscode. Not used for string output
   destinationPath?: string; // Path to the destination file
   reader?: Reader; // Reader instance or class
-  reader_name?: string; // Name of the reader (Deprecated)
+  readerName?: string; // Name of the reader (Deprecated)
   parser?: Parser; // Parser instance or class
-  parser_name?: string; // Name of the parser (Deprecated)
+  parserName?: string; // Name of the parser (Deprecated)
   writer?: Writer; // Writer instance or class
-  writer_name?: string; // Name of the writer (Deprecated)
+  writerName?: string; // Name of the writer (Deprecated)
   settings?: any; // Settings for the publisher
-  settings_spec?: any; // Specification for settings
-  settings_overrides?: any; // Overrides for settings
-  config_section?: string; // Configuration section
-  enable_exit_status?: boolean; // Enable exit status
+  settingsSpec?: any; // Specification for settings
+  settingsOverrides?: any; // Overrides for settings
+  configSection?: string; // Configuration section
+  enableExitStatus?: boolean; // Enable exit status
 }
 
 
@@ -147,7 +147,7 @@ export function publishCmdLine(args: PublishCmdLineArgs): Promise<any> {
 export async function publish_string(options: PublishStringOptions): Promise<string | Uint8Array> {
 
   // The "*_name" arguments are deprecated.
-  _name_arg_warning(options.reader_name, options.parser_name, options.writer_name)
+  _name_arg_warning(options.readerName, options.parserName, options.writerName)
 
   // The default is set in publish_programmatically().
   const [output, _publisher] = await publish_programmatically(
@@ -281,13 +281,15 @@ async function publish_programmatically(options: publishProgramaticallyOptions):
     logger: new NoOpLogger()
   });
 
+  publisher.setComponents(options.readerName, options.parserName, options.writerName)
+
   publisher.process_programmatic_settings(
-    options.settings_spec, options.settings_overrides, options.config_section
+    options.settingsSpec, options.settingsOverrides, options.configSection
   );
 
   publisher.setSource({ source: options.source, sourcePath: options.sourcePath })
   publisher.setDestination({ destination: options.destination, destinationPath: options.destinationPath })
-  const output = await publisher.publish({ enable_exit_status: options.enable_exit_status })
+  const output = await publisher.publish({ enable_exit_status: options.enableExitStatus })
 
   return [output, publisher];
 }

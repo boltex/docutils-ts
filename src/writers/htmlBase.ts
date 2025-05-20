@@ -217,7 +217,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.docinfo = [];
         this.body = [];
         this.fragment = [];
-        this.bodySuffix = ['</body>\n</html\n'];
+        this.bodySuffix = ['</body>\n</html>\n'];
         this.sectionLevel = 0;
         if (myConfig) {
             if (myConfig.initialHeaderLevel !== undefined) {
@@ -956,32 +956,32 @@ class HTMLTranslator extends nodes.NodeVisitor {
 
     /*
       visit_figure(node: NodeInterface): void {
-      atts = {'class': 'figure'}
-      if node.get('width'):
-      atts['style'] = 'width: %s' % node.attributes['width']
-      if node.get('align'):
-      atts['class'] += " align-" + node.attributes['align']
-      this.body.push(this.starttag(node, 'div', **atts))
+        atts = {'class': 'figure'}
+        if node.get('width'):
+            atts['style'] = 'width: %s' % node.attributes['width']
+        if node.get('align'):
+            atts['class'] += " align-" + node.attributes['align']
+        this.body.push(this.starttag(node, 'div', **atts))
       }
 
       depart_figure(node: NodeInterface): void {
-      this.body.push('</div>\n')
+        this.body.push('</div>\n')
       }
 
       // use HTML 5 <footer> element?
       visit_footer(node: NodeInterface): void {
-      this.context.push(len(this.body))
+        this.context.push(len(this.body))
       }
 
       depart_footer(node: NodeInterface): void {
-      start = this.context.pop()
-      footer = [this.starttag(node, 'div', { CLASS: 'footer' }),
-      '<hr class="footer" />\n']
-      footer.extend(this.body[start:])
-      footer.push('\n</div>\n')
-      this.footer.extend(footer)
-      this.body_suffix[:0] = footer
-      del this.body[start:]
+        start = this.context.pop()
+        footer = [this.starttag(node, 'div', { CLASS: 'footer' }),
+        '<hr class="footer" />\n']
+        footer.extend(this.body[start:])
+        footer.push('\n</div>\n')
+        this.footer.extend(footer)
+        this.body_suffix[:0] = footer
+        del this.body[start:]
 
       // footnotes
       // ---------
@@ -990,6 +990,27 @@ class HTMLTranslator extends nodes.NodeVisitor {
       // TODO: use the new HTML5 element <aside>? (Also for footnote text)
       }
     */
+
+    public visit_footer(node: NodeInterface): void {
+        this.context.push(this.body.length.toString());
+    }
+
+    public depart_footer(node: NodeInterface): void {
+        const start = this.context.pop()!;
+
+        const footer = [
+            this.starttag(node, 'div', undefined, undefined, { CLASS: 'footer' }),
+            '<hr class="footer" />\n',
+        ];
+
+        footer.push(...this.body.slice(parseInt(start, 10)));
+        footer.push('\n</div>\n');
+        this.footer.push(...footer);
+        this.bodySuffix.splice(0, 0, ...footer);
+        this.body.splice(parseInt(start, 10), this.body.length - parseInt(start, 10));
+    }
+
+
     public visit_footnote(node: NodeInterface): void {
         if (!this.inFootnoteList) {
             const classes = `footnote ${this.settings.footnoteReferences}`;

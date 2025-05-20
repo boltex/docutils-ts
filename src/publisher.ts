@@ -202,10 +202,8 @@ export class Publisher {
   public process_programmatic_settings(
     settings_spec: any,
     settings_overrides: Record<string, any> | null,
-    config_section?: string
+    configSection?: string
   ): void {
-
-    // TODO : Needed ?
 
     if (this.settings == null) {
       const defaults = settings_overrides ? { ...settings_overrides } : {};
@@ -215,38 +213,38 @@ export class Publisher {
       }
       this.get_settings({
         settings_spec: settings_spec,
-        config_section: config_section,
+        configSection: configSection,
         ...defaults
       });
     }
   }
 
   public get_settings(options: {
-    usage?: string | null;
-    description?: string | null;
-    settings_spec?: any;
-    config_section?: string | null;
+    usage?: string;
+    description?: string;
+    settingsSpec?: any;
+    configSection?: string;
     [key: string]: any; // for defaults
   }): any {
 
-    // TODO : Needed ?
-    // const {
-    //   usage = null,
-    //   description = null,
-    //   settings_spec = null,
-    //   config_section = null,
-    //   ...defaults
-    // } = options;
 
-    // const option_parser = this._setup_settings_parser({
-    //   usage: usage,
-    //   description: description,
-    //   settings_spec: settings_spec,
-    //   config_section: config_section,
-    //   ...defaults
-    // });
+    const {
+      usage = undefined,
+      description = undefined,
+      settingsSpec = undefined,
+      configSection = undefined,
+      ...defaults
+    } = options;
 
-    // this.settings = option_parser.get_default_values();
+    const option_parser = this.setupOptionParser({
+      usage: usage,
+      description: description,
+      settingsSpec: settingsSpec,
+      configSection: configSection,
+      ...defaults
+    });
+
+    this.settings = option_parser.getDefaultValues();
     return this.settings;
   }
 
@@ -263,7 +261,7 @@ export class Publisher {
         argv = process.argv.slice(2);
       }
       this.logger.silly('calling argParser.parseKnownArgs', { argv });
-      const [settings, restArgs] = argParser.parse_known_args(argv);
+      const [settings, restArgs] = argParser.parseKnownArgs(argv);
       this.settings = argParser.checkValues(settings, restArgs);
     } catch (error) {
       if (error instanceof Error) {
@@ -365,7 +363,6 @@ export class Publisher {
     document1.transformer.applyTransforms();
   }
 
-  /* This doesnt seem to return anything ? */
   public publish(args: any): Promise<any> {
     this.logger.silly('Publisher.publish');
 

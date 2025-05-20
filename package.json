@@ -44,13 +44,13 @@
   "author": "Félix Malboeuf",
   "license": "MIT",
   "devDependencies": {
-    "@types/argparse": "^2.0.17",
+    "@types/argparse": "^1.0.36",
     "@types/ejs": "^3.1.5",
     "@types/node": "^22.15.3",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "argparse": "^2.0.1",
+    "argparse": "^1.0.10",
     "camelcase": "^8.0.0",
     "ejs": "^3.1.10"
   }
