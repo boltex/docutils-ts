@@ -1,6 +1,6 @@
 {
   "name": "docutils-ts",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Port of the Python Docutils library to TypeScript",
   "repository": {
     "type": "git",
