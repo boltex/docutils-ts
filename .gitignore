@@ -25,3 +25,10 @@ Thumbs.db
 # IDEs
 .vscode/
 .idea/
+
+# Jest coverage reports
+coverage/
+
+# Jest cache
+jest-cache/
+jest-coverage/
