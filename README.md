@@ -4,7 +4,7 @@
 
 This library aims to bring [reStructuredText](https://docutils.sourceforge.io/rst.html) processing and publishing capabilities to the JavaScript/TypeScript ecosystem — useful for documentation tools, markdown-like text processing and more.
 
-It is intended to work in a browser, or in Node.js (**version 15 or higher**).
+It is intended to work in a browser and in NodeJS.
 
 This library only contains the API implementation and no front-end tools nor Python Source Reader implementations.
 
