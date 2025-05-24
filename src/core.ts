@@ -94,6 +94,7 @@ export interface PublishCmdLineArgs {
  *
  */
 export function publishCmdLine(args: PublishCmdLineArgs): Promise<any> {
+  checkNodeVersion();
   const _defaults = {
     readerName: 'standalone',
     parserName: 'restructuredtext',
@@ -145,7 +146,7 @@ export function publishCmdLine(args: PublishCmdLineArgs): Promise<any> {
 */
 
 export async function publish_string(options: PublishStringOptions): Promise<string | Uint8Array> {
-
+  checkNodeVersion();
   // The "*_name" arguments are deprecated.
   _name_arg_warning(options.readerName, options.parserName, options.writerName)
 
@@ -269,6 +270,8 @@ function _name_arg_warning(...name_args: Array<string | null | undefined>): void
  */
 async function publish_programmatically(options: publishProgramaticallyOptions): Promise<[string | Uint8Array, Publisher]> {
 
+  checkNodeVersion();
+
   // TODO : Get better logger!
 
   const publisher = new Publisher({
@@ -292,4 +295,15 @@ async function publish_programmatically(options: publishProgramaticallyOptions):
   const output = await publisher.publish({ enable_exit_status: options.enableExitStatus })
 
   return [output, publisher];
+}
+
+function checkNodeVersion(): void {
+
+  if (typeof process !== 'undefined' && process.versions?.node) {
+    if (typeof String.prototype.replaceAll !== 'function') {
+      console.error('❌ Your Node.js version does not support String.prototype.replaceAll.');
+      console.error('Please upgrade to Node.js v15+.');
+      process.exit(1);
+    }
+  }
 }
