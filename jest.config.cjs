@@ -10,9 +10,5 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
-  // Fix the transformIgnorePatterns format for better compatibility
-  transformIgnorePatterns: [
-    '/node_modules/(?!camelcase/).*/'
-  ],
+  }
 };
