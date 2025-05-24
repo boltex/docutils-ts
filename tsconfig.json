@@ -9,9 +9,9 @@
     "moduleResolution": "Node",
     "declaration": true,
     "outDir": "./dist",
-    // linting
     "strict": true,
-    "strictPropertyInitialization": true
+    "strictPropertyInitialization": true,
+    "esModuleInterop": true
   },
   "include": [
     "src"
