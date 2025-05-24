@@ -298,7 +298,6 @@ async function publish_programmatically(options: publishProgramaticallyOptions):
 }
 
 function checkNodeVersion(): void {
-
   if (typeof process !== 'undefined' && process.versions?.node) {
     if (typeof String.prototype.replaceAll !== 'function') {
       console.error('❌ Your Node.js version does not support String.prototype.replaceAll.');
