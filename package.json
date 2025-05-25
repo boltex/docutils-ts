@@ -11,21 +11,25 @@
   },
   "homepage": "https://github.com/boltex/docutils-ts#readme",
   "type": "module",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
     },
     "./core": {
-      "import": "./dist/core.js",
-      "types": "./dist/core.d.ts"
+      "import": "./dist/src/core.js",
+      "types": "./dist/src/core.d.ts"
     },
     "./languages": {
-      "import": "./dist/languages/index.js",
-      "types": "./dist/languages/index.d.ts"
+      "import": "./dist/src/languages/index.js",
+      "types": "./dist/src/languages/index.d.ts"
     }
+  },
+  "bin": {
+    "rst2html": "./dist/tools/rst2html.js",
+    "rst2xml": "./dist/tools/rst2xml.js"
   },
   "files": [
     "dist",

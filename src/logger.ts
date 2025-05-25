@@ -1,4 +1,4 @@
-import { LoggerType } from "./types";
+import { LoggerType } from "./types.js";
 
 export class Logger implements LoggerType {
   constructor(private options: any = {}) { }
