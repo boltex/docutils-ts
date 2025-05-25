@@ -2,7 +2,12 @@ module.exports = {
   testEnvironment: 'node',
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  testMatch: ['**/src/**/*.test.js', '**/src/**/*.test.ts'],
+  testMatch: [
+    '**/test/**/*.test.js',
+    '**/test/**/*.test.ts',
+    '**/test/**/*.spec.js',
+    '**/test/**/*.spec.ts'
+  ],
   transform: {
     '^.+\\.ts$': ['ts-jest', { useESM: true }],
   },

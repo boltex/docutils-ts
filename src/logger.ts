@@ -1,4 +1,6 @@
-export class Logger {
+import { LoggerType } from "./types";
+
+export class Logger implements LoggerType {
   constructor(private options: any = {}) { }
 
   child(options: any): Logger {

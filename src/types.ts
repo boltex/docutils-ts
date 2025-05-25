@@ -27,7 +27,7 @@ export interface LeveledLogMethod {
     (message: string, meta: any, callback: LogCallback): Logger;
     (message: string, ...meta: any[]): Logger;
     (message: any): Logger;
-    (infoObject: object): Logger;
+    (infoObject: any): Logger;
 }
 
 export interface LoggerType {
