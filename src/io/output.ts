@@ -23,7 +23,7 @@ abstract class Output<T> extends TransformSpec {
         }
     }
 
-    public abstract write(data: string): string;
+    public abstract write(data: string): Promise<any>;
 
     public encode(data: string): string {
         return data; // fixme?

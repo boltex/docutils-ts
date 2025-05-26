@@ -11,8 +11,17 @@ export class StringInput extends Input {
         this.sourcePath = '<string>';
     }
 
-    public read(): Promise<any> {
+    public read(): Promise<string> {
         return Promise.resolve(this.source);
+    }
+    public readlines(): Promise<string[]> {
+        if (typeof this.source === 'string') {
+            return Promise.resolve(this.source.split('\n'));
+        } else if (Array.isArray(this.source)) {
+            return Promise.resolve(this.source);
+        } else {
+            return Promise.reject(new Error('StringInput: source is not a string or array'));
+        }
     }
 }
 
@@ -28,7 +37,7 @@ export class StringOutput extends Output<string> {
         this.defaultDestinationPath = '<string>';
     }
 
-    public write(data: string): string {
+    public async write(data: string): Promise<string> {
         // self.destination = self.encode(data) // fixme encoding
         if (Array.isArray(data)) {
             data = JSON.stringify(data);

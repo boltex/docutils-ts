@@ -6,7 +6,7 @@ abstract class Input extends TransformSpec {
     public supported: string[] = [];
     private successfulEncoding: string | undefined;
     private defaultSourcePath?: string;
-    private encoding?: string;
+    public encoding?: string;
     private errorHandler?: string;
     public sourcePath?: string;
     protected source?: any;
@@ -24,7 +24,8 @@ abstract class Input extends TransformSpec {
         this.successfulEncoding = undefined;
     }
 
-    abstract read(): Promise<any>;
+    abstract read(): Promise<string>;
+    abstract readlines(): Promise<string[]>;
 
     public decode(data: string): string {
         return data;

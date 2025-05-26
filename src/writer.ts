@@ -25,6 +25,7 @@ export default abstract class Writer extends Component {
      */
     private destination?: Output<string>;
 
+    // TODO : SHOULD 'write' BE ASYNC ?
     public write(document: Document, destination: Output<string> | undefined): string | {} | undefined {
         this.document = document;
         if (document !== undefined) {
