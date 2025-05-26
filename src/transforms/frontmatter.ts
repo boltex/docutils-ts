@@ -35,7 +35,6 @@ abstract class TitlePromoter extends Transform {
         // console.log('promoteSubtitle');
         // Type check
         const x = this.candidateIndex(node);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const subsection: ElementInterface = x[0]!;
         const index: number = x[1];
         if (index == null) {

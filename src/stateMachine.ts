@@ -119,7 +119,6 @@ class StateMachine implements StatemachineInterface {
         if (cArgs.debug && !cArgs.debugFn) {
             // make this unexpected error?
             // throw new Error("unexpected lack of debug function");
-            /* eslint-disable-next-line no-console */
             cArgs.debugFn = this.logger.debug.bind(this.logger);
         }
         if (cArgs.stateFactory !== undefined) {
@@ -242,7 +241,6 @@ class StateMachine implements StatemachineInterface {
                 throw new Error('expecting array');
             }
             results.push(...result);
-            /* eslint-disable-next-line no-constant-condition */
             while (true) {
                 try {
                     try {
@@ -297,7 +295,6 @@ class StateMachine implements StatemachineInterface {
                                 + `state "${state.stateName}", transition ${transitions[0]}.`);
                         }
                         /* Cant continue, makes no sense? ??  */
-                        /* eslint-disable-next-line no-continue */
                         continue;
                     } else if (error instanceof StateCorrection) {
                         this.previousLine();
@@ -437,7 +434,6 @@ class StateMachine implements StatemachineInterface {
     }
 
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
     public insertInput(inputLines: StringList, source: string): void {
         // self.input_lines.insert(self.line_offset + 1, '',
         //     source='internal padding after '+source,
@@ -500,7 +496,6 @@ class StateMachine implements StatemachineInterface {
             this.debugFn(`\nStateMachine.check_line: ` +
                 `state="${state.constructor.name}", transitions=${transitions}.`);
         }
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
         const stateCorrection = true;
 
         for (let i = 0; i < transitions.length; i++) {
@@ -585,7 +580,6 @@ class StateMachine implements StatemachineInterface {
     }
 
     public notifyObservers(): void {
-        /* eslint-disable-next-line no-restricted-syntax */
         for (const observer of this.observers) {
             if (observer === undefined) {
                 throw new ApplicationError('undefined observer');
@@ -599,7 +593,6 @@ class StateMachine implements StatemachineInterface {
                 }
                 if (info === undefined) {
                     // throw new Error("undefined info");
-                    /* eslint-disable-next-line no-continue */
                     continue;
                 }
                 if (!isIterable(info)) {
@@ -620,7 +613,6 @@ class StateMachine implements StatemachineInterface {
 
 function expandtabs(strVal: string): string {
     let tabIndex;
-    /* eslint-disable-next-line no-cond-assign */
     while ((tabIndex = strVal.indexOf('\t')) !== -1) {
         strVal = strVal.substring(0, tabIndex) +
             Array(8 - (tabIndex % 8)).fill(' ').join('')
@@ -640,9 +632,7 @@ export function string2lines(
         args = {};
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars,prefer-const */
     let { tabWidth, convertWhitespace, whitespace } = args;
-    /* eslint-disable-next-line no-empty */
     if (whitespace === undefined) {
     }
     if (tabWidth === undefined) {

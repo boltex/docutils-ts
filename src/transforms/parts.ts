@@ -52,7 +52,6 @@ SectNum.defaultPriority = 710;
 class AnonymousHyperlinks extends Transform {
     public apply(): void {
         const anonymousRefs = [];
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
         const anonymousTargets = [];
         this.document.traverse({ condition: nodes.reference }).forEach((node): void => {
             if (node.attributes.anonymous) {

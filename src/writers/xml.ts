@@ -3,7 +3,7 @@ import * as docutils from '../index.js';
 import * as nodes from '../nodes.js';
 import { Document, NodeClass, NodeInterface } from "../types.js";
 import { Settings } from "../settings.js";
-import { InvalidArgumentsError } from "../exceptions.js";
+import { InvalidStateError } from "../exceptions.js";
 
 export function escapeXml(unsafe: string): string {
     if (typeof unsafe === 'undefined') {
@@ -23,9 +23,7 @@ export function escapeXml(unsafe: string): string {
 class XMLTranslator extends nodes.GenericNodeVisitor {
     public output: string[];
     private indent: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private warn: (...args: any[]) => NodeInterface;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private error: (...args: any[]) => NodeInterface;
     private settings: Settings;
     private generator: string;
@@ -74,9 +72,7 @@ class XMLTranslator extends nodes.GenericNodeVisitor {
         this.output.push(this.generator);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/camelcase,camelcase */
     public default_visit(node: NodeInterface): void {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         this.simple_nodes = [nodes.TextElement];// nodes.image, nodes.colspec, nodes.transition]
         if (!this.inSimple) {
             this.output.push(Array(this.level + 1).join(this.indent));
@@ -84,11 +80,9 @@ class XMLTranslator extends nodes.GenericNodeVisitor {
         this.output.push(node.starttag());
         this.level += 1;
         // fixme should probably pick this code up
-        /* eslint-disable-next-line no-constant-condition */
         if (false) { // node instanceof nodes.FixedTextElement || node instanceof nodes.literal) {
             this.fixedText += 1;
         } else {
-            /* eslint-disable-next-line no-restricted-syntax */
             if (this.simple_nodes.findIndex((nt: NodeClass): boolean => node instanceof nt) !== -1) {
                 this.inSimple++;
             }
@@ -99,7 +93,6 @@ class XMLTranslator extends nodes.GenericNodeVisitor {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/camelcase,camelcase */
     public default_departure(node: NodeInterface): void {
         this.level -= 1;
         if (!this.inSimple) {
@@ -112,17 +105,14 @@ class XMLTranslator extends nodes.GenericNodeVisitor {
         // bla
     }
 
-    /* eslint-disable-next-line @typescript-eslint/camelcase,camelcase */
     public visit_Text(node: NodeInterface): void {
         const text = escapeXml(node.astext());
         this.output.push(text);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/camelcase,camelcase,@typescript-eslint/no-unused-vars,no-unused-vars */
     public depart_Text(node: NodeInterface): void {
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public xmlDeclaration(outputEncoding: string): string {
         return '';
 
@@ -135,7 +125,8 @@ export default class XMLWriter extends BaseWriter {
 
     public translate(): void | never {
         if (this.document === undefined) {
-            throw new InvalidArgumentsError('');
+            throw new InvalidStateError('No document');
+
         }
         const TranslatorClass = this.translatorClass;
 
@@ -144,9 +135,7 @@ export default class XMLWriter extends BaseWriter {
         this.document.walkabout(visitor);
 
         this.output = visitor.output.join('');
-        if (process.stderr) {
-            // process.stderr.write(this.output);
-        }
+
     }
 }
 

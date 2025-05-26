@@ -25,7 +25,6 @@ class GenericRole {
         this.nodeClass = nodeClass;
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
     public invoke(myRole: any, rawtext: any, text: any, lineno: number, inliner: InlinerInterface, options: any, content: any): any[] {
         const myOptions = options || {};
         setClasses(myOptions);

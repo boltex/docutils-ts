@@ -367,10 +367,8 @@ export class Publisher {
     this.logger.silly('Publisher.publish');
 
     const {
-      /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
       argv, usage, description, settingsSpec, settingsOverrides, configSection, enableExitStatus,
     } = args;
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
 
     if (this.settings === undefined) {
       this.processCommandLine({

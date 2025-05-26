@@ -495,4 +495,18 @@ export interface DocutilsReadersStandaloneReader {
 export type Settings = {
     _source?: string;
     _destination?: string;
-} & DocutilsCoreOptionParser & DocutilsFrontendOptionParser & DocutilsParsersRstParser & DocutilsWritersDocutilsXmlWriter & DocutilsWritersPepHtmlWriter & DocutilsWritersLatex2EWriter & DocutilsWritersOdfOdtWriter & DocutilsWritersOdfOdtReader & DocutilsWritersHtml4Css1Writer & DocutilsWritersXetexWriter & DocutilsWritersHtml5PolyglotWriter & DocutilsWritersS5HtmlWriter & DocutilsReadersPepReader & DocutilsReadersStandaloneReader;
+} &
+    DocutilsCoreOptionParser &
+    DocutilsFrontendOptionParser &
+    DocutilsParsersRstParser &
+    DocutilsWritersDocutilsXmlWriter &
+    DocutilsWritersPepHtmlWriter &
+    DocutilsWritersLatex2EWriter &
+    DocutilsWritersOdfOdtWriter &
+    DocutilsWritersOdfOdtReader &
+    DocutilsWritersHtml4Css1Writer &
+    DocutilsWritersXetexWriter &
+    DocutilsWritersHtml5PolyglotWriter &
+    DocutilsWritersS5HtmlWriter &
+    DocutilsReadersPepReader &
+    DocutilsReadersStandaloneReader;

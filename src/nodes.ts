@@ -1388,7 +1388,16 @@ class decoration extends Element {
 
 class Text extends Node {
     public pformat(indent = '    ', level = 0): string {
-        throw new Error("Method not implemented.");
+
+        const indentStr = indent.repeat(level);
+        const lines = this.astext().split('\n').map(line => `${indentStr}${line}`);
+
+        if (lines.length === 0) {
+            return '';
+        }
+
+        return `${lines.join('\n')}\n`;
+
     }
 
     public copy(): NodeInterface {

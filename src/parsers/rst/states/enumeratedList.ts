@@ -42,7 +42,6 @@ class EnumeratedList extends SpecializedBody {
         Return true if the ordinal is valid and the second line is blank,
         indented, or starts with the next enumerator or an auto-enumerator.
 */
-    // eslint-disable-next-line @typescript-eslint/camelcase
     private is_enumerated_list_item(ordinal: number | undefined, sequence: string, format: string): boolean {
         if (ordinal === undefined) {
             return false;

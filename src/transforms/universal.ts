@@ -40,7 +40,6 @@ class Decorations extends Transform {
             const text = [];
             if ((core.sourceLink && settings._source) || core.sourceUrl) {
 
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const source = core.sourceUrl || utils.relativePath(settings._destination!, settings._source!);
                 text.push(new nodes.reference('', 'View document source', [], { refuri: source }),
                     new nodes.Text('.\n'));

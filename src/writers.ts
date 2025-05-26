@@ -1,6 +1,7 @@
 import * as xml from './writers/xml.js';
 import * as pojo from './writers/pojo.js';
 import * as HtmlBase from './writers/htmlBase.js';
+import * as Pseudoxml from './writers/pseudoxml.js';
 import { WriterConstructor } from './types.js';
 
 export function getWriterClass(readerName: string): WriterConstructor {
@@ -10,9 +11,11 @@ export function getWriterClass(readerName: string): WriterConstructor {
         return pojo.default;
     } if (readerName === 'html') {
         return HtmlBase.default;
+    } if (readerName === 'pseudoxml') {
+        return Pseudoxml.default;
     }
 
-    throw new Error('');
+    throw new Error(`./writers/${readerName}.js`);
     // return require(`./writers/${readerName}.js`).default;
 }
 

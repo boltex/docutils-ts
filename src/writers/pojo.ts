@@ -11,12 +11,9 @@ const __version__ = '';
  */
 class POJOTranslator extends GenericNodeVisitor {
     private level: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private ancestors: any[][];
     private generator: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private warn: OmitThisParameter<(...args: any[]) => NodeInterface>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private error: OmitThisParameter<(...args: any[]) => NodeInterface>;
     private inSimple: number;
     private output: {};

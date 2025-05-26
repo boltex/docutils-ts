@@ -152,7 +152,6 @@ class Text extends RSTState {
 
     /** Return a list of nodes. */
     public literal_block(): NodeInterface[] {
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
         const [indented, indent, offset, blankFinish] = this.rstStateMachine.getIndented({});
         while (indented && indented.length && !indented[indented.length - 1].trim()) {
             indented.trimEnd();
@@ -192,9 +191,7 @@ class Text extends RSTState {
         return parentNode.getChildren();
     }
 
-    /* eslint-disable-next-line @typescript-eslint/camelcase,camelcase */
     public definition_list_item(termline: string[]): [NodeInterface, boolean] {
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
         const [indented, indent, lineOffset, blankFinish] = this.rstStateMachine.getIndented({});
         const itemnode = new nodes.definition_list_item(
             [...termline, ...indented].join('\b'),
@@ -216,7 +213,6 @@ class Text extends RSTState {
         return [itemnode, blankFinish];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public term(lines: any[], lineno: number): [NodeInterface[], NodeInterface[]] {
         const [textNodes, messages] = this.inline_text(lines[0], lineno);
         const termNode = new nodes.term(lines[0]);

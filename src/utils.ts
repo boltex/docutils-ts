@@ -107,7 +107,6 @@ function escape2null(text: string): string {
 function splitEscapedWhitespace(text: string): string[] {
     const strings = text.split("\x00 ");
     const s = [];
-    /* eslint-disable-next-line no-restricted-syntax */
     for (const string of strings) {
         s.push(...string.split("\x00\n"));
     }

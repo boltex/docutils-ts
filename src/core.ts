@@ -11,6 +11,44 @@ import { defaultPublisherOptions, defaultUsage, defaultDescription } from './con
 import { NoOpLogger } from './noOpLogger.js';
 export { Publisher };
 
+export interface FileSystem {
+  writeFile(path: string, data: string | Uint8Array): Promise<void>;
+  readFile(path: string): Promise<string | Uint8Array>;
+}
+// Default implementation that warns about missing implementation
+const defaultFileSystem: FileSystem = {
+  async writeFile(path: string, data: string | Uint8Array): Promise<void> {
+    console.warn('fileSystem.writeFile is not implemented in this environment.');
+  },
+  async readFile(path: string): Promise<string | Uint8Array> {
+    console.warn('fileSystem.readFile is not implemented in this environment.');
+    return '';
+  }
+};
+
+// Singleton instance that can be replaced
+let _fileSystemInstance: FileSystem = defaultFileSystem;
+
+// Public API
+export const fileSystem = {
+  // Method implementations that delegate to the current instance
+  writeFile: (path: string, data: string | Uint8Array): Promise<void> =>
+    _fileSystemInstance.writeFile(path, data),
+
+  readFile: (path: string): Promise<string | Uint8Array> =>
+    _fileSystemInstance.readFile(path),
+
+  // Method to configure a custom implementation
+  setImplementation: (implementation: FileSystem): void => {
+    _fileSystemInstance = implementation;
+  },
+
+  // Method to reset to default implementation
+  resetToDefault: (): void => {
+    _fileSystemInstance = defaultFileSystem;
+  }
+};
+
 export interface PublishStringOptions {
   source: string | Uint8Array; // Input source
   sourcePath?: string; // Path to the source file
@@ -271,6 +309,16 @@ function _name_arg_warning(...name_args: Array<string | null | undefined>): void
 async function publish_programmatically(options: publishProgramaticallyOptions): Promise<[string | Uint8Array, Publisher]> {
 
   checkNodeVersion();
+
+  if (options.reader === undefined && !options.readerName) {
+    options.readerName = 'standalone';
+  }
+  if (options.parser === undefined && !options.parserName) {
+    options.parserName = 'restructuredtext';
+  }
+  if (options.writer === undefined && !options.writerName) {
+    options.writerName = 'pseudoxml';
+  }
 
   // TODO : Get better logger!
 

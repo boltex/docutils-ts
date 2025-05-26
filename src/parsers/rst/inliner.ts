@@ -496,10 +496,8 @@ class Inliner implements InlinerInterface {
         let startStringPrefix;
         let
             endStringSuffix;
-        /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
         let ssn;
         let
-            /* eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars */
             esn;
         if (settings.characterLevelInlineMarkup) {
             startStringPrefix = "(^|(?<!\\x00))";

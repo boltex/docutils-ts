@@ -90,7 +90,6 @@ class State implements StateInterface {
         this.debug = debug;
 
         if (this.createNestedStateMachine === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.createNestedStateMachine = () => NestedStateMachine.createStateMachine(this.stateMachine!, undefined, this.stateMachine!.stateFactory!.withStateClasses(["QuotedLiteralBlock"]));
         }
 

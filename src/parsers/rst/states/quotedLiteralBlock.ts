@@ -76,7 +76,6 @@ class QuotedLiteralBlock extends RSTState {
         this.addTransition('quoted',
             [pattern, this.quoted.bind(this),
                 this.constructor.name]);
-        // eslint-disable-next-line @typescript-eslint/camelcase
         this.initial_lineno = this.rstStateMachine.absLineNumber();
         return [[match.result.input], nextState, []];
     }

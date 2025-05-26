@@ -53,7 +53,6 @@ class Transformer implements TransformerInterface {
         for (const component of components) {
             if (!component) {
                 this.logger.warn('component is undefined');
-                /* eslint-disable-next-line no-continue */
                 continue;
             }
             this.logger.silly(`processing ${component.toString()} ${component.componentType}`);

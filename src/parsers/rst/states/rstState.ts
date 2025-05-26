@@ -67,7 +67,6 @@ abstract class RSTState extends StateWS {
         //     stateFactory: this.rstStateMachine.stateFactory.withStateClasses(this.stateClasses),
         //     initialState: 'Body',
         //     debug: args && stateMachine ? stateMachine.debug : false,
-        //     /* eslint-disable-next-line no-console */
         //     debugFn: args && stateMachine ? stateMachine.debugFn : console.log,
         // };
         //this.logger.silly('end constructor');

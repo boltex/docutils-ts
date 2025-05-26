@@ -1955,6 +1955,10 @@ class HTMLBaseWriter extends BaseWriter {
     /*    private attr: any;*/
     private translatorClass: typeof HTMLTranslator = HTMLTranslator;
     private template: TemplateFunction = template;
+
+    public configSection = 'html base writer'  // overwrite in subclass
+    public configSectionDependencies = ['writers', 'html writers'];
+
     public settingsDefaults: GenericSettings = {
         outputEncodingErrorHandler: 'xmlcharrefreplace',
     };

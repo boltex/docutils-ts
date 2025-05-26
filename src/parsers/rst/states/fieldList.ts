@@ -8,7 +8,6 @@ class FieldList extends SpecializedBody {
     /** Field list field. */
     public field_marker(match: RegexpResult, context: ContextArray, nextState: StateInterface): ParseMethodReturnType {
         const [field, blankFinish] = this.field(match);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.parent!.add(field);
         this.blankFinish = blankFinish;
         return [[], nextState, []];
