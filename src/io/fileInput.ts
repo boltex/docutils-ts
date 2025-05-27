@@ -11,38 +11,21 @@ export default class FileInput extends Input {
     }
 
     public async read(): Promise<string> {
-
-        const logger = this.logger;
         this.logger.silly('read');
         const data = await fileSystem.readFile(this.sourcePath!, { encoding: this.encoding || 'utf-8' });
         return data.toString();
-        // if (this.finished) {
-        //     this.logger.silly('data already read,handing off to callback');
-        //     return Promise.resolve(this.data);
-        // } else {
-        //     // TODO : Add file support if not in browser 
-
-        //     throw new Error('FileInput: read() not implemented');
-        //     // this.logger.silly('data not read');
-        //     // return new Promise((resolve, reject): void => {
-        //     //     this.source.on('end', (): void => {
-        //     //         try {
-        //     //             logger.error('end of source');
-        //     //             this.finished = true;
-        //     //             this.source.close();
-        //     //             logger.silly('handing off to cb');
-        //     //         } catch (err) {
-        //     //             reject(err);
-        //     //         }
-        //     //         resolve(this.data);
-        //     //     });
-        //     // });
-        // }
     }
 
-    public readlines(): Promise<string[]> {
-        return Promise.resolve([]); // TODO : Add file support if not in browser
-
+    public async readlines(): Promise<string[]> {
+        this.logger.silly('readlines');
+        const data = await this.read();
+        if (typeof data === 'string') {
+            return data.split('\n');
+        } else if (Array.isArray(data)) {
+            return data;
+        } else {
+            return Promise.reject(new Error('FileInput: source is not a string or array'));
+        }
     }
 
 }

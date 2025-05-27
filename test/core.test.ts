@@ -13,6 +13,7 @@ Some **bold** text and *italic* text.
 
 // TODO : Add reals tests
 describe('Some tests description', () => {
+
     test('testing inside test folder', () => {
         expect(1 + 1).toBe(2);
     });

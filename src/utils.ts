@@ -9,12 +9,29 @@ import * as nodes from './nodes.js';
 import CallSite = NodeJS.CallSite;
 
 function findCombiningChars(text: string): number[] {
-    return [];
+
+    const combiningCharPattern = /\p{Mark}/u;
+    return [...text].reduce((indices: number[], char: string, index: number): number[] => {
+        if (combiningCharPattern.test(char)) {
+            indices.push(index);
+        }
+        return indices;
+    }, []);
+
     /*
-    return text.split("").map((c, i): number[][] => {
-        const r = combining[text.codePointAt(i)];
-        return [r, i];
-    }).filter(([r, i]): number => r).map(([r, i]): number => i);
+
+    ORIGINAL PYTHON CODE:
+    def find_combining_chars(text: str) -> list[int]:
+    """Return indices of all combining chars in  Unicode string `text`.
+
+    >>> from docutils.utils import find_combining_chars
+    >>> find_combining_chars('A t̆ab̆lĕ')
+    [3, 6, 9]
+
+    """
+    return [i for i, c in enumerate(text) if unicodedata.combining(c)]
+
+
 */
 }
 
