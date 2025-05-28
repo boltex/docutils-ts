@@ -7,12 +7,18 @@ import { InvalidStateError } from "./exceptions.js";
 class StringList extends ViewList {
 
     public splice(index: number, num: number, ...elems: any[]): StringList {
-        return super.splice(index, num, ...elems) as StringList;
+        const result = super.splice(index, num, ...elems);
+        return new StringList([...result], undefined,
+            undefined, this.parent as StringList, this.parentOffset);
     }
 
     public slice(start: number = 0, end: number = this.length): StringList {
-        return super.slice(start, end) as StringList;
+        const viewList = super.slice(start, end);
+        // Create a new StringList with the content from viewList
+        return new StringList([...viewList], undefined,
+            undefined, this.parent as StringList, this.parentOffset);
     }
+
     public constructor(
         initlist: string[],
         source?: string,
