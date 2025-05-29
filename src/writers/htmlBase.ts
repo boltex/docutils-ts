@@ -1030,7 +1030,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
     /* whoops this requires references transform!! */
     public visit_footnote_reference(node: NodeInterface): void {
         if (!node.attributes.refid) {
-            console.log('warning, no refid ( implement transforms )');
+            console.warn('warning, no refid ( implement transforms )');
         }
         const href = `#${node.attributes.refid || ''}`;
         const classes = `footnote-reference ${this.settings.footnoteReferences}`;
@@ -2231,7 +2231,7 @@ class HTMLBaseWriter extends BaseWriter {
         const settings = this.document!.settings;
         const obj = Object.getOwnPropertyDescriptor(this, "test");
         const x = obj ? obj.value : '';
-        console.log(x);
+        console.warn(x);
         this.visitorAttributes.forEach((attr): void => {
             vars[attr] = ((this as any)[attr] || [].join('').trim());
         });

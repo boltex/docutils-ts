@@ -11,7 +11,7 @@ import Output from "./io/output.js";
 import FileInput from "./io/fileInput.js";
 import FileOutput from "./io/fileOutput.js";
 import Input from "./io/input.js";
-import { DebugFunction, Document, InputConstructor, LoggerType } from "./types.js";
+import { DebugFunction, Document, InputConstructor, LoggerType, OutputConstructor } from "./types.js";
 
 export interface SetupOptionParserArgs {
   usage?: string;
@@ -42,10 +42,6 @@ export interface PublisherArgs {
   debugFn?: DebugFunction;
   debug?: boolean;
   logger: LoggerType;
-}
-
-interface OutputConstructor<T> {
-  new(destination?: T, destinationPath?: string, encoding?: string, errorHandler?: string): Output<T>;
 }
 
 /*interface InputConstructor {
@@ -303,8 +299,7 @@ export class Publisher {
         this.source = new SourceClass({
           source,
           sourcePath,
-          encoding:
-            inputEncoding,
+          encoding: inputEncoding,
           logger: this.logger,
         });
       }
@@ -330,10 +325,13 @@ export class Publisher {
       const outputEncoding = this.settings!.outputEncoding;
       let outputEncodingErrorHandler = this.settings!.outputEncodingErrorHandler;
       this.destination = new DestinationClass(
-        destination,
-        destinationPath,
-        outputEncoding,
-        outputEncodingErrorHandler,
+        {
+          logger: this.logger,
+          destination: destination,
+          destinationPath: destinationPath,
+          encoding: outputEncoding,
+          errorHandler: outputEncodingErrorHandler,
+        }
       );
     } catch (error: any) {
       console.log(error.message);
@@ -349,8 +347,10 @@ export class Publisher {
     }
     if (this.source === undefined ||
       this.reader === undefined ||
-      this.reader.parser === undefined
-      || this.writer === undefined || this.destination === undefined) {
+      this.reader.parser === undefined ||
+      this.writer === undefined
+      // ||      this.destination === undefined
+    ) {
       throw new InvalidStateError('Component undefined');
     }
     document1.transformer.populateFromComponents(
@@ -363,7 +363,7 @@ export class Publisher {
     document1.transformer.applyTransforms();
   }
 
-  public publish(args: any): Promise<any> {
+  public async publish(args: any): Promise<any> {
     this.logger.silly('Publisher.publish');
 
     const {
@@ -387,24 +387,27 @@ export class Publisher {
     if (this.settings! === undefined) {
       throw new InvalidStateError('need serttings');
     }
-    this.logger.silly('calling read');
-    return this.reader.read(
-      this.source, this.parser, this.settings!)
-      .then((result: any): string | {} | undefined => {
-        this._document = result;
-        if (this._document === undefined) {
-          throw new InvalidStateError('need document');
-        }
-        if (this.destination === undefined) {
-          throw new InvalidStateError('need destination');
-        }
-        this.applyTransforms();
 
-        const output = writer.write(this._document, this.destination);
-        writer.assembleParts();
-        this.debuggingDumps();
-        return output;
-      });
+    this.logger.silly('calling read');
+
+    this._document = await this.reader.read(this.source, this.parser, this.settings!);
+
+    if (this._document === undefined) {
+      throw new InvalidStateError('need document');
+    }
+    // If file output is used, the destination is set in the writer. (file or stdout)
+    // if (this.destination === undefined) {
+    //   throw new InvalidStateError('need destination');
+    // }
+
+    this.applyTransforms();
+
+    const output = writer.write(this._document, this.destination);
+
+    writer.assembleParts();
+
+    this.debuggingDumps();
+    return output;
   }
 
   public debuggingDumps(): void {

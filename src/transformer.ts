@@ -48,7 +48,7 @@ class Transformer implements TransformerInterface {
     /**
      * populateFromComponents
      */
-    public populateFromComponents(...components: ComponentInterface[]): void {
+    public populateFromComponents(...components: (ComponentInterface | undefined)[]): void {
         this.logger.silly('populateFromComponents');
         for (const component of components) {
             if (!component) {

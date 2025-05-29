@@ -26,7 +26,7 @@ export default abstract class Writer extends Component {
     private destination?: Output<string>;
 
     // TODO : SHOULD 'write' BE ASYNC ?
-    public write(document: Document, destination: Output<string> | undefined): string | {} | undefined {
+    public async write(document: Document, destination: Output<string> | undefined): Promise<string | {} | undefined> {
         this.document = document;
         if (document !== undefined) {
             this.language = getLanguage(document.settings.languageCode, document.reporter as Reporter);
@@ -42,7 +42,7 @@ export default abstract class Writer extends Component {
             }
         }
         if (fn !== undefined && this.output !== undefined) {
-            return fn(this.output as string);
+            return fn(this.output as string); // Should this call be async?
         } else {
             return this.output;
         }

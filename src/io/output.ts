@@ -1,5 +1,5 @@
 import TransformSpec from '../transformSpec.js';
-import { LoggerType } from '../types.js';
+import { LoggerType, OutputConstructorArgs } from '../types.js';
 
 abstract class Output<T> extends TransformSpec {
     public componentType: string = 'output';
@@ -10,15 +10,15 @@ abstract class Output<T> extends TransformSpec {
     public destination?: T;
     private errorHandler: string;
 
-    public constructor(logger: LoggerType, destination?: T, destinationPath?: string, encoding?: string, errorHandler?: string) {
-        super({ logger });
-        if (encoding !== undefined) {
-            this.encoding = encoding;
+    public constructor(args: OutputConstructorArgs<T>) {
+        super({ logger: args.logger });
+        if (args.encoding !== undefined) {
+            this.encoding = args.encoding;
         }
-        this.errorHandler = errorHandler || 'strict';
-        this.destination = destination;
-        this.destinationPath = destinationPath;
-        if (!destinationPath) {
+        this.errorHandler = args.errorHandler || 'strict';
+        this.destination = args.destination;
+        this.destinationPath = args.destinationPath;
+        if (!args.destinationPath) {
             this.destinationPath = this.defaultDestinationPath;
         }
     }

@@ -1525,7 +1525,7 @@ class Body extends RSTState implements BodyState {
 
     public build_table(tabledata: TableData, tableline: number, stubColumns: number = 0, widths?: string): nodes.table {
         const [colwidths, headRows, bodyrows] = tabledata;
-        console.log(headRows);
+        console.warn(headRows);
         const table = nodesFactory.table();
         if (widths === "auto") {
             table.attributes.classes.push("colwidths-auto");
@@ -1554,7 +1554,7 @@ class Body extends RSTState implements BodyState {
         tgroup.add(tbody);
         // @ts-ignore
         bodyrows.forEach((row: RowData): void => {
-            console.log(row);
+            console.warn(row);
         });
         // @ts-ignore
         bodyrows.map((row: RowData): nodes.row => this.buildTableRow(row, tableline))

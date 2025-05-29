@@ -10,21 +10,21 @@ export class Logger implements LoggerType {
   // Implement log methods
   debug(message: string, ...meta: any[]): this {
     if (typeof console !== 'undefined' && this.shouldLog('debug')) {
-      console.debug(`[DEBUG] ${message}`, ...meta);
+      console.warn(`[DEBUG] ${message}`, ...meta);
     }
     return this;
   }
 
   silly(message: string, ...meta: any[]): this {
     if (typeof console !== 'undefined' && this.shouldLog('silly')) {
-      console.debug(`[SILLY] ${message}`, ...meta);
+      console.warn(`[SILLY] ${message}`, ...meta);
     }
     return this;
   }
 
   info(message: string, ...meta: any[]): this {
     if (typeof console !== 'undefined' && this.shouldLog('info')) {
-      console.info(`[INFO] ${message}`, ...meta);
+      console.warn(`[INFO] ${message}`, ...meta);
     }
     return this;
   }

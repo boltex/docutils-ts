@@ -1,6 +1,6 @@
 import Input from './io/input.js';
 import Output from './io/output.js';
-import { InputConstructorArgs, LoggerType } from "./types.js";
+import { InputConstructorArgs, OutputConstructorArgs } from "./types.js";
 
 /**
  * Direct string input. 
@@ -27,13 +27,9 @@ export class StringInput extends Input {
 
 export class StringOutput extends Output<string> {
     public constructor(
-        logger: LoggerType,
-        destination?: string,
-        destinationPath?: string,
-        encoding?: string,
-        errorHandler?: string
+        args: OutputConstructorArgs<string>
     ) {
-        super(logger, destination, destinationPath, encoding, errorHandler);
+        super(args);
         this.defaultDestinationPath = '<string>';
     }
 

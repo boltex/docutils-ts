@@ -131,7 +131,7 @@ export interface PublishCmdLineArgs {
  *    (along with command-line option descriptions).
  *
  */
-export function publishCmdLine(args: PublishCmdLineArgs): Promise<any> {
+export async function publishCmdLine(args: PublishCmdLineArgs): Promise<string | Uint8Array> {
   checkNodeVersion();
   const _defaults = {
     readerName: 'standalone',
@@ -154,9 +154,10 @@ export function publishCmdLine(args: PublishCmdLineArgs): Promise<any> {
     reader, parser, writer, settings, logger: args.logger,
   });
   pub.setComponents(readerName, parserName, writerName);
-  return pub.publish({
+  const output = pub.publish({
     argv, usage, description, settingsSpec, settingsOverrides, configSection, enableExitStatus
   });
+  return output;
 }
 
 // export function publish_string(options: any): string {

@@ -654,6 +654,17 @@ export interface InputConstructor {
     new(args: InputConstructorArgs): Input;
 }
 
+export interface OutputConstructorArgs<T> {
+    logger: LoggerType,
+    destination?: T,
+    destinationPath?: string,
+    encoding?: string,
+    errorHandler?: string
+}
+export interface OutputConstructor<T> {
+    new(args: OutputConstructorArgs<T>): Output<T>;
+}
+
 export interface WriterConstructor {
     new(args: { logger: LoggerType }): Writer;
 }

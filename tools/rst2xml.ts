@@ -7,8 +7,6 @@ import { fileSystem, publishCmdLine } from '../src/core.js'
 import { defaultDescription } from '../src/constants.js';
 import { createLogger } from '../src/logger.js';
 
-
-console.log('test rst2xml');
 fileSystem.setImplementation({
     writeFile: fs.promises.writeFile,
     readFile: fs.promises.readFile,
