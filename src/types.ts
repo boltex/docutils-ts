@@ -201,6 +201,7 @@ export interface ElementInterface extends NodeInterface {
     listAttributes: string[];
     firstChildNotMatchingClass(childClass: any | any[], start?: number, end?: number): number | undefined;
     attlist(): Attributes;
+    nonDefaultAttributes(): Attributes;
 }
 
 export interface TextElementInterface extends ElementInterface {

@@ -6,7 +6,7 @@ import * as utils from '../utils.js';
 import { basename } from '../utils/paths.js';
 import { UnimplementedError } from '../exceptions.js';
 import { Settings } from "../settings.js";
-import { Document, Attributes, NodeInterface, SettingsSpecType, GenericSettings, CoreLanguage } from "../types.js";
+import { Document, Attributes, NodeInterface, SettingsSpecType, GenericSettings, CoreLanguage, ElementInterface } from "../types.js";
 import { row, tgroup } from "../nodes.js";
 import { getLanguage } from "../languages/index.js"
 import { logger as baseLogger } from '../logger.js';
@@ -154,7 +154,12 @@ class HTMLTranslator extends nodes.NodeVisitor {
     private inFootnoteList: boolean;
     private head: string[];
     private docinfo: string[];
-    private attributionFormats?: AttributionFormats;
+    private attributionFormats: AttributionFormats = {
+        dash: ['\u2014', ''],
+        parentheses: ['(', ')'],
+        parens: ['(', ')'],
+        none: ['', ''],
+    };
     private mathHeader: string[];
     private authorInAuthors: boolean;
     private htmlBody: string[];
@@ -288,7 +293,6 @@ class HTMLTranslator extends nodes.NodeVisitor {
     public stylesheetCall(path: string): string {
         return '';
     }
-
 
     /*
      * Construct and return a start tag given a node (id & class attributes
@@ -442,17 +446,15 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push('</acronym>');
     }
 
-    /*
-      visit_address(node: NodeInterface): void {
-      this.visitDocinfoItem(node, 'address', meta = false);
-      this.body.push(this.starttag(node, 'pre',
-      suffix = '', false, { CLASS: 'address' }));
-      }
+    public visit_address(node: NodeInterface): void {
+        this.visit_docinfo_item(node, 'address', false);
+        this.body.push(this.starttag(node, 'pre', '', false, { CLASS: 'address' }));
+    }
 
-      depart_address(node: NodeInterface): void {
-      this.body.push('\n</pre>\n');
-      this.departDocinfoItem();
-      } */
+    public depart_address(node: NodeInterface): void {
+        this.body.push('\n</pre>\n');
+        this.depart_docinfo_item();
+    }
 
     public visit_admonition(node: NodeInterface): void {
         node.attributes.classes.splice(0, 0, 'admonition');
@@ -461,13 +463,6 @@ class HTMLTranslator extends nodes.NodeVisitor {
 
     public depart_admonition(node: NodeInterface): void {
         this.body.push('</div>\n');
-
-        const attributionFormats: AttributionFormats = {
-            dash: ['\u2014', ''],
-            parentheses: ['(', ')'],
-            parens: ['(', ')'],
-            none: ['', ''],
-        };
     }
 
     public visit_attribution(node: NodeInterface): void {
@@ -484,7 +479,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
 
     public visit_author(node: NodeInterface): void {
         if (!(node.parent instanceof nodes.authors)) {
-            this.visitDocinfoItem(node, 'author');
+            this.visit_docinfo_item(node, 'author');
         }
         this.body.push('<p>');
     }
@@ -494,16 +489,16 @@ class HTMLTranslator extends nodes.NodeVisitor {
         if (!(node.parent instanceof nodes.authors)) {
             this.body.push('\n');
         } else {
-            this.departDocinfoItem();
+            this.depart_docinfo_item();
         }
     }
 
     public visit_authors(node: NodeInterface): void {
-        this.visitDocinfoItem(node, 'authors');
+        this.visit_docinfo_item(node, 'authors');
     }
 
     public depart_authors(node: NodeInterface): void {
-        this.departDocinfoItem();
+        this.depart_docinfo_item();
     }
 
     public visit_block_quote(node: NodeInterface): void {
@@ -694,27 +689,27 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public visit_contact(node: NodeInterface): void {
-        this.visitDocinfoItem(node, 'contact', false);
+        this.visit_docinfo_item(node, 'contact', false);
     }
 
     public depart_contact(node: NodeInterface): void {
-        this.departDocinfoItem();
+        this.depart_docinfo_item();
     }
 
     public visit_copyright(node: NodeInterface): void {
-        this.visitDocinfoItem(node, 'copyright');
+        this.visit_docinfo_item(node, 'copyright');
     }
 
     public depart_copyright(node: NodeInterface): void {
-        this.departDocinfoItem();
+        this.depart_docinfo_item();
     }
 
     public visit_date(node: NodeInterface): void {
-        this.visitDocinfoItem(node, 'date');
+        this.visit_docinfo_item(node, 'date');
     }
 
     public depart_date(node: NodeInterface): void {
-        this.departDocinfoItem();
+        this.depart_docinfo_item();
     }
 
     public visit_decoration(node: NodeInterface): void {
@@ -781,7 +776,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body = [];
     }
 
-    public visitDocinfoItem(node: NodeInterface, name: string, meta: boolean = true): void {
+    public visit_docinfo_item(node: NodeInterface, name: string, meta: boolean = true): void {
         if (meta) {
             const metaTag = `<meta name="${name}" content="${this.attVal(node.astext())}" />\n`;
             this.addMeta(metaTag);
@@ -791,7 +786,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push(this.starttag(node, 'dd', '', false, { CLASS: name }));
     }
 
-    public departDocinfoItem(): void {
+    public depart_docinfo_item(): void {
         this.body.push('</dd>\n');
     }
 
@@ -820,8 +815,37 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     /*
-      this.headPrefixTemplate %
-      {'lang': this.settings.language_code}])
+        # original python
+        def depart_document(self, node) -> None:
+            self.head_prefix.extend([self.doctype,
+                                    self.head_prefix_template %
+                                    {'lang': self.settings.language_code}])
+            self.html_prolog.append(self.doctype)
+            self.head = self.meta[:] + self.head
+            if 'name="dcterms.' in ''.join(self.meta):
+                self.head.append('<link rel="schema.dcterms"'
+                                ' href="http://purl.org/dc/terms/"/>')
+            if self.math_header:
+                if self.math_output == 'mathjax':
+                    self.head.extend(self.math_header)
+                else:
+                    self.stylesheet.extend(self.math_header)
+            if (self.settings.output_encoding  # may be None
+                and self.settings.output_encoding.lower() != 'unicode'):
+                # skip content-type meta tag with interpolated charset value:
+                self.html_head.extend(self.head[1:])
+            else:
+                self.html_head.extend(self.head)
+            self.body_prefix.append(self.starttag(node, **self.documenttag_args))
+            self.body_suffix.insert(0, f'</{self.documenttag_args["tagname"]}>\n')
+            self.fragment.extend(self.body)  # self.fragment is the "naked" body
+            self.html_body.extend(self.body_prefix[1:] + self.body_pre_docinfo
+                                + self.docinfo + self.body
+                                + self.body_suffix[:-1])
+            assert not self.context, f'len(context) = {len(self.context)}'
+
+      // javascript Experimental
+      this.headPrefix.push(this.doctype, this.headPrefixTemplate({ lang: this.settings!.languageCode }));
       this.html_prolog.push(this.doctype)
       this.meta.splice(0, 0, this.content_type % this.settings.output_encoding)
       this.head.splice(0, 0, this.content_type % this.settings.output_encoding)
@@ -844,6 +868,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
       //        assert not this.context, 'len(context) = %s' % len(this.context)
       }
     */
+
     public visit_emphasis(node: NodeInterface): void {
         this.body.push(this.starttag(node, 'em', ''));
     }
@@ -892,22 +917,25 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push(this.context.pop()!);
     }
 
-    /*
-      visit_enumerated_list(node: NodeInterface): void {
-      atts = {}
-      if 'start' in node:
-      atts['start'] = node.attributes['start']
-      if 'enumtype' in node:
-      atts['class'] = node.attributes['enumtype']
-      if this.isCompactable(node: NodeInterface):
-      atts['class'] = (atts.get('class', '') + ' simple').strip()
-      this.body.push(this.starttag(node, 'ol', **atts))
-      }
+    public visit_enumerated_list(node: NodeInterface): void {
+        const atts: Attributes = { class: [] };
+        if ('start' in node.attributes) {
+            atts.start = node.attributes.start;
+        }
+        if ('enumtype' in node.attributes) {
+            atts.class.push(node.attributes.enumtype);
+        }
+        if (this.isCompactable(node)) {
+            atts.class.push('simple');
+        }
+        atts.class = atts.class.join(' ');
+        this.body.push(this.starttag(node, 'ol', '\n', false, atts));
+    }
 
-      depart_enumerated_list(node: NodeInterface): void {
-      this.body.push('</ol>\n')
-      }
-    */
+    public depart_enumerated_list(node: NodeInterface): void {
+        this.body.push('</ol>\n');
+    }
+
     public visit_field_list(node: NodeInterface): void {
         // Keep simple paragraphs in the field_body to enable CSS
         // rule to start body on new line if the label is too long
@@ -953,7 +981,35 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push('</dd>\n');
     }
 
+    public visit_figure(node: NodeInterface): void {
+        const atts: Attributes = { class: 'figure' };
+        if (node.attributes.width) {
+            atts.style = `width: ${node.attributes.width}`;
+        }
+        if (node.attributes.align) {
+            atts.class += ` align-${node.attributes.align}`;
+        }
+        this.body.push(this.starttag(node, 'div', '', false, atts));
+    }
+
+    public depart_figure(node: NodeInterface): void {
+        this.body.push('</div>\n');
+    }
+
     /*
+        # original python
+        def visit_figure(self, node) -> None:
+            atts = {'class': 'figure'}
+            if node.get('width'):
+                atts['style'] = 'width: %s' % node['width']
+            if node.get('align'):
+                atts['class'] += " align-" + node['align']
+            self.body.append(self.starttag(node, 'div', **atts))
+
+        def depart_figure(self, node) -> None:
+            self.body.append('</div>\n')
+
+      // javascript experimental
       visit_figure(node: NodeInterface): void {
         atts = {'class': 'figure'}
         if node.get('width'):
@@ -1050,21 +1106,24 @@ class HTMLTranslator extends nodes.NodeVisitor {
     public depart_generated(node: NodeInterface): void {
     }
 
+    public visit_header(node: NodeInterface): void {
+        this.context.push(this.body.length.toString());
+    }
+
+    public depart_header(node: NodeInterface): void {
+        const start = this.context.pop()!;
+        const header = [
+            this.starttag(node, 'div', undefined, undefined, { CLASS: 'header' }),
+        ];
+        header.push(...this.body.slice(parseInt(start, 10)));
+        header.push('\n<hr class="header"/>\n</div>\n');
+        this.bodyPrefix.push(...header);
+        this.header.push(...header);
+        this.body.splice(parseInt(start, 10), this.body.length - parseInt(start, 10));
+    }
+
     /*
-          visit_header(node: NodeInterface): void {
-          this.context.push(len(this.body))
-          }
-
-          depart_header(node: NodeInterface): void {
-          start = this.context.pop()
-          header = [this.starttag(node, 'div', { CLASS: 'header' })]
-          header.extend(this.body[start:])
-          header.push('\n<hr class="header"/>\n</div>\n')
-          this.bodyPrefix.extend(header)
-          this.header.extend(header)
-          }
-          del this.body[start:]
-
+        TODO : IMAGE HANDLING
           // Image types to place in an <object> element
           object_image_types = {'.swf': 'application/x-shockwave-flash'}
 
@@ -1138,15 +1197,16 @@ class HTMLTranslator extends nodes.NodeVisitor {
           // this.body.push(this.context.pop())
           }
           pass
-
-          visit_inline(node: NodeInterface): void {
-          this.body.push(this.starttag(node, 'span', ''))
-          }
-
-          depart_inline(node: NodeInterface): void {
-          this.body.push('</span>')
-          }
     */
+
+    public visit_inline(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'span', '', false));
+    }
+
+    public depart_inline(node: NodeInterface): void {
+        this.body.push('</span>');
+    }
+
     // footnote and citation labels:
     public visit_label(node: NodeInterface): void {
         let classes;
@@ -1183,41 +1243,33 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push('</dt>\n<dd>');
     }
 
-    /*
-      visit_legend(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'div', { CLASS: 'legend' }))
-      }
+    public visit_legend(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'div', '', false, { CLASS: 'legend' }));
+    }
 
-      depart_legend(node: NodeInterface): void {
-      this.body.push('</div>\n')
-      }
+    public depart_legend(node: NodeInterface): void {
+        this.body.push('</div>\n');
+    }
 
-      visit_line(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'div', suffix='', { CLASS: 'line' }))
-      if not len(node: NodeInterface):
-      this.body.push('<br />')
-      }
+    public visit_line(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'div', '', false, { CLASS: 'line' }));
+        if (!node.hasChildren()) {
+            this.body.push('<br />');
+        }
+    }
 
-      depart_line(node: NodeInterface): void {
-      this.body.push('</div>\n')
-      }
+    public depart_line(node: NodeInterface): void {
+        this.body.push('</div>\n');
+    }
 
-      visit_line_block(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'div', { CLASS: 'line-block' }))
-      }
+    public visit_line_block(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'div', '', false, { CLASS: 'line-block' }));
+    }
 
-      depart_line_block(node: NodeInterface): void {
-      this.body.push('</div>\n')
-      }
+    public depart_line_block(node: NodeInterface): void {
+        this.body.push('</div>\n');
+    }
 
-      visit_list_item(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'li', ''))
-      }
-
-      depart_list_item(node: NodeInterface): void {
-      this.body.push('</li>\n')
-      }
-    */
     // inline literal
     public visit_literal(node: NodeInterface): void {
         // special case: "code" role
@@ -1396,107 +1448,78 @@ class HTMLTranslator extends nodes.NodeVisitor {
       depart_math_block(node: NodeInterface): void {
       }
       pass // never reached
-
-      // Meta tags: 'lang' attribute replaced by 'xml:lang' in XHTML 1.1
-      // HTML5/polyglot recommends using both
-      visit_meta(node: NodeInterface): void {
-      meta = this.emptytag(node, 'meta', **node.non_default_attributes())
-      this.add_meta(meta)
-      }
-
-      depart_meta(node: NodeInterface): void {
-      }
-      pass
-
-      add_meta( tag) {
-      this.meta.push(tag)
-      this.head.push(tag)
-      }
-
-      visit_option(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'span', '', { CLASS: 'option' }))
-      }
-
-      depart_option(node: NodeInterface): void {
-      this.body.push('</span>')
-      if isinstance(node.next_node(descend=false, siblings=true),
-      nodes.option):
-      this.body.push(', ')
-      }
-
-      visit_option_argument(node: NodeInterface): void {
-      this.body.push(node.get('delimiter', ' '))
-      this.body.push(this.starttag(node, 'var', ''))
-      }
-
-      depart_option_argument(node: NodeInterface): void {
-      this.body.push('</var>')
-      }
-
-      visit_option_group(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'dt', ''))
-      this.body.push('<kbd>')
-      }
-
-      depart_option_group(node: NodeInterface): void {
-      this.body.push('</kbd></dt>\n')
-      }
-
-      visit_option_list(node: NodeInterface): void {
-      this.body.push(
-      this.starttag(node, 'dl', { CLASS: 'option-list' }))
-      }
-
-      depart_option_list(node: NodeInterface): void {
-      this.body.push('</dl>\n')
-      }
-
-      visit_option_list_item(node: NodeInterface): void {
-      }
-
-      depart_option_list_item(node: NodeInterface): void {
-      }
-
-      visit_option_string(node: NodeInterface): void {
-      }
-
-      depart_option_string(node: NodeInterface): void {
-      }
-
-      visit_organization(node: NodeInterface): void {
-      this.visitDocinfoItem(node, 'organization')
-      }
-
-      depart_organization(node: NodeInterface): void {
-      this.departDocinfoItem()
-
-      // Do not omit <p> tags
-      // --------------------
-      //
-      // The HTML4CSS1 writer does this to "produce
-      // visually compact lists (less vertical whitespace)". This writer
-      }
-      // relies on CSS rules for"visual compactness".
-      //
-      // * In XHTML 1.1, e.g. a <blockquote> element may not contain
-      //   character data, so you cannot drop the <p> tags.
-      // * Keeping simple paragraphs in the field_body enables a CSS
-      //   rule to start the field-body on a new line if the label is too long
-      // * it makes the code simpler.
-      //
-      // TODO: omit paragraph tags in simple table cells?
-
-      visit_paragraph(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'p', ''))
-      }
-
-      depart_paragraph(node: NodeInterface): void {
-      this.body.push('</p>')
-      if not (isinstance(node.parent, (nodes.list_item, nodes.entry)) and
-      (len(node.parent) == 1)):
-      this.body.push('\n')
-      }
     */
+
+    public visit_meta(node: ElementInterface): void {
+        // Add meta tag to the head section
+        this.meta.push(this.emptytag(node, 'meta', undefined, node.nonDefaultAttributes()));
+    }
+
+    public depart_meta(node: ElementInterface): void {
+        // No action needed for departing meta tags
+    }
+
+    public visit_option(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'span', '', false, { CLASS: 'option' }));
+    }
+
+    public depart_option(node: NodeInterface): void {
+        this.body.push('</span>');
+        if (node.nextNode({ descend: false, siblings: true }) instanceof nodes.option) {
+            this.body.push(', ');
+        }
+    }
+
+    public visit_option_argument(node: NodeInterface): void {
+        this.body.push(node.attributes.delimiter || ' ');
+        this.body.push(this.starttag(node, 'var', '', false));
+    }
+
+    public depart_option_argument(node: NodeInterface): void {
+        this.body.push('</var>');
+    }
+
+    public visit_option_group(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'dt', '', false));
+        this.body.push('<kbd>');
+    }
+
+    public depart_option_group(node: NodeInterface): void {
+        this.body.push('</kbd></dt>\n');
+    }
+
+    public visit_option_list(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'dl', '', false, { CLASS: 'option-list' }));
+    }
+
+    public depart_option_list(node: NodeInterface): void {
+        this.body.push('</dl>\n');
+    }
+
+    public visit_option_list_item(node: NodeInterface): void {
+        // No specific action needed for option list items
+    }
+
+    public depart_option_list_item(node: NodeInterface): void {
+        // No specific action needed for departing option list items
+    }
+
+    public visit_option_string(node: NodeInterface): void {
+        // No specific action needed for option strings
+    }
+
+    public depart_option_string(node: NodeInterface): void {
+        // No specific action needed for departing option strings
+    }
+
+    public visit_organization(node: NodeInterface): void {
+        this.visit_docinfo_item(node, 'organization', false);
+    }
+
+    public depart_organization(node: NodeInterface): void {
+        this.depart_docinfo_item();
+    }
+
     public visit_problematic(node: NodeInterface): void {
         if (typeof node.attributes.refid !== 'undefined') {
             this.body.push(`<a href="//${node.attributes.refid}">`);
@@ -1512,19 +1535,24 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push(this.context.pop()!);
     }
 
-    /*
-      visit_raw(node: NodeInterface): void {
-      if 'html' in node.get('format', '').split():
-      t = isinstance(node.parent, nodes.TextElement) and 'span' or 'div'
-      if node.attributes['classes']:
-      this.body.push(this.starttag(node, t, suffix=''))
-      this.body.push(node.astext())
-      if node.attributes['classes']:
-      this.body.push('</%s>' % t)
-      // Keep non-HTML raw text out of output:
-      raise nodes.SkipNode
-      }
-    */
+    public visit_raw(node: NodeInterface): void {
+        if (node.attributes.format && node.attributes.format.split(' ').indexOf('html') !== -1) {
+            let tagname = 'div';
+            if (node.parent instanceof nodes.TextElement) {
+                tagname = 'span';
+            }
+            if (node.attributes.classes && node.attributes.classes.length > 0) {
+                this.body.push(this.starttag(node, tagname, '', false, { CLASS: node.attributes.classes.join(' ') }));
+            }
+            this.body.push(node.astext());
+            if (node.attributes.classes && node.attributes.classes.length > 0) {
+                this.body.push(`</${tagname}>`);
+            }
+        }
+        // Keep non-HTML raw text out of output:
+        throw new nodes.SkipNode();
+    }
+
     public visit_reference(node: NodeInterface): void {
         const atts: Attributes = { class: 'reference' };
         if ('refuri' in node.attributes) {
@@ -1556,15 +1584,14 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.inMailto = false;
     }
 
-    /*
-      visit_revision(node: NodeInterface): void {
-      this.visitDocinfoItem(node, 'revision', meta=false)
-      }
+    public visit_revision(node: NodeInterface): void {
+        this.visit_docinfo_item(node, 'revision', false);
+    }
 
-      depart_revision(node: NodeInterface): void {
-      this.departDocinfoItem()
-      }
-    */
+    public depart_revision(node: NodeInterface): void {
+        this.depart_docinfo_item();
+    }
+
     public visit_row(node: row): void {
         this.body.push(this.starttag(node, 'tr', ''));
         node.column = 0;
@@ -1574,48 +1601,32 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push('</tr>\n');
     }
 
-    /*
-      visit_rubric(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'p', '', { CLASS: 'rubric' }))
-      }
+    public visit_rubric(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'p', '', false, { CLASS: 'rubric' }));
+    }
 
-      depart_rubric(node: NodeInterface): void {
-      this.body.push('</p>\n')
-      }
+    public depart_rubric(node: NodeInterface): void {
+        this.body.push('</p>\n');
+    }
 
-      // TODO: use the new HTML 5 element <section>?
-      visit_section(node: NodeInterface): void {
-      this.section_level += 1
-      this.body.push(
-      this.starttag(node, 'div', { CLASS: 'section' }))
-      }
+    public visit_sidebar(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'div', '', false, { CLASS: 'sidebar' }));
+        this.inSidebar = true;
+    }
 
-      depart_section(node: NodeInterface): void {
-      this.section_level -= 1
-      this.body.push('</div>\n')
+    public depart_sidebar(node: NodeInterface): void {
+        this.body.push('</div>\n');
+        this.inSidebar = false;
+    }
 
-      // TODO: use the new HTML5 element <aside>? (Also for footnote text)
-      }
-      visit_sidebar(node: NodeInterface): void {
-      this.body.push(
-      this.starttag(node, 'div', { CLASS: 'sidebar' }))
-      this.in_sidebar = true
-      }
+    public visit_status(node: NodeInterface): void {
+        this.visit_docinfo_item(node, 'status', false);
+    }
 
-      depart_sidebar(node: NodeInterface): void {
-      this.body.push('</div>\n')
-      this.in_sidebar = false
-      }
+    public depart_status(node: NodeInterface): void {
+        this.depart_docinfo_item();
+    }
 
-      visit_status(node: NodeInterface): void {
-      this.visitDocinfoItem(node, 'status', meta=false)
-      }
-
-      depart_status(node: NodeInterface): void {
-      this.departDocinfoItem()
-      }
-
-    */
     public visit_strong(node: NodeInterface): void {
         this.body.push(this.starttag(node, 'strong', ''));
     }
@@ -1625,59 +1636,92 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     /*
-      visit_subscript(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'sub', ''))
-      }
+        # <sub> not allowed in <pre>
+        def visit_subscript(self, node) -> None:
+            if isinstance(node.parent, nodes.literal_block):
+                self.body.append(self.starttag(node, 'span', '',
+                                            CLASS='subscript'))
+            else:
+                self.body.append(self.starttag(node, 'sub', ''))
 
-      depart_subscript(node: NodeInterface): void {
-      this.body.push('</sub>')
-      }
-*/
+        def depart_subscript(self, node) -> None:
+            if isinstance(node.parent, nodes.literal_block):
+                self.body.append('</span>')
+            else:
+                self.body.append('</sub>')
+    */
+
+    public visit_subscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push(this.starttag(node, 'span', '', false, { CLASS: 'subscript' }));
+        } else {
+            this.body.push(this.starttag(node, 'sub', ''));
+        }
+    }
+
+    public depart_subscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push('</span>');
+        } else {
+            this.body.push('</sub>');
+        }
+    }
 
     /** Internal only. */
     public visit_substitution_definition(node: NodeInterface): void {
         throw new nodes.SkipNode();
     }
 
-    /*
-      visit_substitution_reference(node: NodeInterface): void {
-      this.unimplemented_visit(node: NodeInterface)
-      }
+    public visit_substitution_reference(node: NodeInterface): void {
+        this.unimplemented_visit(node);
+    }
 
-      // h1 h6 elements must not be used to markup subheadings, subtitles,
-      // alternative titles and taglines unless intended to be the heading for a
-      // new section or subsection.
-      // -- http://www.w3.org/TR/html/sections.html//headings-and-sections
-      visit_subtitle(node: NodeInterface): void {
-      if isinstance(node.parent, nodes.sidebar):
-      classes = 'sidebar-subtitle'
-      elif isinstance(node.parent, nodes.document):
-      classes = 'subtitle'
-      this.in_document_title = len(this.body)+1
-      elif isinstance(node.parent, nodes.section):
-      classes = 'section-subtitle'
-      this.body.push(this.starttag(node, 'p', '', CLASS=classes))
-      }
+    /**
+     * h1–h6 elements must not be used to markup subheadings, subtitles,
+     * alternative titles and taglines unless intended to be the heading for a
+     * new section or subsection.
+     * -- http://www.w3.org/TR/html51/sections.html#headings-and-sections
+     */
+    public visit_subtitle(node: NodeInterface): void {
+        let classes: string[] = [];
+        if (node.parent instanceof nodes.sidebar) {
+            classes = ['sidebar-subtitle'];
+        } else if (node.parent instanceof nodes.document) {
+            classes = ['subtitle'];
+            this.inDocumentTitle = this.body.length + 1;
+        } else if (node.parent instanceof nodes.section) {
+            classes = ['section-subtitle'];
+        }
+        this.body.push(this.starttag(node, 'p', '', false, { CLASS: classes.join(' ') }));
+    }
 
-      depart_subtitle(node: NodeInterface): void {
-      this.body.push('</p>\n')
-      if isinstance(node.parent, nodes.document):
-      this.subtitle = this.body[this.in_document_title:-1]
-      this.in_document_title = 0
-      this.body_pre_docinfo.extend(this.body)
-      this.html_subtitle.extend(this.body)
-      del this.body[:]
-      }
+    public depart_subtitle(node: NodeInterface): void {
+        this.body.push('</p>\n');
+        if (node.parent instanceof nodes.document) {
+            this.subtitle = this.body.slice(this.inDocumentTitle, -1);
+            this.inDocumentTitle = 0;
+            this.bodyPrefix.push(...this.body);
+            this.htmlSubtitle.push(...this.body);
+            this.body.splice(0, this.body.length);
+        }
+    }
 
-      visit_superscript(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'sup', ''))
-      }
+    public visit_superscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push(this.starttag(node, 'span', '', false, { CLASS: 'superscript' }));
+        } else {
+            this.body.push(this.starttag(node, 'sup', ''));
+        }
+    }
 
-      depart_superscript(node: NodeInterface): void {
-      this.body.push('</sup>')
-      }
+    public depart_superscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push('</span>');
+        } else {
+            this.body.push('</sup>');
+        }
+    }
 
-    */
     public visit_system_message(node: NodeInterface): void {
         this.body.push(this.starttag(node, 'div', '\n', false, { CLASS: 'system-message' }));
         this.body.push('<p class="system-message-title">');
@@ -1800,11 +1844,11 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public visit_version(node: NodeInterface): void {
-        this.visitDocinfoItem(node, 'version', false);
+        this.visit_docinfo_item(node, 'version', false);
     }
 
     public depart_version(node: NodeInterface): void {
-        this.departDocinfoItem();
+        this.depart_docinfo_item();
     }
 
     public unimplemented_visit(node: NodeInterface): void {
