@@ -2095,7 +2095,7 @@ class HTMLBaseWriter extends BaseWriter {
                             "5",
                             "6"
                         ],
-                        "default": "1",
+                        "default": 1,
                         "metavar": "<level>"
                     }
                 ],
