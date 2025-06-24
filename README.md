@@ -83,6 +83,37 @@ const html = core.publish_string({ source: rst });
 console.log(html);
 ```
 
+**Note**: You can import docutils as a whole or its components separately:
+
+```ts
+import * as docutils from "docutils-ts";
+const html = docutils.core.publish_string({ source: "Hello world" });
+```
+
+```ts
+import { core, frontend, writers, nodes } from "docutils-ts";
+const html = core.publish_string({ source: "Hello world" });
+```
+
+### Sub components usage example
+
+All following import usage examples are valid:
+
+```ts
+import { getLanguage } from "docutils-ts/languages";
+const lang = getLanguage("en");
+```
+
+```ts
+import { languages } from "docutils-ts";
+const lang = languages.getLanguage("en");
+```
+
+```ts
+import * as docutils from "docutils-ts";
+const lang = docutils.languages.getLanguage("en");
+```
+
 ## File I/O
 
 JS does not have native IO - this is provided via the host. Node provides its own fs module, and web browsers of course have many other ways of getting RST input, from XMLHttpRequest/fetch to extracting text from the current document or a form input (e.g. textarea).
@@ -129,37 +160,6 @@ core.fileSystem.setImplementation({
     // (e.g., download, localStorage, or sending to server)
   },
 });
-```
-
-**Note**: You can import docutils as a whole or its components separately:
-
-```ts
-import * as docutils from "docutils-ts";
-const html = docutils.core.publish_string({ source: "Hello world" });
-```
-
-```ts
-import { core, frontend, writers, nodes } from "docutils-ts";
-const html = core.publish_string({ source: "Hello world" });
-```
-
-### Sub components usage example
-
-All following import usage examples are valid:
-
-```ts
-import { getLanguage } from "docutils-ts/languages";
-const lang = getLanguage("en");
-```
-
-```ts
-import { languages } from "docutils-ts";
-const lang = languages.getLanguage("en");
-```
-
-```ts
-import * as docutils from "docutils-ts";
-const lang = docutils.languages.getLanguage("en");
 ```
 
 ## 👥 Contributing
