@@ -171,7 +171,7 @@ export function stripCombiningChars(text: string): string {
 }
 
 export function pySplit(text: string, max?: number): string[] {
-    return text.trim().split(/s+/, max);
+    return text.trim().split(/\s+/, max);
 }
 
 export function checkDocumentArg(document: Document): boolean | never {
