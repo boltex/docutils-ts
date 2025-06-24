@@ -16,14 +16,17 @@
   "exports": {
     ".": {
       "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
       "types": "./dist/src/index.d.ts"
     },
     "./core": {
       "import": "./dist/src/core.js",
+      "require": "./dist/src/core.js",
       "types": "./dist/src/core.d.ts"
     },
     "./languages": {
       "import": "./dist/src/languages/index.js",
+      "require": "./dist/src/languages/index.js",
       "types": "./dist/src/languages/index.d.ts"
     }
   },
