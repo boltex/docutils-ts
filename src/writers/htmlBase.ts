@@ -663,29 +663,28 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.push('</colgroup>\n');
     }
 
-    /*
-      visit_comment(self, node,
-      sub=re.compile('-(?=-)').sub):
-      // Escape double-dashes in comment text.
-      this.body.push('<!-- %s -->\n' % sub('- ', node.astext()))
-      // Content already processed:
-      raise nodes.SkipNode
-      }
+    public visit_comment(node: NodeInterface, sub: RegExp = /-(?=-)/g): void {
+        // Escape double-dashes in comment text.
+        this.body.push(`<!-- ${node.astext().replace(sub, '- ')} -->\n`);
+        // Content already processed:
+        throw new nodes.SkipNode();
+    }
 
-      visit_compound(node: NodeInterface): void {
-      this.body.push(this.starttag(node, 'div', { CLASS: 'compound' }))
-      if len(node: NodeInterface) > 1:
-      node.attributes[0]['classes'].push('compound-first')
-      node.attributes[-1]['classes'].push('compound-last')
-      for child in node.attributes[1:-1]:
-      child['classes'].push('compound-middle')
-      }
+    public visit_compound(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'div', '\n', false, { CLASS: 'compound' }));
+        if (node.getNumChildren() > 1) {
+            node.getChild(0).attributes.classes.push('compound-first');
+            node.getChild(node.getNumChildren() - 1).attributes.classes.push('compound-last');
+            for (let i = 1; i < node.getNumChildren() - 1; i++) {
+                node.getChild(i).attributes.classes.push('compound-middle');
+            }
+        }
+    }
 
-      depart_compound(node: NodeInterface): void {
-      this.body.push('</div>\n')
-      }
+    public depart_compound(node: NodeInterface): void {
+        this.body.push('</div>\n');
+    }
 
-    */
     public visit_container(node: NodeInterface): void {
         this.body.push(this.starttag(node, 'div', '\n', false, { CLASS: 'docutils container' }));
     }
