@@ -186,8 +186,10 @@ export async function publishCmdLine(args: PublishCmdLineArgs): Promise<string |
 
 export async function publish_string(options: PublishStringOptions): Promise<string | Uint8Array> {
   checkNodeVersion();
+
   // The "*_name" arguments are deprecated.
-  _name_arg_warning(options.readerName, options.parserName, options.writerName)
+  // TODO : MAYBE BRING BACK THOSE WARNINGS !
+  // _name_arg_warning(options.readerName, options.parserName, options.writerName)
 
   // The default is set in publish_programmatically().
   const [output, _publisher] = await publish_programmatically(
