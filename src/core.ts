@@ -1,5 +1,3 @@
-import Input from './io/input.js';
-import Output from './io/output.js';
 import { StringInput, StringOutput } from './io.js';
 import { Publisher } from './publisher.js';
 import { ConfigSettings, SettingsSpecType, LoggerType } from './types.js';

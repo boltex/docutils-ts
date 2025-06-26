@@ -34,6 +34,7 @@ import { Settings } from './index.js';
 import { InvalidStateError } from './exceptions.js';
 import { ActionCallback } from './callback.js';
 import { ActionValidating } from './validating.js';
+import * as constants from './constants.js';
 
 /*
     """Check/normalize boolean settings:
@@ -1043,55 +1044,61 @@ export class OptionParser extends ArgumentParser {
     public components: (SettingsSpec | undefined)[] = [];
 
     /** Default version message. */
-    public versionTemplate = '';
+    public versionTemplate = `(Docutils ${constants.__version__}, Node ${process.version.slice(1)}, on ${process.platform})`;
     private logger: LoggerType;
 
     public constructor(args: OptionParserArgs) {
         super({ usage: args.usage, description: args.description });
         this.logger = args.logger;
 
-        // TODO ? What are those 'register' calls? ('register' exist on ArgumentParser!)
+        // Register custom action types for argument parsing
+        // Note: ArgumentParser.register() method exists but TypeScript definitions may be incomplete
         //@ts-ignore
         this.register('action', 'callback', ActionCallback);
         //@ts-ignore
         this.register('action', 'validating', ActionValidating);
 
-        /** Set of list-type settings. */
-        this.lists = {}
+        // Initialize collections
+        this.lists = {};
+        this.configFiles = [];
 
-        /** List of paths of applied configuration files. */
-        this.configFiles = []
-
-        // TODO : unused argParser
-        const argParser = new ArgumentParser({ description: args.description });
+        // Initialize version if not already set
         if (!this.version) {
-            // is this correct?
             this.version = this.versionTemplate;
         }
-        // Make an instance copy (it will be modified): ??
+
+        // Create a copy of relativePathSettings as it will be modified
         this.relativePathSettings = [...this.relativePathSettings];
+
+        // Build component list starting with self
         this.logger.silly('constructing component list');
         this.logger.silly(`adding 'this' to component list`);
         this.components = [this];
-        if (args && args.components) {
-            this.logger.silly(`tacking on supplied components: ${args.components.map(c => c !== undefined ? c.toString() : 'undefined').join(', ')}`);
-            if (args.components.indexOf(undefined) !== -1) {
+
+        // Add additional components if provided
+        if (args.components) {
+            this.logger.silly(`adding supplied components: ${args.components.map(c => c !== undefined ? c.toString() : 'undefined').join(', ')}`);
+
+            // Validate that no undefined components are passed
+            if (args.components.includes(undefined)) {
                 throw new InvalidStateError('received undefined component');
             }
 
             this.components.push(...args.components);
         }
 
-        this.populateFromComponents(this.components)
-        this.setDefaultsFromDict(args.defaults || {})
+        // Populate settings from all components
+        this.populateFromComponents(this.components);
+        this.setDefaultsFromDict(args.defaults || {});
+
+        // Load configuration files if requested and not disabled
         if (args.readConfigFiles && !this.defaults._disableConfig) {
-            let configSettings;
             try {
-                configSettings = this.getStandardConfigSettings();
+                const configSettings = this.getStandardConfigSettings();
+                this.setDefaultsFromDict(configSettings);
             } catch (error) {
                 throw error; //except ValueError, error: self.error(SafeString(error))
             }
-            this.setDefaultsFromDict(configSettings);
         }
     }
 

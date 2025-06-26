@@ -126,7 +126,7 @@ class SimpleListChecker extends nodes.GenericNodeVisitor {
  * HTMLTranslator class
  */
 class HTMLTranslator extends nodes.NodeVisitor {
-    private xmlDeclaration: TemplateFunction = compile('<?xml version="1.0" encoding="<%=encoding%>" ?>\n');
+    private xmlDeclaration: TemplateFunction = compile('<?xml version="1.0" encoding="<%=encoding%>"?>\n');
     private doctype: string = '<!DOCTYPE html>\n';
     private doctypeMathML: string = this.doctype;
     private headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%=lang%>" lang="<%=lang%>">\n<head>\n');
@@ -761,7 +761,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public visit_docinfo(node: NodeInterface): void {
-        this.context.push(this.body.length.toString());
+        this.context.push(this.body.length);
         let classes = 'docinfo';
         if (this.isCompactable(node)) {
             classes += ' simple';
@@ -771,8 +771,8 @@ class HTMLTranslator extends nodes.NodeVisitor {
 
     public depart_docinfo(node: NodeInterface): void {
         this.body.push('</dl>\n');
-        const start = this.context.pop()!;
-        this.docinfo = this.body.slice(parseInt(start, 10));
+        const start = this.context.pop()! as number;
+        this.docinfo = this.body.slice(start);
         this.body = [];
     }
 
@@ -800,10 +800,11 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public visit_document(node: NodeInterface): void {
-        const title = ((node.attributes.title || '') || basename(node.attributes.source) || 'docutils document without title');
+        const title = ((node.attributes.title || '') || basename(node.attributes.source) || 'untitled Docutils document');
         this.head.push(`<title>${this.encode(title)}</title>\n`);
     }
 
+    // TODO : FIX depart_document !
     public depart_document(node: NodeInterface): void {
         this.headPrefix.push(this.doctype, this.headPrefixTemplate({ lang: this.settings!.languageCode }));
         this.meta.splice(0, 0, this.contentType({ charset: this.settings!.outputEncoding }));
@@ -1047,22 +1048,22 @@ class HTMLTranslator extends nodes.NodeVisitor {
     */
 
     public visit_footer(node: NodeInterface): void {
-        this.context.push(this.body.length.toString());
+        this.context.push(this.body.length);
     }
 
     public depart_footer(node: NodeInterface): void {
-        const start = this.context.pop()!;
+        const start = this.context.pop()! as number;
 
         const footer = [
             this.starttag(node, 'div', undefined, undefined, { CLASS: 'footer' }),
             '<hr class="footer" />\n',
         ];
 
-        footer.push(...this.body.slice(parseInt(start, 10)));
+        footer.push(...this.body.slice(start));
         footer.push('\n</div>\n');
         this.footer.push(...footer);
         this.bodySuffix.splice(0, 0, ...footer);
-        this.body.splice(parseInt(start, 10), this.body.length - parseInt(start, 10));
+        this.body.splice(start, this.body.length - start);
     }
 
 
@@ -1107,19 +1108,19 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public visit_header(node: NodeInterface): void {
-        this.context.push(this.body.length.toString());
+        this.context.push(this.body.length);
     }
 
     public depart_header(node: NodeInterface): void {
-        const start = this.context.pop()!;
+        const start = this.context.pop()! as number;
         const header = [
             this.starttag(node, 'div', undefined, undefined, { CLASS: 'header' }),
         ];
-        header.push(...this.body.slice(parseInt(start, 10)));
+        header.push(...this.body.slice(start));
         header.push('\n<hr class="header"/>\n</div>\n');
         this.bodyPrefix.push(...header);
         this.header.push(...header);
-        this.body.splice(parseInt(start, 10), this.body.length - parseInt(start, 10));
+        this.body.splice(start, this.body.length - start);
     }
 
     /*
