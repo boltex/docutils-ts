@@ -49,10 +49,7 @@ const booleans: { [val: string]: boolean } = {
         false, 'false': false, '': false
 };
 
-export function validateBoolean(parser: ArgumentParser, namespace: Namespace, values: any[],
-    optionString: (string | null)): boolean {
-    return false;
-}
+
 /*
     if isinstance(value, bool):
         return value
@@ -146,6 +143,17 @@ function validateEncodingAndErrorHandler(): void {
         */
 }
 
+export function validateBoolean(parser: ArgumentParser, namespace: Namespace, values: any[],
+    optionString: (string | null)): boolean {
+    if (typeof values[0] === 'boolean' || values[0] === undefined) {
+        return values[0];
+    }
+    const v = values[0].trim().toLowerCase();
+    if (v in booleans) {
+        return booleans[v];
+    }
+    throw new InvalidStateError(`unknown boolean value: "${values[0]}"`);
+}
 
 /**
 Check/normalize three-value settings:
@@ -433,7 +441,7 @@ export class OptionParser extends ArgumentParser {
                     ],
                     {
                         "action": "store_true",
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -443,6 +451,7 @@ export class OptionParser extends ArgumentParser {
                     ],
                     {
                         "action": "store_false",
+                        // "default": false, // have to specify default false here because it inversely targets the "generator" setting ( UNLESS optionArgs['default'] IS USED IN optparse.pyemulation below)
                         "dest": "generator"
                     }
                 ],
@@ -489,7 +498,7 @@ export class OptionParser extends ArgumentParser {
                     ],
                     {
                         "action": "store_true",
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -556,7 +565,7 @@ export class OptionParser extends ArgumentParser {
                     {
                         "action": "store_true",
                         "default": 1,
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -578,7 +587,7 @@ export class OptionParser extends ArgumentParser {
                         "action": "store_true",
                         "dest": "sectnum_xform",
                         "default": 1,
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -588,6 +597,7 @@ export class OptionParser extends ArgumentParser {
                     ],
                     {
                         "action": "store_false",
+                        // "default": true, // have to specify default true here because it inversely targets the "sectnum_xform" setting
                         "dest": "sectnum_xform"
                     }
                 ],
@@ -598,7 +608,7 @@ export class OptionParser extends ArgumentParser {
                     ],
                     {
                         "action": "store_true",
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -750,7 +760,7 @@ export class OptionParser extends ArgumentParser {
                     ],
                     {
                         "action": "store_true",
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -781,7 +791,7 @@ export class OptionParser extends ArgumentParser {
                     {
                         "action": "store_true",
                         "default": null,
-                        "validator": "validate_boolean"
+                        "validator": validateBoolean
                     }
                 ],
                 [
@@ -1181,17 +1191,31 @@ export class OptionParser extends ArgumentParser {
                                         self.defaults[option.dest] = None
                         */
                         if (newArgs.dest) {
-                            if (newArgs.defaultValue != null) {
+
+                            // NOPE ! SHOULD USE:  Object.prototype.hasOwnProperty.call(optionArgs, 'default')
+
+                            if (Object.prototype.hasOwnProperty.call(optionArgs, 'default')) {
                                 this.logger.silly(`setting default for ${newArgs.dest} is ${newArgs.defaultValue}`);
-                                this.defaults[newArgs.dest] = newArgs.defaultValue;
+                                this.defaults[newArgs.dest] = optionArgs['default'];
                             }
                             else if (newArgs.dest in this.defaults) {
                                 this.logger.silly(`setting default for ${newArgs.dest} is ${this.defaults[newArgs.dest]}`);
-                            }
-                            else {
-                                this.logger.silly(`setting default for ${newArgs.dest} is undefined`);
+                                // this.defaults[newArgs.dest] = this.defaults[newArgs.dest]; // DO NOTHING HERE!!
+                            } else {
                                 this.defaults[newArgs.dest] = undefined;
                             }
+
+                            // if (newArgs.defaultValue != null) {
+                            //     this.logger.silly(`setting default for ${newArgs.dest} is ${newArgs.defaultValue}`);
+                            //     this.defaults[newArgs.dest] = newArgs.defaultValue;
+                            // }
+                            // else if (newArgs.dest in this.defaults) {
+                            //     this.logger.silly(`setting default for ${newArgs.dest} is ${this.defaults[newArgs.dest]}`);
+                            // }
+                            // else {
+                            //     this.logger.silly(`setting default for ${newArgs.dest} is undefined`);
+                            //     this.defaults[newArgs.dest] = undefined;
+                            // }
                         }
                     }
                 });

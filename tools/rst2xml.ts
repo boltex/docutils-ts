@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-
-
 import fs from 'fs';
 
 import { fileSystem, publishCmdLine } from '../src/core.js'
