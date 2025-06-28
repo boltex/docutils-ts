@@ -412,7 +412,12 @@ export class Publisher {
 
   public debuggingDumps(): void {
     if (this.settings!.dumpSettings) {
-      process.stderr.write(JSON.stringify(this.settings!, null, 4));
+      // Fix this stringify in case it fails
+      try {
+        process.stderr.write(JSON.stringify(this.settings!, null, 4));
+      } catch (err) {
+        process.stderr.write("[debuggingDumps] Could not stringify settings (possible circular reference): " + (err instanceof Error ? err.message : String(err)) + "\n");
+      }
     }
   }
 }

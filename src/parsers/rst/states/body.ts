@@ -25,14 +25,15 @@ import {
 } from "../../../types.js";
 import {
     BodyState,
-    ParserConstructor, DirectiveConstructor, TableData
+    ParserConstructor, DirectiveConstructor, TableData,
+    RowData
 } from '../types.js';
 import { fullyNormalizeName } from "../../../nodeUtils.js";
 
 const nonWhitespaceEscapeBefore = RegExps.nonWhitespaceEscapeBefore;
 const simplename = RegExps.simplename;
 
-export type RowData = [number, number, number, number, StringList];
+// export type RowData = [number, number, number, StringList][]; // TODO : MAKE SURE THIS IS OK!
 
 function _LoweralphaToInt(s: string): number {
     return s.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
@@ -138,7 +139,7 @@ class Body extends RSTState implements BodyState {
         // this.doubleWidthPadChar = tableparser.TableParser.doubleWidthPadChar
 
         const enum_: EnumParseInfo = {};
-        // @ts-ignore
+
         enum_.formatinfo = {
             parens: {
                 prefix: "\\(", suffix: "\\)", start: 1, end: 1
@@ -150,12 +151,12 @@ class Body extends RSTState implements BodyState {
                 prefix: "", suffix: "\\.", start: 0, end: -1
             }
         };
-        // @ts-ignore
+
         enum_.formats = Object.keys(enum_.formatinfo);
-        // @ts-ignore
+
         enum_.sequences = ["arabic", "loweralpha", "upperalpha",
             "lowerroman", "upperroman"];
-        // @ts-ignore
+
         enum_.sequencepats = {
             arabic: "[0-9]+",
             loweralpha: "[a-z]",
@@ -163,11 +164,10 @@ class Body extends RSTState implements BodyState {
             lowerroman: "[ivxlcdm]+",
             upperroman: "[IVXLCDM]+"
         };
-        // @ts-ignore
+
         enum_.converters = {
             arabic: parseInt,
             loweralpha: _LoweralphaToInt,
-
             upperalpha: _UpperalphaToInt,
             lowerroman: _LowerromanToInt,
             upperroman: _UpperromanToInt
@@ -175,7 +175,7 @@ class Body extends RSTState implements BodyState {
 
         // @ts-ignore
         enum_.sequenceregexps = {};
-        // @ts-ignore
+
         enum_.sequences.forEach((sequence): void => {
             // @ts-ignore
             enum_.sequenceregexps[sequence] = new RegExp(`${enum_.sequencepats[sequence]}$`);
@@ -443,10 +443,10 @@ class Body extends RSTState implements BodyState {
         block.disconnect();
         let escaped = escape2null(block[0].trimRight());
         let blockIndex = 0;
-        let subDefMatch;
+        let subDefMatch!: RegExpExecArray; // Would throw if not initialized in the while loop below.
         let done = false;
         while (!done) {
-            subDefMatch = pattern.exec(escaped);
+            subDefMatch = pattern.exec(escaped)!;
             if (subDefMatch) {
                 done = true;
             } else {
@@ -459,7 +459,6 @@ class Body extends RSTState implements BodyState {
             }
         }
 
-        // @ts-ignore
         const subDefMatchEnd = subDefMatch.index + subDefMatch[0].length;
         block.splice(0, blockIndex);// strip out the substitution marker
         const tmpLine = `${block[0].trim()} `;
@@ -471,7 +470,7 @@ class Body extends RSTState implements BodyState {
         while (block.length && !block[block.length - 1].trim()) {
             block.pop();
         }
-        // @ts-ignore
+
         const subname = subDefMatch[2];
         const substitutionNode: nodes.substitution_definition = nodesFactory.substitution_definition(blockText);
         substitutionNode.source = src;
@@ -603,10 +602,9 @@ class Body extends RSTState implements BodyState {
         let args: string[] = [];
         let options: Options | undefined;
         let content: StringList | undefined;
-        let
-            contentOffset: number;
+        let contentOffset: number;
         /*        try {*/
-        // @ts-ignore
+
         [args, options, content, contentOffset] = this.parseDirectiveBlock(
             indented,
             lineOffset,
@@ -717,8 +715,7 @@ class Body extends RSTState implements BodyState {
             throw new Error('invalid state');
         }
         const r = this.explicit.constructs.map(
-            // @ts-ignore
-            ([method, pattern]): ExplicitConstructTuple => [method, pattern, pattern.exec(match.result.input)]
+            ([method, pattern]): ExplicitConstructTuple => [method, pattern, pattern.exec(match.result.input)!]
         );
         const r2 = r
             .find((x: ExplicitConstructTuple): boolean => x[2] && x[0] !== undefined);
@@ -726,7 +723,6 @@ class Body extends RSTState implements BodyState {
             const [method, pattern, expmatch] = r2;
             try {
                 // direct return of method result - returns ParseResult
-                // @ts-ignore
                 return method(expmatch);
             } catch (error) {
                 if (error instanceof MarkupError) {
@@ -820,11 +816,9 @@ class Body extends RSTState implements BodyState {
             this.nestedParse(blockquoteLines!, lineOffset, blockquote);
             elements.push(blockquote);
             if (attributionLines) { // fixme
-                // @ts-ignore
-                const [attribution, messages] = this.parse_attribution(attributionLines,
-                    attributionOffset!);
+
+                const [attribution, messages] = this.parse_attribution(attributionLines, attributionOffset!);
                 blockquote.add(attribution);
-                // @ts-ignore
                 elements.push(...messages);
             }
             lineOffset = newLineOffset!;
@@ -889,9 +883,9 @@ class Body extends RSTState implements BodyState {
 
     /** Enumerated List Item */
     public enumerator(match: RegexpResult, context: ContextArray, nextState: StateInterface): ParseMethodReturnType {
-        // @ts-ignore
+
         const [format, sequence, text, ordinal]: [string, string, string, number] = this.parseEnumerator(match);
-        // @ts-ignore
+
         if (!this.isEnumeratedListItem(ordinal, sequence, format)) {
             throw new TransitionCorrection("text");
         }
@@ -1545,35 +1539,30 @@ class Body extends RSTState implements BodyState {
         if (headRows && headRows.length) {
             const thead = nodesFactory.thead("", [], {});
             tgroup.add(thead);
-            //@ts-ignore
-            headRows.map((row: RowData): nodes.row => this.buildTableRow(row, tableline))
-                //@ts-ignore
-                .forEach((row: nodes.row): void => thead.add(row));
+
+            headRows.map((row: RowData): nodes.row => this.buildTableRow(row, tableline)).forEach((row: nodes.row): void => thead.add(row));
         }
         const tbody = nodesFactory.tbody();
         tgroup.add(tbody);
-        // @ts-ignore
+
         bodyrows.forEach((row: RowData): void => {
             console.warn(row);
         });
-        // @ts-ignore
-        bodyrows.map((row: RowData): nodes.row => this.buildTableRow(row, tableline))
-            // @ts-ignore
-            .forEach((row: nodes.row): void => tbody.add(row));
+
+
+        bodyrows.map((row: RowData): nodes.row => this.buildTableRow(row, tableline)).forEach((row: nodes.row): void => tbody.add(row));
         return table;
     }
 
     public buildTableRow(rowdata: RowData, tableline: number): nodes.row {
         const row = nodesFactory.row("", [], {});
-        // @ts-ignore
+
         rowdata.filter((x): boolean => x !== undefined).forEach(([morerows, morecols, offset, cellblock]): void => {
-            const attributes = {};
+            const attributes: Record<string, any> = {};
             if (morerows) {
-                // @ts-ignore
                 attributes.morerows = morerows;
             }
             if (morecols) {
-                // @ts-ignore
                 attributes.morecols = morecols;
             }
             const entry = nodesFactory.entry("", [], attributes);
@@ -1651,10 +1640,12 @@ class Body extends RSTState implements BodyState {
         return ['', '', '', 0];
     }
 
-    private parseDirectiveBlock(indented: StringList,
+    private parseDirectiveBlock(
+        indented: StringList,
         lineOffset: number,
         directive: DirectiveConstructor,
-        option_presets: Options): [string[], Options, StringList, number] | undefined {
+        option_presets: Options
+    ): [string[], Options, StringList, number] {
         const optionSpec = directive.optionSpec;
         const hasContent = directive.hasContent;
         if (indented && indented.length && !indented[0].trim()) {
@@ -1712,7 +1703,7 @@ class Body extends RSTState implements BodyState {
     private parseDirectiveOptions(option_presets: Options, optionSpec: OptionSpec, argBlock: StringList): [Options | undefined, StringList] {
         let options: Options = { ...option_presets };
         let optBlock: StringList;
-        // @ts-ignore
+
         let i = argBlock.findIndex((line): boolean => this.patterns.field_marker.test(line));
         if (i !== -1) {
             optBlock = argBlock.slice(i) as StringList;

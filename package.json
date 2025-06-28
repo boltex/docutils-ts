@@ -32,7 +32,8 @@
   },
   "bin": {
     "rst2html": "./dist/tools/rst2html.js",
-    "rst2xml": "./dist/tools/rst2xml.js"
+    "rst2xml": "./dist/tools/rst2xml.js",
+    "rst2pseudoxml": "./dist/tools/rst2pseudoxml.js"
   },
   "files": [
     "dist",

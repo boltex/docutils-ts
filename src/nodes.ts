@@ -117,9 +117,8 @@ function serialEscape(value: string): string {
     return value.replace(/\\/g, "\\\\").replace(/ /g, "\\ ");
 }
 
-/* We don't do 'psuedo-xml' but perhaps we should */
 function pseudoQuoteattr(value: string): string {
-    return `"${xmlescape(value)}"`;
+    return `"${value}"`;
 }
 
 function setupBacklinkable(o: NodeInterface): void {

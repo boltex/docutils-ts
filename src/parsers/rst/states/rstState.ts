@@ -107,13 +107,13 @@ abstract class RSTState extends StateWS {
         return [[], []];
     }
 
-
     public nestedParse(
         inputLines: StringList,
         inputOffset: number,
         node: NodeInterface,
         matchTitles: boolean = false,
-        factoryFunction?: StateMachineFactoryFunction<Nestedstatemachine>): number | undefined {
+        factoryFunction?: StateMachineFactoryFunction<Nestedstatemachine>
+    ): number | undefined {
         if (!this.memo || !this.memo.document) {
             throw new Error('need memo');
         }

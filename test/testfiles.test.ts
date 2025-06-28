@@ -48,25 +48,36 @@ test('todo: uncomment to run tests in testfiles.test', () => {
     expect(1 + 1).toBe(2);
 });
 
-// test.each(table)('%s', (file, input) => {
-//     const logger = createLogger();
-//     const myOpts: any = {};
+test.each(table)('%s', (file, input) => {
+    const logger = createLogger();
+    const myOpts: any = {};
 
-//     const settings = { ...defaultSettings };
-//     const args = { ...defaultArgs };
+    const settings = { ...defaultSettings };
+    const args = { ...defaultArgs };
 
-//     const { readerName, parserName, writerName } = args;
-//     const source = new StringInput({ source: input, logger: logger });
-//     const destination = new StringOutput(logger);
-//     const pub = new Publisher({
-//         source, destination, settings, logger,
-//     });
-//     pub.setComponents(readerName, parserName, writerName);
-//     return pub.publish({}).then(() => {
-//         const document = pub.document;
-//         const visitor = new Visitor(document!);
-//         document!.walkabout(visitor);
-//         expect(destination.destination!).toMatchSnapshot();
-//     });
+    const { readerName, parserName, writerName } = args;
+    const source = new StringInput({ source: input, logger: logger });
+    const destination = new StringOutput({ logger: logger });
+    const pub = new Publisher({
+        source, destination, settings, logger,
+    });
 
-// });
+    pub.setComponents(readerName, parserName, writerName);
+    pub.publish({}).then(() => {
+        const document = pub.document;
+        // console.log(!!document ? 'No document' : 'Document created');
+        // const visitor = new Visitor(document!);
+        // document!.walkabout(visitor);
+        // expect(destination.destination!).toMatchSnapshot();
+    });
+
+
+    // return pub.publish({}).then(() => {
+    //     const document = pub.document;
+    //     console.log(!!document ? 'No document' : 'Document created');
+    //     // const visitor = new Visitor(document!);
+    //     // document!.walkabout(visitor);
+    //     // expect(destination.destination!).toMatchSnapshot();
+    // });
+
+});

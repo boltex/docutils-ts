@@ -21,7 +21,6 @@ class EnumeratedList extends SpecializedBody {
                 || ordinal !== (this.lastordinal + 1)))
             || !this.is_enumerated_list_item(ordinal, sequence, format))) {
             // # different enumeration: new list
-            // @ts-ignore
             this.invalid_input();
         }
         if (sequence === '#') {

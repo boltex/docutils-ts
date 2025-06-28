@@ -16,7 +16,6 @@ class OptionList extends SpecializedBody {
             [optionListItem, blankFinish] = this.option_list_item(match);
         } catch (error) {
             if (error instanceof MarkupError) {
-                // @ts-ignore
                 this.invalid_input();
             }
             throw error;

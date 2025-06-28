@@ -175,15 +175,13 @@ class Text extends RSTState {
         const absLineOffset = this.rstStateMachine.absLineOffset();
         const offset = this.rstStateMachine.lineOffset;
         const parentNode = new nodes.Element();
-        // @ts-ignore
-        const newAbsOffset = this.nestedParse(
 
+        const newAbsOffset = this.nestedParse(
             this.rstStateMachine.inputLines.slice(offset),
             absLineOffset,
             parentNode,
             false,
             (): NestedStateMachine => NestedStateMachine.createStateMachine(this.rstStateMachine, 'QuotedLiteralBlock', this.rstStateMachine.stateFactory!.withStateClasses(['QuotedLiteralBlock'])));
-
 
         if (newAbsOffset !== undefined) {
             this.gotoLine(newAbsOffset);

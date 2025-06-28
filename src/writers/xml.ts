@@ -4,6 +4,7 @@ import * as nodes from '../nodes.js';
 import { Document, NodeClass, NodeInterface } from "../types.js";
 import { Settings } from "../settings.js";
 import { InvalidStateError } from "../exceptions.js";
+import { xmlescape } from '../xml-escape.js';
 
 export function escapeXml(unsafe: string): string {
     if (typeof unsafe === 'undefined') {
@@ -77,7 +78,7 @@ class XMLTranslator extends nodes.GenericNodeVisitor {
         if (!this.inSimple) {
             this.output.push(Array(this.level + 1).join(this.indent));
         }
-        this.output.push(node.starttag());
+        this.output.push(node.starttag(xmlescape));
         this.level += 1;
         // fixme should probably pick this code up
         if (false) { // node instanceof nodes.FixedTextElement || node instanceof nodes.literal) {

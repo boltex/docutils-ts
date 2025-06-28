@@ -134,6 +134,7 @@ export async function publishCmdLine(args: PublishCmdLineArgs): Promise<string |
   const _defaults = {
     readerName: 'standalone',
     parserName: 'restructuredtext',
+    writerName: 'pseudoxml',
     usage: defaultUsage,
     description: defaultDescription,
     enableExitStatus: true,

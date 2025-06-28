@@ -24,9 +24,9 @@ export interface BodyState {
     directive: (match: RegExpExecArray, optionPresets: Options) => [NodeInterface[], boolean];
 }
 
-export type RowData = TableEntryData[];
+export type RowData = TableEntryData[]; // Todo fix along with 'table' handling in body.ts
 export type CellData = [number, number, number, number, StringList];
-export type TableEntryData = [number, number, number, StringList];
+export type TableEntryData = [number, number, number, StringList]; // Todo fix along with 'table' handling in body.ts
 export type TableData = [number[], RowData[], RowData[]]
 export interface ParserConstructor {
     new(): any;
