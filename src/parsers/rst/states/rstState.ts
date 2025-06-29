@@ -97,7 +97,6 @@ abstract class RSTState extends StateWS {
         }
     }
 
-    /* istanbul ignore next */
     public noMatch(context: any[], transitions: TransitionsArray | undefined): [{}[], (string | StateInterface | undefined), {}[]] {
         this.reporter!.severe(`Internal error: no transition pattern match.  State: "${this.constructor.name}"; transitions: ${transitions}; context: ${context}; current line: ${this.rstStateMachine.line}.`);
         return [context, undefined, []];
@@ -175,7 +174,6 @@ abstract class RSTState extends StateWS {
         if (myargs.createStateMachine !== undefined) {
             throw Error('not expecing that');
         }
-        /* istanbul ignore next */
         if (myargs.extraSettings == null) {
             myargs.extraSettings = {};
         }
@@ -290,7 +288,7 @@ abstract class RSTState extends StateWS {
         this.document!.noteImplicitTarget(sectionNode, sectionNode);
         const offset = this.rstStateMachine.lineOffset + 1;
         const absoffset = this.rstStateMachine.absLineOffset() + 1;
-        const newabsoffset = this.nestedParse(this.rstStateMachine.inputLines.slice(offset) as StringList,
+        const newabsoffset = this.nestedParse(this.rstStateMachine.inputLines.slice(offset),
             absoffset,
             sectionNode as NodeInterface,
             true,
@@ -310,7 +308,7 @@ abstract class RSTState extends StateWS {
     }
 
     public paragraph(lines: (string | {})[], lineno: number): any[] {
-        const data = lines.join('\n').trimRight();
+        const data = lines.join('\n').trimEnd();
         let text;
         let literalNext;
         if (/(?<!\\)(\\\\)*::$/.test(data)) {

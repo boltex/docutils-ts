@@ -53,7 +53,7 @@ class SubstitutionDef extends Body {
         const offset = this.rstStateMachine.lineOffset;
         const parentNode = new nodes.Element();
         const newAbsOffset = this.nestedParse(
-            this.rstStateMachine.inputLines.slice(offset) as StringList,
+            this.rstStateMachine.inputLines.slice(offset),
             absLineOffset,
             parentNode,
             false)

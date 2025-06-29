@@ -20,7 +20,7 @@ import NestedStateMachine from "../nestedStateMachine.js";
 class Text extends RSTState {
     protected initialTransitions?: (string | string[])[] = [['underline', 'Body'], ['text', 'Body']];
     public patterns: Patterns = {
-        underline: new RegExp('([!-/:-@[-`{-~])\\1* *$'),
+        underline: new RegExp('^([!-/:-@[-`{-~])\\1* *$'),
         text: new RegExp(''),
     };
 
@@ -62,13 +62,12 @@ class Text extends RSTState {
     }
 
     public underline(match: RegexpResult, context: ContextArray, nextState: StateInterface): any[] {
-        /* istanbul ignore if */
         if (!Array.isArray(context)) {
             throw new Error('Context should be array');
         }
         const lineno = this.rstStateMachine.absLineNumber();
-        const title = context[0].trimRight();
-        const underline = match.result.input.trimRight();
+        const title = context[0].trimEnd();
+        const underline = match.result.input.trimEnd();
         const source = `${title}\n${underline}`;
         const messages = [];
         if (columnWidth(title) > underline.length) {
@@ -223,7 +222,7 @@ class Text extends RSTState {
                 if (parts.length === 1) {
                     nodeList[nodeList.length - 1].add(node);
                 } else {
-                    const text = parts[0].trimRight();
+                    const text = parts[0].trimEnd();
                     const textnode = new nodes.Text(unescape(text, true));
                     nodeList[nodeList.length - 1].add(textnode as NodeInterface);
                     parts.slice(1).forEach((part): void => {

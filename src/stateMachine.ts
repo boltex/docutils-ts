@@ -624,7 +624,8 @@ export function string2lines(
     astring?: string, args?: {
         tabWidth?: number; convertWhitespace?: boolean;
         whitespace?: RegExp | string;
-    }): string[] {
+    }
+): string[] {
     if (!astring) {
         astring = '';
     }

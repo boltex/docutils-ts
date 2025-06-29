@@ -131,7 +131,20 @@ class Body extends RSTState implements BodyState {
     private attribution_pattern?: RegExp;
     private simpleTableTopPat?: RegExp;
     private pats: BodyPats;
-    protected initialTransitions?: (string | string[])[] = ["bullet", "enumerator", "field_marker", "option_marker", "doctest", "line_block", "grid_table_top", "simple_table_top", "explicit_markup", "anonymous", "line", "text"];
+    protected initialTransitions?: (string | string[])[] = [
+        "bullet",
+        "enumerator",
+        "field_marker",
+        "option_marker",
+        "doctest",
+        "line_block",
+        "grid_table_top",
+        "simple_table_top",
+        "explicit_markup",
+        "anonymous",
+        "line",
+        "text"
+    ];
 
     public constructor(stateMachine: RSTStateMachine, debug: boolean = false) {
         super(stateMachine, debug);
@@ -271,7 +284,6 @@ class Body extends RSTState implements BodyState {
             this.document!.setId(footnote, footnote);
         }
 
-        /* istanbul ignore else */
         if (indented && indented.length) {
             this.nestedParse(indented, offset, footnote);
         }
@@ -295,7 +307,6 @@ class Body extends RSTState implements BodyState {
         citation.attributes.names.push(name);
         this.document!.noteCitation(citation);
         this.document!.noteExplicitTarget(citation, citation);
-        /* istanbul ignore else */
         if (indented && indented.length) {
             this.nestedParse(indented, offset, citation);
         }
@@ -406,7 +417,6 @@ class Body extends RSTState implements BodyState {
             target.attributes.names.push(name);
             if (refuri) {
                 const uri = this.inliner!.adjustUri(refuri);
-                /* istanbul ignore else */
                 if (uri) {
                     target.attributes.refuri = uri;
                 } else {
@@ -416,7 +426,6 @@ class Body extends RSTState implements BodyState {
             this.document!.noteExplicitTarget(target, this.parent);
         } else {
             // # anonymous target
-            // istanbul ignore else
             if (refuri) {
                 target.attributes.refuri = refuri;
             }
@@ -441,7 +450,7 @@ class Body extends RSTState implements BodyState {
         // unuseD? fixme
         const blockText = (match.input.substring(0, matchEnd) + block.join("\n"));
         block.disconnect();
-        let escaped = escape2null(block[0].trimRight());
+        let escaped = escape2null(block[0].trimEnd());
         let blockIndex = 0;
         let subDefMatch!: RegExpExecArray; // Would throw if not initialized in the while loop below.
         let done = false;
@@ -505,7 +514,7 @@ class Body extends RSTState implements BodyState {
         const result = substitutionNode.traverse({ condition: nodes.Element }).map((node: NodeInterface): ParseResult | undefined => {
             if (this.disallowedInsideSubstitutionDefinitions(node)) {
 
-                const pformat = nodesFactory.literal_block("", node.pformat().trimRight());
+                const pformat = nodesFactory.literal_block("", node.pformat().trimEnd());
 
                 const msg = this.reporter!.error(
                     `Substitution definition contains illegal element <${node.tagname}>:`,
@@ -690,7 +699,6 @@ class Body extends RSTState implements BodyState {
 
     public explicit_markup(match: RegexpResult, context: ContextArray, nextState: StateInterface): ParseMethodReturnType {
         const r = this.explicit_construct(match);
-        /* istanbul ignore if */
         if (!isIterable(r)) {
             throw new Error("");
         }
@@ -787,7 +795,6 @@ class Body extends RSTState implements BodyState {
 
     public indent(match: RegexpResult, context: ContextArray, nextState: StateInterface): ParseMethodReturnType {
         const [indented, indent, lineOffset, blankFinish] = this.rstStateMachine.getIndented({});
-        /* istanbul ignore if */
         if (indented === undefined) {
             throw new Error();
         }
@@ -800,7 +807,6 @@ class Body extends RSTState implements BodyState {
     }
 
     public block_quote(indented: StringList, lineOffset: number): NodeInterface[] {
-        /* istanbul ignore if */
         if (!indented) {
             throw new Error();
         }
@@ -823,7 +829,7 @@ class Body extends RSTState implements BodyState {
             }
             lineOffset = newLineOffset!;
             while (indented && indented.length && !indented[0]) {
-                indented = indented.slice(1) as StringList;
+                indented = indented.slice(1);
                 lineOffset += 1;
             }
         }
@@ -835,14 +841,14 @@ class Body extends RSTState implements BodyState {
         let blank;
         let nonblankSeen = false;
         for (let i = 0; i < indented.length; i += 1) {
-            const line = indented[i].trimRight();
+            const line = indented[i].trimEnd();
             if (line) {
                 if (nonblankSeen && blank === i - 1) {
                     const match = this.attribution_pattern.exec(line);
                     if (match) {
                         const [attributionEnd, indent] = this.check_attribution(indented, i);
                         if (attributionEnd) {
-                            const aLines = indented.slice(i, attributionEnd) as StringList;
+                            const aLines = indented.slice(i, attributionEnd);
                             aLines.trimLeft(match.index + match[0].length, undefined, 1);
                             aLines.trimLeft(indent, 1);
                             return [
@@ -865,7 +871,7 @@ class Body extends RSTState implements BodyState {
         let indent = null;
         let i;
         for (i = attributionStart + 1; i < indented.length; i += 1) {
-            const line = indented[i].trimRight();
+            const line = indented[i].trimEnd();
             if (!line) {
                 break;
             }
@@ -919,7 +925,7 @@ class Body extends RSTState implements BodyState {
     }
 
     public parse_attribution(indented: string[], lineOffset: number): [NodeInterface, NodeInterface[]] {
-        const text = indented.join("\n").trimRight();
+        const text = indented.join("\n").trimEnd();
         const lineno = this.rstStateMachine.absLineNumber() + lineOffset;
         const [textnodes, messages] = this.inline_text(text, lineno);
         const anode = nodesFactory.attribution(text, "", textnodes);
@@ -938,7 +944,6 @@ class Body extends RSTState implements BodyState {
         if (sourceAndLine[1] !== undefined) {
             bulletlist.line = sourceAndLine[1];
         }
-        /* istanbul ignore if */
         if (!this.parent) {
             throw new Error("no parent");
         }
@@ -950,7 +955,6 @@ class Body extends RSTState implements BodyState {
             match.pattern.lastIndex + match.result[0].length
         ); /* -1 ? */
         let blankFinish = blankFinish1;
-        /* istanbul ignore if */
         if (!i) {
             throw new Error("no node");
         }
@@ -968,7 +972,6 @@ class Body extends RSTState implements BodyState {
 
     public list_item(indent: number): [NodeInterface, boolean] {
         //      console.log(`in list_item (indent=${indent})`);
-        /* istanbul ignore if */
         if (indent == null) {
             throw new Error("Need indent");
         }
@@ -1170,7 +1173,7 @@ class Body extends RSTState implements BodyState {
      */
     public parse_option_marker(match: RegexpResult): NodeInterface[] {
         const optlist: NodeInterface[] = [];
-        const optionstrings: string[] = match.result[0].trimRight().split(", ");
+        const optionstrings: string[] = match.result[0].trimEnd().split(", ");
         optionstrings.forEach((optionstring): void => {
             const tokens = optionstring.split(/s+/);
             let delimiter = " ";
@@ -1262,7 +1265,7 @@ class Body extends RSTState implements BodyState {
         const text = indented.join("\n");
         const [textNodes, messages] = this.inline_text(text, lineno);
         const line = nodesFactory.line(text, "", textNodes);
-        if (match.result.input.trimRight() !== "|") {
+        if (match.result.input.trimEnd() !== "|") {
             line.indent = match.result[1].length - 1;
         }
 
@@ -1495,7 +1498,7 @@ class Body extends RSTState implements BodyState {
             return [new StringList([]), messages, !extra];
         }
         this.rstStateMachine.nextLine(end! - start);
-        block = lines.slice(start, end! + 1) as StringList;
+        block = lines.slice(start, end! + 1);
         // for East Asian chars:
         block.padDoubleWidth(this.doubleWidthPadChar!);
         return [block, [], end === limit || !lines[end! + 1].trim()];
@@ -1606,7 +1609,6 @@ class Body extends RSTState implements BodyState {
 
 
     public text(match: RegexpResult, context: ContextArray, nextState: StateInterface): ParseMethodReturnType {
-        /* istanbul ignore if */
         if (match.input === undefined) {
             throw new Error("");
         }
@@ -1665,8 +1667,8 @@ class Body extends RSTState implements BodyState {
             if (i === -1) {
                 i = indented.length;
             }
-            argBlock = indented.slice(0, i) as StringList;
-            content = indented.slice(i + 1, 0) as StringList;
+            argBlock = indented.slice(0, i);
+            content = indented.slice(i + 1, 0);
             contentOffset = lineOffset + i + 1;
         } else {
             content = indented;
@@ -1706,8 +1708,8 @@ class Body extends RSTState implements BodyState {
 
         let i = argBlock.findIndex((line): boolean => this.patterns.field_marker.test(line));
         if (i !== -1) {
-            optBlock = argBlock.slice(i) as StringList;
-            argBlock = argBlock.slice(0) as StringList;
+            optBlock = argBlock.slice(i);
+            argBlock = argBlock.slice(0);
         } else {
             i = argBlock.length;
             optBlock = new StringList([]);

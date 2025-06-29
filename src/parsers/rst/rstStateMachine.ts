@@ -22,19 +22,21 @@ class RSTStateMachine extends StateMachineWS implements Rststatemachine {
     public createIndentStateMachine?: StateMachineFactoryFunction<Rststatemachine>;
     private inliner?: InlinerInterface;
 
-    public run(inputLines: StringList | string | string[],
+    public run(
+        inputLines: StringList | string[],
         inputOffset: number,
         runContext?: ContextKind,
         inputSource?: {},
         initialState?: string,
         document?: Document,
         matchTitles: boolean = true,
-        inliner?: InlinerInterface): (string | {})[] {
+        inliner?: InlinerInterface
+    ): (string | {})[] {
         if (document === undefined) {
             throw new Error('need document');
         }
         this.document = document;
-        // @ts-ignore
+        // @ts-ignore-next-line
         this.inputLines = inputLines;
         this.inputOffset = inputOffset;
         try {

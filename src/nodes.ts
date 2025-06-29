@@ -1841,10 +1841,12 @@ class document extends Element implements Document {
 }
 
 class FixedTextElement extends TextElement {
-    /*    def __init__(self, rawsource='', text='', *children, **attributes):
-          TextElement.__init__(self, rawsource, text, *children, **attributes)
-          self.attributes['xml:space'] = 'preserve'
-  */
+
+    constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.attributes["xml:space"] = "preserve";
+    }
+
 }
 
 // ================

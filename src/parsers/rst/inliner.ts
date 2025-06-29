@@ -16,8 +16,11 @@ import {
     LoggerType,
 } from "../../types.js";
 import { Settings } from "../../settings.js";
-import { InlinerInterface } from "./types.js";
+import { InlinerInterface, RegexpMatchParam } from "./types.js";
 import { fullyNormalizeName } from "../../nodeUtils.js";
+
+// Add this type definition near the top of the file or just before the class definition
+type DispatchKey = '*' | '**' | '``' | '`' | '_`' | '_' | ']_' | '|' | '__';
 
 const uric = '[-_.!~*\'()[\\];/:@&=+$,%a-zA-Z0-9\\x00]';
 // # Delimiter indicating the end of a URI (not part of the URI):
@@ -28,7 +31,12 @@ const emailc = '[-_!~*\'{|}/#?^`&=+$%a-zA-Z0-9\\x00]';
 const emailPattern = `${emailc}+(?:\\.${emailc}+)*(?<!\x00)@${emailc}+(?:\\.${emailc}*)*%(uriEnd)s`;
 // email=re.compile(self.email_pattern % args + '$', re.VERBOSE | re.UNICODE),
 
-function buildRegexp(definition: any[], compile = true): [RegExp | string, string[], string] | [RegExp | string, string[]] {
+// Function overloads
+function buildRegexp(definition: any[]): [RegExp, string[], string];
+function buildRegexp(definition: any[], compile: true): [RegExp, string[], string];
+function buildRegexp(definition: any[], compile: false): [string, string[]];
+// Implementation signature
+function buildRegexp(definition: any[], compile = true): [RegExp, string[], string] | [string, string[]] {
     const [fakeTuple, name, prefix, suffix, parts] = definition;
     let myPrefix = prefix.slice();
     let mySuffix = suffix.slice();
@@ -101,13 +109,46 @@ function buildRegexp(definition: any[], compile = true): [RegExp | string, strin
  */
 class Inliner implements InlinerInterface {
     private language: any;
-    private dispatch: any;
-    private implicitDispatch: any[];
+    private dispatch = {
+        '*': this.emphasis.bind(this),
+        '**': this.strong.bind(this),
+        '``': this.literal.bind(this),
+        '`': this.interpreted_or_phrase_ref.bind(this),
+        '_`': this.inline_internal_target.bind(this),
+        _: this.reference.bind(this),
+        ']_': this.footnote_reference.bind(this),
+        '|': this.substitution_reference.bind(this),
+        __: this.anonymous_reference.bind(this),
+    };
+    private implicitDispatch: RegExp[];
     private nonWhitespaceAfter: string = '';
     private nonWhitespaceBefore: string;
     private nonWhitespaceEscapeBefore: string;
     private nonUnescapedWhitespaceEscapeBefore: string;
-    public patterns: any;
+    public patterns!: {
+        initial: [RegExp, string[], string],
+        emphasis: RegExp,
+        strong: RegExp,
+        interpreted_or_phrase_ref: RegExp,
+        embedded_link: RegExp,
+        literal: RegExp,
+        target: RegExp,
+        substitution_ref: RegExp,
+        email: RegExp,
+        uri: RegExp,
+        //            emphasis: new RegExp(`${this.nonWhitespaceEscapeBefore}(\\*)${endStringSuffix}`),
+        // strong: new RegExp(`${this.nonWhitespaceEscapeBefore}(\\*\\*)${endStringSuffix}`),
+        // interpreted_or_phrase_ref: new RegExp(`${this.nonUnescapedWhitespaceEscapeBefore}(\`((:${this.simplename}:)?(__?)?))${endStringSuffix}`),
+        // embedded_link: new RegExp(`((?:[ \\n]+|^)<${this.nonWhitespaceAfter}(([^<>]|\\x00[<>])+)${this.nonWhitespaceEscapeBefore}>)$`),
+        // literal: new RegExp(`${this.nonWhitespaceBefore}(\`\`)${endStringSuffix}`),
+        // target: new RegExp(`${this.nonWhitespaceEscapeBefore}(\`)${endStringSuffix}`),
+        // substitution_ref: new RegExp(`${this.nonWhitespaceEscapeBefore}(\\|_{0,2})${endStringSuffix}`),
+        // email: new RegExp(emailPattern), // fixme % args + '$',
+        // // re.VERBOSE | re.UNICODE),
+        // uri: new RegExp(`${startStringPrefix}((([a-zA-Z][a-zA-Z0-9.+-]*):(((//?)?${uric}*${uriEnd})(\\?${uric}*${uriEnd})?(\\#${uriEnd})?))|(${emailPattern}))${endStringSuffix}`),
+        // // need pep
+        // // need rfc
+    };
     private reporter: ReporterInterface;
     private parent?: ElementInterface;
     private document: Document;
@@ -121,17 +162,6 @@ class Inliner implements InlinerInterface {
      */
     public constructor(document: Document, logger: LoggerType) {
         this.logger = logger;
-        this.dispatch = {
-            '*': this.emphasis.bind(this),
-            '**': this.strong.bind(this),
-            '``': this.literal.bind(this),
-            '`': this.interpreted_or_phrase_ref.bind(this),
-            '_`': this.inline_internal_target.bind(this),
-            _: this.reference.bind(this),
-            ']_': this.footnote_reference.bind(this),
-            '|': this.substitution_reference.bind(this),
-            __: this.anonymous_reference.bind(this),
-        };
         this.document = document;
 
         this.reporter = document.reporter;
@@ -143,7 +173,7 @@ class Inliner implements InlinerInterface {
         this.nonUnescapedWhitespaceEscapeBefore = '(?<!(?<!\\x00)[\\s\\x00])';
     }
 
-    public inline_internal_target(match: any, lineno: number): any[] {
+    public inline_internal_target(match: RegexpMatchParam, lineno: number): any[] {
         const [before, inlines, remaining, sysmessages, endstring] = this.inline_obj(
             match,
             lineno,
@@ -160,7 +190,7 @@ class Inliner implements InlinerInterface {
         return [before, inlines, remaining, sysmessages];
     }
 
-    public substitution_reference(match: any, lineno: number): any[] {
+    public substitution_reference(match: RegexpMatchParam, lineno: number): any[] {
         const [before, inlines, remaining, sysmessages, endstring] = this.inline_obj(
             match, lineno, this.patterns.substitution_ref,
             nodes.substitution_reference,
@@ -188,7 +218,7 @@ class Inliner implements InlinerInterface {
         return [before, inlines, remaining, sysmessages];
     }
 
-    public footnote_reference(match: any, lineno: number): any[] {
+    public footnote_reference(match: RegexpMatchParam, lineno: number): any[] {
         const label = match.groups.footnotelabel;
         let refname = fullyNormalizeName(label);
         const string = match.result.input;
@@ -220,13 +250,13 @@ class Inliner implements InlinerInterface {
                 this.document.noteFootnoteRef(refnode);
             }
             if (getTrimFootnoteRefSpace(this.document.settings)) {
-                before = before.trimRight();
+                before = before.trimEnd();
             }
         }
         return [before, [refnode], remaining, []];
     }
 
-    public reference(match: any, lineno: number, anonymous = false): any[] {
+    public reference(match: RegexpMatchParam, lineno: number, anonymous = false): any[] {
         const referencename = match.groups.refname;
         const refname = fullyNormalizeName(referencename);
         const referencenode = new nodes.reference(
@@ -247,7 +277,7 @@ class Inliner implements InlinerInterface {
         return [string.substring(0, matchstart), [referencenode], string.substring(matchend), []];
     }
 
-    private anonymous_reference(match: any, lineno: number): any[] {
+    private anonymous_reference(match: RegexpMatchParam, lineno: number): any[] {
         return this.reference(match, lineno, true);
     }
 
@@ -259,14 +289,14 @@ class Inliner implements InlinerInterface {
         return problematic;
     }
 
-    private emphasis(match: any, lineno: number): any[] {
+    private emphasis(match: RegexpMatchParam, lineno: number): any[] {
         const [before, inlines, remaining, sysmessages, endstring] = this.inline_obj(
             match, lineno, this.patterns.emphasis, nodes.emphasis,
         );
         return [before, inlines, remaining, sysmessages];
     }
 
-    private strong(match: any, lineno: number): any[] {
+    private strong(match: RegexpMatchParam, lineno: number): any[] {
         const [before, inlines, remaining, sysmessages, endstring] = this.inline_obj(match,
             lineno,
             this.patterns.strong,
@@ -274,7 +304,7 @@ class Inliner implements InlinerInterface {
         return [before, inlines, remaining, sysmessages];
     }
 
-    private interpreted_or_phrase_ref(match: any, lineno: number): any[] {
+    private interpreted_or_phrase_ref(match: RegexpMatchParam, lineno: number): any[] {
         const endPattern = this.patterns.interpreted_or_phrase_ref;
         const string = match.match.input;
         // console.log(match.groups);
@@ -338,7 +368,7 @@ class Inliner implements InlinerInterface {
         return [string.substring(0, match.match.index), [prb], string.substring(matchend), [msg]];
     }
 
-    private phrase_ref(before: any, after: any, rawsource: any, escaped: any, text: any): any[] {
+    private phrase_ref(before: string, after: string, rawsource: string, escaped: string, text: string): any[] {
         const match = this.patterns.embedded_link.exec(escaped);
         let aliastype;
         let aliastext;
@@ -430,7 +460,7 @@ class Inliner implements InlinerInterface {
            of matching opening/closing delimiters (not necessarily quotes)
            or at the end of the match.
     */
-    private quoted_start(match: any): boolean {
+    private quoted_start(match: RegexpMatchParam): boolean {
         const string = match.result.input;
         const start = match.result.index;
         if (start === 0) { // start-string at beginning of text
@@ -447,7 +477,7 @@ class Inliner implements InlinerInterface {
         return matchChars(prestart, poststart);
     }
 
-    private inline_obj(match: any, lineno: number, endPattern: any, nodeclass: any,
+    private inline_obj(match: RegexpMatchParam, lineno: number, endPattern: any, nodeclass: any,
         restore_backslashes = false): any[] {
         if (typeof nodeclass !== 'function') {
             throw new Error();
@@ -617,14 +647,14 @@ class Inliner implements InlinerInterface {
             //          console.log(match);
             if (match) {
                 this.logger.silly('matched', { value: match });
-                const rr: any = {};
+                const rr: Record<string, string> = {};
 
-                this.patterns.initial[1].forEach((x: any, index: number): void => {
+                this.patterns.initial[1].forEach((x: string, index: number): void => {
                     if (x != null) {
                         rr[x] = match[index];
                     }
                 });
-                const mname = rr.start || rr.backquote || rr.refend || rr.fnend;
+                const mname = (rr.start || rr.backquote || rr.refend || rr.fnend) as DispatchKey;
                 const method = this.dispatch[mname];
                 if (typeof method !== "function") {
                     throw new Error(`Invalid dispatch ${mname}`);
@@ -638,6 +668,7 @@ class Inliner implements InlinerInterface {
                 [before, inlines, remaining, sysmessages] = method(
                     { result: match, match, groups: rr }, lineno
                 );
+
                 unprocessed.push(before);
                 if (!isIterable(sysmessages)) {
                     throw new Error(`Expecting iterable, got ${sysmessages}`);
@@ -723,7 +754,7 @@ class Inliner implements InlinerInterface {
         return [[this.problematic(rawsource, rawsource, msg)], [...messages, msg]];
     }
 
-    private literal(match: any, lineno: number): any[] {
+    private literal(match: RegexpMatchParam, lineno: number): any[] {
 
         const [before, inlines, remaining, sysmessages, endstring] = this.inline_obj(
             match, lineno, this.patterns.literal, nodes.literal, true,

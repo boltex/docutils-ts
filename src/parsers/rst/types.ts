@@ -133,6 +133,12 @@ export interface InlinerInterface {
     adjustUri(uri: string): string;
 }
 
+export interface RegexpMatchParam {
+    result: RegExpExecArray;
+    match: RegExpExecArray;
+    groups: Record<string, string>;
+};
+
 export interface NestedStateMachineRunArgs extends StateMachineRunArgs {
     memo: RstMemo;
 }

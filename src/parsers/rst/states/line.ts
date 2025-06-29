@@ -73,9 +73,9 @@ class Line extends SpecializedText {
             }
         }
         const source = [overline, title, underline].join('\n');
-        overline = overline.trimRight();
+        overline = overline.trimEnd();
         underline = underline || '';
-        underline = underline.trimRight();
+        underline = underline.trimEnd();
 
         if (!this.transitions.underline[0].test(underline)) {
             const blocktext = `${overline}\n${title}\n${underline}`;
