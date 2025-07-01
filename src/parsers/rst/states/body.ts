@@ -997,11 +997,12 @@ class Body extends RSTState implements BodyState {
         return [listitem, blankFinish];
     }
 
-    /**         Construct and return the next enumerated list item marker, and an
-        auto-enumerator ("#" instead of the regular enumerator).
-
-        Return ``None`` for invalid (out of range) ordinals.
-*/
+    /**
+     * Construct and return the next enumerated list item marker, and an
+     * auto-enumerator ("#" instead of the regular enumerator).
+     *
+     * Return ``None`` for invalid (out of range) ordinals.
+     */
     public make_enumerator(ordinal: number, sequence: string, format: string): [string, string] | undefined {
         /*
         let enumerator: string|undefined;
@@ -1012,11 +1013,11 @@ class Body extends RSTState implements BodyState {
             }else {
                 if(sequence.endsWith('alpha')) {
                     if(ordinal > 26) {
-            return undefined;
-            }
-    //                enumerator = chr(ordinal + ord('a') - 1)
-    } else if(sequence.endsWith('roman')) {
-    try {
+                        return undefined;
+                    }
+                //  enumerator = chr(ordinal + ord('a') - 1)
+                } else if(sequence.endsWith('roman')) {
+                try {
                     try:
                         enumerator = roman.toRoman(ordinal)
                     except roman.RomanError:

@@ -129,7 +129,7 @@ class StateFactory implements Statefactory {
 
     public withStateClasses(stateClasses: StateConstructor[]): this {
         // @ts-ignore
-        return new StateFactory({ stateClasses });
+        return new StateFactory({ stateClasses, logger: this.logger });
     }
 }
 

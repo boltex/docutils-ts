@@ -477,7 +477,7 @@ class Inliner implements InlinerInterface {
         return matchChars(prestart, poststart);
     }
 
-    private inline_obj(match: RegexpMatchParam, lineno: number, endPattern: any, nodeclass: any,
+    private inline_obj(match: RegexpMatchParam, lineno: number, endPattern: RegExp, nodeclass: any,
         restore_backslashes = false): any[] {
         if (typeof nodeclass !== 'function') {
             throw new Error();
@@ -603,6 +603,7 @@ class Inliner implements InlinerInterface {
         //      const build = buildRegexp(parts, true);
         //      console.log(build[0]);
         this.patterns = {
+            // TODO : MAYBE THAT ^ START OF STRING FOR REGEX IS NOT NEEDED?
             initial: buildRegexp(parts), // KM
             emphasis: new RegExp(`${this.nonWhitespaceEscapeBefore}(\\*)${endStringSuffix}`),
             strong: new RegExp(`${this.nonWhitespaceEscapeBefore}(\\*\\*)${endStringSuffix}`),

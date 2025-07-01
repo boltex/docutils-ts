@@ -1211,7 +1211,12 @@ class Element extends Node implements ElementInterface {
 
     public attlist(): Attributes {
         const attlist = this.nonDefaultAttributes();
-        return attlist;
+        const sortedEntries = Object.entries(attlist).sort((a, b) => a[0].localeCompare(b[0]));
+        const sortedAttlist: Attributes = {};
+        for (const [key, value] of sortedEntries) {
+            sortedAttlist[key] = value;
+        }
+        return sortedAttlist;
     }
 
     public nonDefaultAttributes(): Attributes {
@@ -2528,42 +2533,78 @@ class pending extends Element {
         this.details = details || {};
     }
 
-    // fixme implement this
+    // TODO : implement this from the Python code
     /*
-  def pformat(self, indent='    ', level=0):
-      internals = [
+
+    def pformat(self, indent: str = '    ', level: int = 0) -> str:
+        internals = ['.. internal attributes:',
+                     '     .transform: %s.%s' % (self.transform.__module__,
+                                                 self.transform.__name__),
+                     '     .details:']
+        details = sorted(self.details.items())
+        for key, value in details:
+            if isinstance(value, Node):
+                internals.append('%7s%s:' % ('', key))
+                internals.extend(['%9s%s' % ('', line)
+                                  for line in value.pformat().splitlines()])
+            elif (value
+                  and isinstance(value, list)
+                  and isinstance(value[0], Node)):
+                internals.append('%7s%s:' % ('', key))
+                for v in value:
+                    internals.extend(['%9s%s' % ('', line)
+                                      for line in v.pformat().splitlines()])
+            else:
+                internals.append('%7s%s: %r' % ('', key, value))
+        return (Element.pformat(self, indent, level)
+                + ''.join(('    %s%s\n' % (indent * level, line))
+                          for line in internals))
+
+    def copy(self) -> Self:
+        obj = self.__class__(self.transform, self.details, self.rawsource,
+                             **self.attributes)
+        obj._document = self._document
+        obj.source = self.source
+        obj.line = self.line
+        return obj
+
+    */
+
+    public pformat(indent = '    ', level = 0): string {
+        const internals: string[] = [
             '.. internal attributes:',
-            '     .transform: %s.%s' % (this.transform.__module__,
-                                        this.transform.__name__),
-            '     .details:']
-      details = this.details.items()
-      details.sort()
-      for key, value in details:
-          if isinstance(value, Node):
-              internals.append('%7s%s:' % ('', key))
-              internals.extend(['%9s%s' % ('', line)
-                                for line in value.pformat().splitlines()])
-          elif value and isinstance(value, list) \
-                and isinstance(value[0], Node):
-              internals.append('%7s%s:' % ('', key))
-              for v in value:
-                  internals.extend(['%9s%s' % ('', line)
-                                    for line in v.pformat().splitlines()])
-          else:
-              internals.append('%7s%s: %r' % ('', key, value))
-      return (Element.pformat(self, indent, level)
-              + ''.join([('    %s%s\n' % (indent * level, line))
-                         for line in internals]))
+            `     .transform: ${this.transform.constructor.name}`,
+            '     .details:'
+        ];
+        const details = Object.entries(this.details).sort();
+        for (const [key, value] of details) {
+            if (value instanceof Node) {
+                internals.push(`${' '.repeat(7)}${key}:`);
+                internals.push(...value.pformat().split('\n').map(line => `${' '.repeat(9)}${line}`));
+            } else if (Array.isArray(value) && value.length > 0 && value[0] instanceof Node) {
+                internals.push(`${' '.repeat(7)}${key}:`);
+                for (const v of (value as NodeInterface[])) {
+                    internals.push(...v.pformat().split('\n').map(line => `${' '.repeat(9)}${line}`));
+                }
+            } else {
+                // internals.push(`${' '.repeat(7)}${key}: ${JSON.stringify(value)}`);
+                internals.push(`${' '.repeat(7)}${key}: ${value?.toString()}`);
+            }
+        }
+        return super.pformat(indent, level)
+            + internals.map(line => `    ${indent.repeat(level)}${line}`).join('\n') + '\n';
 
-  def copy(self):
-      obj = this.__class__(this.transform, this.details, this.rawsource,
-                            **this.attributes)
-      obj.document = this.document
-      obj.source = this.source
-      obj.line = this.line
-      return obj
+    }
 
-*/
+    public copy(): pending {
+        const obj = new pending(this.transform, this.details, this.rawsource, this.children, this.attributes);
+        obj.document = this.document;
+        obj.source = this.source;
+        obj.line = this.line;
+        return obj;
+    }
+
+
 }
 
 

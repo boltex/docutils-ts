@@ -41,6 +41,15 @@ class Reporter implements ReporterInterface {
     private errorHandler: string;
     private stream?: WritableStream;
     private encoding?: string;
+
+    private levelTypes = [
+        'DEBUG',
+        'INFO',
+        'WARNING',
+        'ERROR',
+        'SEVERE'
+    ];
+
     public constructor(
         source: string,
         reportLevel: number,
@@ -109,6 +118,18 @@ class Reporter implements ReporterInterface {
         }
         if (!('source' in attributes)) {
             // fixme
+            console.log('no source in attributes, using:', this.source);
+            attributes.source = this.source;
+        }
+        if (!('type' in attributes)) {
+            // fixme
+            console.log('no type in attributes');
+            attributes.type = this.levelTypes[level] || 'UNKNOWN';
+        }
+        if (!('level' in attributes)) {
+            // fixme
+            console.log('no level in attributes');
+            attributes.level = level;
         }
 
         const msg: Systemmessage = new nodes.system_message(myMessage, children, attributes);

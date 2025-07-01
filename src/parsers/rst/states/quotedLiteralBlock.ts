@@ -20,7 +20,8 @@ class QuotedLiteralBlock extends RSTState {
     private initial_lineno?: number;
     protected initialTransitions?: (string | string[])[] = ['initial_quoted', 'text'];
     public patterns: Patterns = {
-        initial_quoted: new RegExp(`(${RegExps.nonalphanum7bit})`),
+        // TODO : CHECK IF CARET START IS NEEDED !
+        initial_quoted: new RegExp(`^(${RegExps.nonalphanum7bit})`),
         text: new RegExp(''),
     };
 
