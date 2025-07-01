@@ -10,7 +10,7 @@
 
 [ ] Directives (there are a couple of no-op directives in place, such as image and contents.)
 
-[ ] Problems with sections
+[x] Problems with sections
 
 [ ] Problems with tables
 

@@ -117,25 +117,22 @@ class Reporter implements ReporterInterface {
             }
         }
         if (!('source' in attributes)) {
-            // fixme
-            console.log('no source in attributes, using:', this.source);
             attributes.source = this.source;
         }
         if (!('type' in attributes)) {
-            // fixme
-            console.log('no type in attributes');
             attributes.type = this.levelTypes[level] || 'UNKNOWN';
         }
         if (!('level' in attributes)) {
-            // fixme
-            console.log('no level in attributes');
             attributes.level = level;
         }
 
         const msg: Systemmessage = new nodes.system_message(myMessage, children, attributes);
+
+        // TODO : FOR DEBUGGING ONLY, REMOVE LATER
         if (this.stream) { // fixme
             this.stream.write(`${msg.astext()}\n`);
         }
+
         if (this.stream && (level >= this.reportLevel
             || (this.debugFlag && level === this.DEBUG_LEVEL)
             || level >= this.haltLevel)) {

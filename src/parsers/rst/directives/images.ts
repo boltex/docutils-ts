@@ -98,7 +98,9 @@ Image.optionSpec = {
     target: directives.unchanged_required,
     class: directives.class_option,
 };
+
 class Figure extends Image {
+    // 
 }
 
 export { Image, Figure };

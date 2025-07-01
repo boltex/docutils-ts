@@ -102,7 +102,19 @@ class Directive implements DirectiveInterface {
     public blockText: string;
     public state: Body;
     public stateMachine: StatemachineInterface;
-    public constructor(args: { name: string; args: string[]; options: Options; content: any; lineno: number; contentOffset: number; blockText: string; state: Body; stateMachine: StatemachineInterface }) {
+    public constructor(
+        args: {
+            name: string;
+            args: string[];
+            options: Options;
+            content: any;
+            lineno: number;
+            contentOffset: number;
+            blockText: string;
+            state: Body;
+            stateMachine: StatemachineInterface;
+        }
+    ) {
         this.name = args.name;
         this.arguments = args.args;
         this.options = args.options;
