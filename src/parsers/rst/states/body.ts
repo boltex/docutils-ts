@@ -630,8 +630,19 @@ class Body extends RSTState implements BodyState {
             }
             */
         const directiveInstance = new directiveClass(
-            typeName!, args, options!, content!, lineno,
-            contentOffset, blockText, this, this.rstStateMachine
+            {
+                name: typeName,
+                args: args,
+                options: options!,
+                content: content!,
+                lineno: lineno,
+                contentOffset: contentOffset,
+                blockText: blockText,
+                state: this,
+                stateMachine: this.rstStateMachine
+            }
+            // typeName!, args, options!, content!, lineno,
+            // contentOffset, blockText, this, this.rstStateMachine
         );
         let result;
         try {

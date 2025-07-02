@@ -32,8 +32,21 @@ export interface ParserConstructor {
 }
 
 export interface DirectiveConstructor {
-    new(typeName: string, args: string[], options: Options, content: StringList, lineno: number,
-        contentOffset: number, blockText: string, u: any, stateMachine: Rststatemachine): any;
+    new(
+        // typeName: string, args: string[], options: Options, content: StringList, lineno: number,
+        // contentOffset: number, blockText: string, u: any, stateMachine: Rststatemachine
+        args: {
+            name: string;
+            args: string[];
+            options: Options;
+            content: StringList;
+            lineno: number;
+            contentOffset: number;
+            blockText: string;
+            state: any;
+            stateMachine: Rststatemachine;
+        }
+    ): any;
 
     optionalArguments: number;
     requiredArguments: number;
