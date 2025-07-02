@@ -1,12 +1,14 @@
 import * as _fallbackLanguageModule from "./languages/en.js";
-//import * as images from "./directives/images.js";
+import * as images from "./directives/images.js";
 //import * as parts from "./directives/parts";
 import { ApplicationError } from "../../exceptions.js";
 import { Document } from "../../types.js";
 import { RSTLanguage } from "./types.js";
-import { escape2null, pySplit, splitEscapedWhitespace } from "../../utils.js";
 
-const dirMap: any = { /*images, parts */ };
+const dirMap: any = {
+    images
+    //  , parts 
+};
 
 const directiveRegistry = {
     attention: ['admonitions', 'Attention'],
@@ -58,15 +60,9 @@ const directiveRegistry = {
     'restructuredtext-test-directive': ['misc', 'TestDirective'],
 };
 
-export function uri(argument: string) {
-    const parts = splitEscapedWhitespace(escape2null(argument));
-    const uri = parts.map(part => pySplit(unescape(part)).join('')).join(' ');
-    return uri;
-}
-
 const _directives: any = {};
 
-function directive(directiveName: string, document: Document, languageModule?: RSTLanguage) {
+export function directive(directiveName: string, document: Document, languageModule?: RSTLanguage) {
     const normName = directiveName.toLowerCase();
     const messages: any[] = [];
     const msgText = [];
@@ -94,52 +90,11 @@ function directive(directiveName: string, document: Document, languageModule?: R
     // @ts-ignore
     const [modulename, classname] = directiveRegistry[canonicalName];
     const DirectiveClass = dirMap[modulename] ? dirMap[modulename][classname] : undefined;
+    if (modulename === 'images') {
+        console.log('got it', modulename, classname, DirectiveClass);
+
+    }
     _directives[normName] = DirectiveClass;
     return [DirectiveClass, messages];
 }
 
-/**
- *  Convert the argument into a list of ID-compatible strings and return it.
- *  (Directive option conversion function.)
- * 
- *  Raise ``ValueError`` if no argument is found.
- */
-function class_option(argument: any) {
-    /*
-        if argument is None:
-            raise ValueError('argument required but none supplied')
-        names = argument.split()
-        class_names = []
-        for name in names:
-            class_name = nodes.make_id(name)
-            if not class_name:
-                raise ValueError('cannot make "%s" into a class name' % name)
-            class_names.append(class_name)
-        return class_names
-        */
-    return [];
-}
-
-/*
- * Directive option utility function, supplied to enable options whose
- * argument must be a member of a finite set of possible values (must be
- * lower case).  A custom conversion function must be written to use it.  For
- * example::
- *
- *     from docutils.parsers.rst import directives
- *
- *     def yesno(argument):
- *         return directives.choice(argument, ('yes', 'no'))
- *
- * Raise ``ValueError`` if no argument is found or if the argument's value is
- * not valid (not an entry in the supplied list).
- */
-function choice(argument: string, values: string[]) {
-    const value = argument.toLowerCase().trim();
-    if (values.indexOf(value) !== -1) {
-        return value;
-    }
-    throw new ApplicationError(`Invalid value ${argument}`);
-}
-
-export { choice, directive, class_option };

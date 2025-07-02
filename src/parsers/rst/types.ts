@@ -1,8 +1,7 @@
-import Inliner from "./inliner.js";
-import {
+import type Inliner from "./inliner.js";
+import type {
     ContextKind,
     Document,
-    ElementInterface,
     LogLevel,
     NodeInterface,
     Options,
@@ -13,8 +12,8 @@ import {
     StateMachineFactoryFunction,
     StateMachineRunArgs
 } from "../../types.js";
-import StringList from "../../stringList.js";
-import { Settings } from "../../settings.js";
+import type StringList from "../../stringList.js";
+import type { Settings } from "../../settings.js";
 
 export interface BodyState {
     footnote: (match: RegExpExecArray) => [NodeInterface[], boolean];
@@ -36,8 +35,8 @@ export interface DirectiveConstructor {
     new(typeName: string, args: string[], options: Options, content: StringList, lineno: number,
         contentOffset: number, blockText: string, u: any, stateMachine: Rststatemachine): any;
 
-    optionalArguments: any;
-    requiredArguments: any;
+    optionalArguments: number;
+    requiredArguments: number;
     optionSpec: any;
     hasContent: boolean;
     finalArgumentWhitespace: boolean;

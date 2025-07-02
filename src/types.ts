@@ -1,22 +1,22 @@
 
 export type _Components = 'reader' | 'parser' | 'writer' | 'input' | 'output';
 
-import { citation, decoration, Element, footnote, reference, substitution_definition } from "./nodes.js";
+import type { citation, decoration, Element, footnote, reference, substitution_definition } from "./nodes.js";
 
-import { Logger } from "./logger.js";
+import type { Logger } from "./logger.js";
 
-import { Settings } from "./settings.js";
+import type { Settings } from "./settings.js";
 export { Settings };
 
-import Transformer from "./transformer.js";
-import StringList from "./stringList.js";
-import { InlinerInterface } from "./parsers/rst/types.js";
-import Parser from "./parser.js";
-import Output from "./io/output.js";
-import RSTStateMachine from "./parsers/rst/rstStateMachine.js";
-import Input from './io/input.js';
-import Writer from "./writer.js";
-import Reader from "./reader.js";
+import type Transformer from "./transformer.js";
+import type StringList from "./stringList.js";
+import type { InlinerInterface } from "./parsers/rst/types.js";
+import type Parser from "./parser.js";
+import type Output from "./io/output.js";
+import type RSTStateMachine from "./parsers/rst/rstStateMachine.js";
+import type Input from './io/input.js';
+import type Writer from "./writer.js";
+import type Reader from "./reader.js";
 
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 
@@ -46,7 +46,7 @@ export type SettingsSpecType = [string | undefined, string | undefined | null, [
 
 export type StateType = StateInterface | string;
 export interface OptionSpec {
-    [optionName: string]: (arg: string) => string;
+    [optionName: string]: (arg: string, options?: any) => any;
 }
 
 export interface Options {
@@ -347,9 +347,7 @@ export interface ReporterInterface {
 
     debugFlag?: boolean;
 
-
     systemMessage(level: number, message: string | Error, children: Element[], attributes: Attributes): NodeInterface;
-
 
     attachObserver(observer: {}): void;
 

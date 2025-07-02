@@ -15,7 +15,6 @@
  * .. _DTD: http://docutils.sourceforge.net/docs/ref/docutils.dtd
  *
  */
-import { xmlescape } from "./xml-escape.js";
 import Transformer from "./transformer.js";
 import { ApplicationError, InvalidArgumentsError, InvalidStateError, UnimplementedError } from "./exceptions.js";
 import unescape from "./utils/unescape.js";
@@ -44,7 +43,7 @@ import {
     LoggerType,
 } from "./types.js";
 import { Settings } from "./settings.js";
-import { fullyNormalizeName, whitespaceNormalizeName } from "./nodeUtils.js";
+import { fullyNormalizeName, whitespaceNormalizeName } from "./utils/nameUtils.js";
 import { nodeBasicAttributes } from './constants.js';
 
 const _nonIdChars = /[^a-z0-9]+/ig;
@@ -108,7 +107,6 @@ function dupname(node: NodeInterface, name: string): void {
     // don't want to throw unnecessary system_messages.
     node.referenced = true;
 }
-
 /**
  * Escape string values that are elements of a list, for serialization.
  * @param {String} value - Value to escape.
@@ -2791,5 +2789,5 @@ export {
     SkipSiblings,
     FixedTextElement,
     NodeFound,
-
+    makeId,
 };

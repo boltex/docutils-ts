@@ -1,3 +1,4 @@
+import { SubstitutionDefLike } from "./stateTypes.js";
 import Body from './body.js';
 import { EOFError } from '../../../exceptions.js';
 import * as nodes from '../../../nodes.js';
@@ -10,12 +11,12 @@ import {
     ParseMethodReturnType,
     Patterns,
 } from "../../../types.js";
-import StringList from "../../../stringList.js";
 
 /**
  * Parser for the contents of a substitution_definition element. 
  */
-class SubstitutionDef extends Body {
+class SubstitutionDef extends Body implements SubstitutionDefLike {
+    public readonly isSubstitutionDef = true as const;
     protected initialTransitions?: (string | string[])[] = ['embedded_directive', 'text'];;
     public patterns: Patterns = {
         embedded_directive: new RegExp(`(${RegExps.simplename})::( +|$)`),
@@ -85,6 +86,7 @@ class SubstitutionDef extends Body {
         throw new EOFError();
     }
 }
+
 SubstitutionDef.stateName = 'SubstitutionDef';
-//SubstitutionDef.constructor.stateName = 'SubstitutionDef';
+
 export default SubstitutionDef;

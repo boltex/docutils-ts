@@ -17,7 +17,7 @@ import {
 } from "../../types.js";
 import { Settings } from "../../settings.js";
 import { InlinerInterface, RegexpMatchParam } from "./types.js";
-import { fullyNormalizeName } from "../../nodeUtils.js";
+import { fullyNormalizeName } from "../../utils/nameUtils.js";
 
 // Add this type definition near the top of the file or just before the class definition
 type DispatchKey = '*' | '**' | '``' | '`' | '_`' | '_' | ']_' | '|' | '__';

@@ -1,5 +1,3 @@
-import { WritableStream } from "./types.js";
-
 export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Specify the document title as metadata. */
     title?: string;
@@ -34,7 +32,7 @@ export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Disable debug output.  (default) */
     debug?: boolean;
     /** DocutilsCoreOptionParser: Send the output of system messages to <file>. */
-    warningStream?: WritableStream; // TODO : Maybe should be string or some other implementation for browser
+    warningStream?: { write: (data: string) => void; };
     /** DocutilsCoreOptionParser: Disable Python tracebacks.  (default) */
     traceback?: boolean | null;
     /** DocutilsCoreOptionParser: Specify the encoding and optionally the error handler of input text.  Default: <locale-dependent>:strict. */
@@ -111,7 +109,7 @@ export interface DocutilsFrontendOptionParser {
     /** DocutilsFrontendOptionParser: Disable debug output.  (default) */
     debug?: boolean;
     /** DocutilsFrontendOptionParser: Send the output of system messages to <file>. */
-    warningStream?: WritableStream; // TODO : Maybe should be string or some other implementation for browser
+    warningStream?: { write: (data: string) => void; };
     /** DocutilsFrontendOptionParser: Disable Python tracebacks.  (default) */
     traceback?: boolean | null;
     /** DocutilsFrontendOptionParser: Specify the encoding and optionally the error handler of input text.  Default: <locale-dependent>:strict. */

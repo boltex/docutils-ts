@@ -1,6 +1,7 @@
 import Input from './io/input.js';
 import Output from './io/output.js';
 import { InputConstructorArgs, OutputConstructorArgs } from "./types.js";
+import { normalizeLineEndings } from './utils/unescape.js';
 
 /**
  * Direct string input. 
@@ -12,7 +13,7 @@ export class StringInput extends Input {
     }
 
     public read(): Promise<string> {
-        return Promise.resolve(this.source);
+        return Promise.resolve(normalizeLineEndings(this.source));
     }
     public readlines(): Promise<string[]> {
         if (typeof this.source === 'string') {

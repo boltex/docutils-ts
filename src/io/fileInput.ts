@@ -1,6 +1,7 @@
 import Input from './input.js';
 import { fileSystem } from '../core.js'
 import { InputConstructorArgs } from '../types.js';
+import { normalizeLineEndings } from '../utils/unescape.js';
 
 export default class FileInput extends Input {
 
@@ -13,7 +14,7 @@ export default class FileInput extends Input {
     public async read(): Promise<string> {
         this.logger.silly('read');
         const data = await fileSystem.readFile(this.sourcePath!, { encoding: this.encoding || 'utf-8' });
-        return data.toString();
+        return normalizeLineEndings(data.toString());
     }
 
     public async readlines(): Promise<string[]> {

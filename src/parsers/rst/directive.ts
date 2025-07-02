@@ -1,6 +1,7 @@
 import { DirectiveError, DirectiveInterface } from "./types.js";
 import { StatemachineInterface, LogLevel, OptionSpec, Options } from "../../types.js";
 import Body from "./states/body.js";
+import { fullyNormalizeName } from "../../utils/nameUtils.js";
 
 /**
  * 
@@ -91,8 +92,17 @@ import Body from "./states/body.js";
  *  
  */
 class Directive implements DirectiveInterface {
+
+    public finalArgumentWhitespace: boolean = false;
+    public requiredArguments: number = 0;
+    public optionalArguments: number = 0;
+    // public optionSpec: OptionSpec | undefined = undefined;
+    // public hasContent: boolean = false;
+
     public static optionSpec: OptionSpec;
     public static hasContent: boolean;
+
+
     public name: string;
     public arguments: string[];
     public options: Options;
@@ -102,6 +112,7 @@ class Directive implements DirectiveInterface {
     public blockText: string;
     public state: Body;
     public stateMachine: StatemachineInterface;
+
     public constructor(
         args: {
             name: string;
@@ -124,6 +135,10 @@ class Directive implements DirectiveInterface {
         this.blockText = args.blockText;
         this.state = args.state;
         this.stateMachine = args.stateMachine;
+    }
+
+    public run(): any[] {
+        throw new DirectiveError(LogLevel.ErrorLevel, 'Must override run() in subclass.');
     }
 
     public debug(message: string): DirectiveError {
@@ -149,5 +164,33 @@ class Directive implements DirectiveInterface {
     private directiveError(level: LogLevel, message: string): DirectiveError {
         return new DirectiveError(level, message);
     }
+
+
+    public assertHasContent(): void {
+        /**
+         * Throw an ERROR-level DirectiveError if the directive doesn't
+         * have contents.
+         */
+        if (!this.content || this.content.length === 0) {
+            throw this.error(`Content block expected for the "${this.name}" directive; none found.`);
+        }
+    }
+
+    public addName(node: any): void {
+        /**
+         * Append self.options['name'] to node['names'] if it exists.
+         * Also normalize the name string and register it as explicit target.
+         */
+        if ('name' in this.options) {
+            const name = fullyNormalizeName(this.options.name);
+            if ('name' in node) {
+                delete node['name'];
+            }
+            node['names'].push(name);
+            this.state.document?.noteExplicitTarget(node, node);
+        }
+    }
+
 }
+
 export default Directive;

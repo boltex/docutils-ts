@@ -1,5 +1,5 @@
 import * as nodes from "../../nodes.js";
-import * as directives from "./directives.js";
+import * as directives from "./directiveConversions.js";
 import { ReporterInterface } from "../../types.js";
 import { InlinerInterface } from "./types.js";
 
@@ -37,9 +37,9 @@ class GenericRole {
  */
 function setImplicitOptions(roleFn: any): void {
     if (!Object.prototype.hasOwnProperty.call(roleFn, 'options') || roleFn.options == null) {
-        roleFn.options = { class: directives.class_option };
+        roleFn.options = { class: directives.classOption };
     } else if (!('class' in roleFn.options)) {
-        roleFn.options.class = directives.class_option;
+        roleFn.options.class = directives.classOption;
     }
 }
 

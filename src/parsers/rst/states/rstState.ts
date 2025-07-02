@@ -14,7 +14,7 @@ import {
 import StringList from "../../../stringList.js";
 import RSTStateMachine from "../rstStateMachine.js";
 import { Explicit, InlinerInterface, NestedParseArgs, Nestedstatemachine, RstMemo } from "../types.js";
-import { fullyNormalizeName } from "../../../nodeUtils.js";
+import { fullyNormalizeName } from "../../../utils/nameUtils.js";
 
 abstract class RSTState extends StateWS {
     public get explicit(): Explicit | undefined {

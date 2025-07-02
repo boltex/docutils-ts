@@ -14,7 +14,6 @@ import {
     ContextKind,
     CoreLanguage,
     DebugFunction,
-    NodeInterface,
     ObserverCallback,
     ReporterInterface,
     Statefactory,

@@ -10,3 +10,7 @@ export default function unescape(text: string, restoreBackslashes = false, respe
     }
     return ['\x00 ', '\x00\n', '\x00'].reduce((a, v): string => a.split(v).join(''), text || '');
 }
+
+export function normalizeLineEndings(text: string): string {
+    return text.replace(/\r\n/g, '\n');
+}

@@ -28,7 +28,7 @@ import {
     ParserConstructor, DirectiveConstructor, TableData,
     RowData
 } from '../types.js';
-import { fullyNormalizeName } from "../../../nodeUtils.js";
+import { fullyNormalizeName } from "../../../utils/nameUtils.js";
 
 const nonWhitespaceEscapeBefore = RegExps.nonWhitespaceEscapeBefore;
 const simplename = RegExps.simplename;

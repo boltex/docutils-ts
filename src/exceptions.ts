@@ -90,6 +90,14 @@ export class ApplicationError extends Error {
   }
 }
 
+export class ValueError extends ApplicationError {
+  public constructor(message: string, args?: ErrorArgs) {
+    super(message, args);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ValueError);
+    }
+  }
+}
 export class DataError extends ApplicationError {
   public constructor(message: string, args?: ErrorArgs) {
     super(message, args);
