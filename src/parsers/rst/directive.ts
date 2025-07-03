@@ -93,15 +93,19 @@ import { fullyNormalizeName } from "../../utils/nameUtils.js";
  */
 class Directive implements DirectiveInterface {
 
-    public finalArgumentWhitespace: boolean = false;
-    public requiredArguments: number = 0;
-    public optionalArguments: number = 0;
-    // public optionSpec: OptionSpec | undefined = undefined;
-    // public hasContent: boolean = false;
+    // * THOSE SHOULD BE STATIC
+    // optionalArguments
+    // requiredArguments
+    // optionSpec
+    // hasContent
+    // finalArgumentWhitespace
+
+    public static finalArgumentWhitespace: boolean = false;
+    public static requiredArguments: number = 0;
+    public static optionalArguments: number = 0;
 
     public static optionSpec: OptionSpec;
     public static hasContent: boolean;
-
 
     public name: string;
     public arguments: string[];

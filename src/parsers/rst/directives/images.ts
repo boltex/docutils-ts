@@ -13,8 +13,8 @@ class Image extends Directive {
     private static loadingValues: string[] = ['embed', 'link', 'lazy'];
     private static alignValues: string[] = [...this.alignHValues, ...this.alignVValues];
 
-    public requiredArguments: number = 1;
-    public optionalArguments: number = 0;
+    public static requiredArguments: number = 1;
+    public static optionalArguments: number = 0;
 
     public static align(argument: any): string {
         return directives.choice(argument, this.alignValues);

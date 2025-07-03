@@ -90,10 +90,6 @@ export function directive(directiveName: string, document: Document, languageMod
     // @ts-ignore
     const [modulename, classname] = directiveRegistry[canonicalName];
     const DirectiveClass = dirMap[modulename] ? dirMap[modulename][classname] : undefined;
-    if (modulename === 'images') {
-        console.log('got it', modulename, classname, DirectiveClass);
-
-    }
     _directives[normName] = DirectiveClass;
     return [DirectiveClass, messages];
 }

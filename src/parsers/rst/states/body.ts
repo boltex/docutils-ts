@@ -641,8 +641,6 @@ class Body extends RSTState implements BodyState {
                 state: this,
                 stateMachine: this.rstStateMachine
             }
-            // typeName!, args, options!, content!, lineno,
-            // contentOffset, blockText, this, this.rstStateMachine
         );
         let result;
         try {
@@ -1675,12 +1673,12 @@ class Body extends RSTState implements BodyState {
         if (indented && indented.length && (!directive.requiredArguments
             || directive.optionalArguments
             || optionSpec)) {
-            i = indented.findIndex((line): boolean => !(!line.trim()));
+            i = indented.findIndex(line => !line.trim());
             if (i === -1) {
                 i = indented.length;
             }
             argBlock = indented.slice(0, i);
-            content = indented.slice(i + 1, 0);
+            content = indented.slice(i + 1);
             contentOffset = lineOffset + i + 1;
         } else {
             content = indented;
@@ -1714,6 +1712,55 @@ class Body extends RSTState implements BodyState {
         return [args, options!, content, contentOffset];
     }
 
+    // Python equivalent:
+    /*
+    def parse_directive_block(self, indented, line_offset, directive,
+                              option_presets):
+        option_spec = directive.option_spec
+        has_content = directive.has_content
+        if indented and not indented[0].strip():
+            indented.trim_start()
+            line_offset += 1
+        while indented and not indented[-1].strip():
+            indented.trim_end()
+        if indented and (directive.required_arguments
+                         or directive.optional_arguments
+                         or option_spec):
+            for i, line in enumerate(indented):
+                if not line.strip():
+                    break
+            else:
+                i += 1
+            arg_block = indented[:i]
+            content = indented[i+1:]
+            content_offset = line_offset + i + 1
+        else:
+            content = indented
+            content_offset = line_offset
+            arg_block = []
+        if option_spec:
+            options, arg_block = self.parse_directive_options(
+                option_presets, option_spec, arg_block)
+        else:
+            options = {}
+        if arg_block and not (directive.required_arguments
+                              or directive.optional_arguments):
+            content = arg_block + indented[i:]
+            content_offset = line_offset
+            arg_block = []
+        while content and not content[0].strip():
+            content.trim_start()
+            content_offset += 1
+        if directive.required_arguments or directive.optional_arguments:
+            arguments = self.parse_directive_arguments(
+                directive, arg_block)
+        else:
+            arguments = []
+        if content and not has_content:
+            raise MarkupError('no content permitted')
+        return arguments, options, content, content_offset
+    */
+
     private parseDirectiveOptions(option_presets: Options, optionSpec: OptionSpec, argBlock: StringList): [Options | undefined, StringList] {
         let options: Options = { ...option_presets };
         let optBlock: StringList;
@@ -1737,6 +1784,31 @@ class Body extends RSTState implements BodyState {
         }
         return [undefined, new StringList([])];
     }
+
+    // Original Python
+    /*
+
+    def parse_directive_options(self, option_presets, option_spec, arg_block):
+        options = option_presets.copy()
+        for i, line in enumerate(arg_block):
+            if re.match(Body.patterns['field_marker'], line):
+                opt_block = arg_block[i:]
+                arg_block = arg_block[:i]
+                break
+        else:
+            opt_block = []
+        if opt_block:
+            success, data = self.parse_extension_options(option_spec,
+                                                            opt_block)
+            if success:                 # data is a dict of options
+                options.update(data)
+            else:                       # data is an error string
+                raise MarkupError(data)
+        return options, arg_block
+
+    */
+
+
 
     /**
    Parse `datalines` for a field list containing extension options
