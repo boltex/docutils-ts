@@ -1,5 +1,5 @@
 import { Settings } from "./settings.js";
-import { Document, NodeInterface } from "./types.js";
+import { Document, NodeInterface, OptionSpec } from "./types.js";
 import * as nodes from './nodes.js';
 /** Return indices of all combining chars in  Unicode string `text`.
  >>> from docutils.utils import find_combining_chars
@@ -240,9 +240,82 @@ function normalizedLanguageTag(tag: string): string[] {
     return taglist;
 }
 
-function assembleOptionDict(optionList: {}, optionsSpec: {}): {} | never {
-    return {};
+function assembleOptionDict(
+    optionList: [string, string | undefined][],
+    optionsSpec: OptionSpec
+): { [key: string]: any } {
+    const options: { [key: string]: any } = {};
+
+    for (const [name, value] of optionList) {
+        // Check if option name exists in spec
+        if (!(name in optionsSpec)) {
+            throw new Error(`Unknown option name: "${name}"`);
+        }
+
+        const convertor = optionsSpec[name];
+
+        // Check if option is explicitly disabled
+        if (convertor === null) {
+            throw new Error(`Option "${name}" is disabled`);
+        }
+
+        // Check for duplicate options
+        if (name in options) {
+            throw new Error(`Duplicate option "${name}"`);
+        }
+
+        try {
+            options[name] = convertor(value!); // Use non-null assertion since value is defined
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`(option: "${name}"; value: ${value})\n${error.message}`);
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    return options;
 }
+
+// Original Python code:
+
+/*
+
+def assemble_option_dict(option_list, options_spec):
+    """
+    Return a mapping of option names to values.
+
+    :Parameters:
+        - `option_list`: A list of (name, value) pairs (the output of
+          `extract_options()`).
+        - `options_spec`: Dictionary mapping known option names to a
+          conversion function such as `int` or `float`.
+
+    :Exceptions:
+        - `KeyError` for unknown option names.
+        - `DuplicateOptionError` for duplicate options.
+        - `ValueError` for invalid option values (raised by conversion
+           function).
+        - `TypeError` for invalid option value types (raised by conversion
+           function).
+    """
+    options = {}
+    for name, value in option_list:
+        convertor = options_spec[name]  # raises KeyError if unknown
+        if convertor is None:
+            raise KeyError(name)        # or if explicitly disabled
+        if name in options:
+            raise DuplicateOptionError('duplicate option "%s"' % name)
+        try:
+            options[name] = convertor(value)
+        except (ValueError, TypeError) as detail:
+            raise detail.__class__('(option: "%s"; value: %r)\n%s'
+                                   % (name, value, ' '.join(detail.args)))
+    return options
+
+
+*/
 
 class BadOptionError implements Error {
     public constructor(message: string) {
@@ -321,8 +394,10 @@ function extractOptions(fieldList: NodeInterface): [string, string | undefined][
         let data: string | undefined;
         if (!body.hasChildren()) {
             data = undefined;
-        } else if (body.getNumChildren() > 1 || !(body.getChild(0) instanceof nodes.paragraph)
-            || body.getChild(0).getNumChildren() !== -1 || !(body.getChild(0).getChild(0) instanceof nodes.Text)) {
+        } else if (body.getNumChildren() > 1 ||
+            !(body.getChild(0) instanceof nodes.paragraph) ||
+            body.getChild(0).getNumChildren() !== 1 ||
+            !(body.getChild(0).getChild(0) instanceof nodes.Text)) {
             throw new BadOptionDataError(
                 `extension option field body may contain\n` +
                 `a single paragraph only (option "${name}")`);
@@ -333,6 +408,47 @@ function extractOptions(fieldList: NodeInterface): [string, string | undefined][
     }
     return optionList;
 }
+
+// Original Python code:
+/*
+
+def extract_options(field_list):
+    """
+    Return a list of option (name, value) pairs from field names & bodies.
+
+    :Parameter:
+        `field_list`: A flat field list, where each field name is a single
+        word and each field body consists of a single paragraph only.
+
+    :Exceptions:
+        - `BadOptionError` for invalid fields.
+        - `BadOptionDataError` for invalid option data (missing name,
+        missing data, bad quotes, etc.).
+    """
+    option_list = []
+    for field in field_list:
+        if len(field[0].astext().split()) != 1:
+            raise BadOptionError(
+                'extension option field name may not contain multiple words')
+        name = str(field[0].astext().lower())
+        body = field[1]
+        if len(body) == 0:
+            data = None
+        elif (len(body) > 1
+            or not isinstance(body[0], nodes.paragraph)
+            or len(body[0]) != 1
+            or not isinstance(body[0][0], nodes.Text)):
+            raise BadOptionDataError(
+                'extension option field body may contain\n'
+                'a single paragraph only (option "%s")' % name)
+        else:
+            data = body[0][0].astext()
+        option_list.append((name, data))
+    return option_list
+
+*/
+
+
 
 
 /**
@@ -355,11 +471,10 @@ function extractOptions(fieldList: NodeInterface): [string, string | undefined][
  *  - `BadOptionDataError` for invalid option data (missing name,
  *  missing data, bad quotes, etc.).
  */
-export function extractExtensionOptions(fieldList: NodeInterface, optionsSpec: {}): {} | undefined {
+export function extractExtensionOptions(fieldList: NodeInterface, optionsSpec: OptionSpec): {} | undefined {
 
     const optionList = extractOptions(fieldList);
-    const optionDict = assembleOptionDict(optionList, optionsSpec);
-    return optionDict;
+    return assembleOptionDict(optionList, optionsSpec);
 }
 
 function toRoman(input: number): string {

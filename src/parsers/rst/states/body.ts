@@ -552,7 +552,7 @@ class Body extends RSTState implements BodyState {
     }
 
     /** Returns a 2-tuple: list of nodes, and a "blank finish" boolean. */
-    public directive(match: RegExpExecArray, optionPresets: any): ParseResult {
+    public directive(match: RegExpExecArray, optionPresets: Record<string, any>): ParseResult {
         const typeName = match[1];
         if (typeof typeName === "undefined") {
             throw new Error("need typename");
@@ -1662,6 +1662,7 @@ class Body extends RSTState implements BodyState {
         const hasContent = directive.hasContent;
         if (indented && indented.length && !indented[0].trim()) {
             indented.trimStart();
+            lineOffset += 1;
         }
         while (indented && indented.length && !indented[indented.length - 1].trim()) {
             indented.trimEnd();
@@ -1670,7 +1671,7 @@ class Body extends RSTState implements BodyState {
         let content: StringList;
         let contentOffset: number;
         let i = 0;
-        if (indented && indented.length && (!directive.requiredArguments
+        if (indented && indented.length && (directive.requiredArguments
             || directive.optionalArguments
             || optionSpec)) {
             i = indented.findIndex(line => !line.trim());
@@ -1712,55 +1713,6 @@ class Body extends RSTState implements BodyState {
         return [args, options!, content, contentOffset];
     }
 
-    // Python equivalent:
-    /*
-    def parse_directive_block(self, indented, line_offset, directive,
-                              option_presets):
-        option_spec = directive.option_spec
-        has_content = directive.has_content
-        if indented and not indented[0].strip():
-            indented.trim_start()
-            line_offset += 1
-        while indented and not indented[-1].strip():
-            indented.trim_end()
-        if indented and (directive.required_arguments
-                         or directive.optional_arguments
-                         or option_spec):
-            for i, line in enumerate(indented):
-                if not line.strip():
-                    break
-            else:
-                i += 1
-            arg_block = indented[:i]
-            content = indented[i+1:]
-            content_offset = line_offset + i + 1
-        else:
-            content = indented
-            content_offset = line_offset
-            arg_block = []
-        if option_spec:
-            options, arg_block = self.parse_directive_options(
-                option_presets, option_spec, arg_block)
-        else:
-            options = {}
-        if arg_block and not (directive.required_arguments
-                              or directive.optional_arguments):
-            content = arg_block + indented[i:]
-            content_offset = line_offset
-            arg_block = []
-        while content and not content[0].strip():
-            content.trim_start()
-            content_offset += 1
-        if directive.required_arguments or directive.optional_arguments:
-            arguments = self.parse_directive_arguments(
-                directive, arg_block)
-        else:
-            arguments = []
-        if content and not has_content:
-            raise MarkupError('no content permitted')
-        return arguments, options, content, content_offset
-    */
-
     private parseDirectiveOptions(option_presets: Options, optionSpec: OptionSpec, argBlock: StringList): [Options | undefined, StringList] {
         let options: Options = { ...option_presets };
         let optBlock: StringList;
@@ -1768,47 +1720,21 @@ class Body extends RSTState implements BodyState {
         let i = argBlock.findIndex((line): boolean => this.patterns.field_marker.test(line));
         if (i !== -1) {
             optBlock = argBlock.slice(i);
-            argBlock = argBlock.slice(0);
+            argBlock = argBlock.slice(0, i);  // Only take elements before index i
         } else {
             i = argBlock.length;
             optBlock = new StringList([]);
         }
         if (optBlock.length) {
             const [success, data] = this.parseExtensionOptions(optionSpec, optBlock);
-            if (success) {
-                options = { ...options, data };
+            if (success && typeof data != 'string') {
+                options = { ...options, ...data };
             } else {
                 throw new MarkupError(data.toString());
             }
-            return [options, argBlock];
         }
-        return [undefined, new StringList([])];
+        return [options, argBlock];
     }
-
-    // Original Python
-    /*
-
-    def parse_directive_options(self, option_presets, option_spec, arg_block):
-        options = option_presets.copy()
-        for i, line in enumerate(arg_block):
-            if re.match(Body.patterns['field_marker'], line):
-                opt_block = arg_block[i:]
-                arg_block = arg_block[:i]
-                break
-        else:
-            opt_block = []
-        if opt_block:
-            success, data = self.parse_extension_options(option_spec,
-                                                            opt_block)
-            if success:                 # data is a dict of options
-                options.update(data)
-            else:                       # data is an error string
-                raise MarkupError(data)
-        return options, arg_block
-
-    */
-
-
 
     /**
    Parse `datalines` for a field list containing extension options
@@ -1825,22 +1751,45 @@ class Body extends RSTState implements BodyState {
    */
     private parseExtensionOptions(optionSpec: OptionSpec, datalines: StringList): [boolean, Options | string] {
         const node = nodesFactory.field_list();
-        const [newlineOffset, blankFinish] = this.nestedListParse(datalines, { inputOffset: 0, node, initialState: "ExtensionOptions", blankFinish: true });
+        const [newlineOffset, blankFinish] = this.nestedListParse(datalines, {
+            inputOffset: 0,
+            node,
+            initialState: "ExtensionOptions",
+            blankFinish: true
+        });
+
         if (newlineOffset !== datalines.length) { // incomplete parse of block
             return [false, "invalid option block"];
         }
+
         let options: Options | undefined;
         try {
             options = extractExtensionOptions(node, optionSpec);
         } catch (error) {
+            // Error handling based on type or message content
+            if (error instanceof Error) {
+                // Handle specific error types
+                if (error.message.includes("unknown option")) {
+                    return [false, `unknown option: "${error.message.split('"')[1]}"`];
+                } else if (error.message.includes("invalid value")) {
+                    return [false, `invalid option value: ${error.message}`];
+                } else if (error.message.includes("invalid option data")) {
+                    return [false, `invalid option data: ${error.message}`];
+                }
+                return [false, `error parsing options: ${error.message}`];
+            }
+            return [false, "unknown error parsing options"];
         }
 
-        return [true, options!];
-        /*          return 0, 'option data incompletely parsed'
+        if (!options) {
+            return [false, "failed to extract options"];
+        }
 
-   */
-
-        return [false, {}];
+        if (blankFinish) {
+            return [true, options];
+        } else {
+            return [false, 'option data incompletely parsed'];
+        }
     }
 
     private parseDirectiveArguments(directive: DirectiveConstructor, argBlock: StringList): string[] {
