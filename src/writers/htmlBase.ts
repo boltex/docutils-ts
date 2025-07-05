@@ -184,6 +184,18 @@ class HTMLTranslator extends nodes.NodeVisitor {
     private compactFieldLists?: number;
     private stylesheet: string[];
 
+    /**
+     * Character references for characters with a special meaning in HTML.
+     */
+    private specialCharacters: { [key: number]: string } = {
+        38: '&amp;',
+        60: '&lt;',
+        34: '&quot;',
+        62: '&gt;',
+        64: '&#64;', // may thwart address harvesters
+    };
+    private documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
+
     public constructor(document: Document) {
         super(document);
         this.settings = document.settings;
@@ -261,8 +273,21 @@ class HTMLTranslator extends nodes.NodeVisitor {
         return [this.headPrefix, this.head, this.stylesheet, this.bodyPrefix].map((a): string => a.join('')).join('');
     }
 
+    /**
+     * Encode special characters in `text` and return.
+     */
     public encode(text: string): string {
-        return text; // fixme
+        if (text === undefined || text === null) {
+            return '';
+        }
+        // Use only named entities known in both XML and HTML
+        // other characters are automatically encoded "by number" if required.
+        // @@@ A codec to do these and all other HTML entities would be nice.
+        text = String(text);
+        return text.replace(/[\u00A0-\u9999<>&]/g, (i: string): string => {
+            const code = i.charCodeAt(0);
+            return this.specialCharacters[code] || `&#${code};`;
+        });
     }
 
     public cloakMailto(href: string): string {
@@ -364,7 +389,8 @@ class HTMLTranslator extends nodes.NodeVisitor {
         const attlist = { ...atts };
         // attlist.sort()
         const parts = [myTagname];
-        Object.keys(attlist).forEach((name: string): void => {
+        const sortedKeys = Object.keys(attlist).sort();
+        sortedKeys.forEach((name: string): void => {
             const value: any | any[] | undefined | null = attlist[name];
             // value=None was used for boolean attributes without
             // value, but this isn't supported by XHTML.
@@ -800,75 +826,69 @@ class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public visit_document(node: NodeInterface): void {
-        const title = ((node.attributes.title || '') || basename(node.attributes.source) || 'untitled Docutils document');
+        const title = (
+            (node.attributes.title || '') ||
+            basename(node.attributes.source) ||
+            'untitled Docutils document'
+        );
         this.head.push(`<title>${this.encode(title)}</title>\n`);
     }
 
-    // TODO : FIX depart_document !
     public depart_document(node: NodeInterface): void {
+        // 1. Set up head prefix
         this.headPrefix.push(this.doctype, this.headPrefixTemplate({ lang: this.settings!.languageCode }));
-        this.meta.splice(0, 0, this.contentType({ charset: this.settings!.outputEncoding }));
-        this.head.splice(0, 0, this.contentType({ charset: this.settings!.outputEncoding }));
-        this.htmlHead.splice(this.htmlHead.length, 0, ...this.head.slice(1));
-        this.bodyPrefix.push(this.starttag(node, 'div', '\n', false, { CLASS: 'document' }));
+
+        // 2. Update HTML prolog
+        this.htmlProlog.push(this.doctype);
+
+        // 3. Combine meta and head
+        this.head = [...this.meta, ...this.head];
+
+        // 4. Handle Dublin Core terms
+        const metaString = this.meta.join('');
+        if (metaString.includes('name="dcterms.')) {
+            this.head.push('<link rel="schema.dcterms" href="http://purl.org/dc/terms/"/>');
+        }
+
+        // 5. Handle math header
+        if (this.mathHeader.length > 0) {
+            if (this.mathOutput === 'mathjax') {
+                this.head.push(...this.mathHeader);
+            } else {
+                this.stylesheet.push(...this.mathHeader);
+            }
+        }
+
+        // 6. Conditionally extend HTML head based on encoding
+        if (this.settings!.outputEncoding &&
+            this.settings!.outputEncoding.toLowerCase() !== 'unicode') {
+            this.htmlHead.push(...this.head.slice(1));
+        } else {
+            this.htmlHead.push(...this.head);
+        }
+
+        // 7. Setup body prefix with document tag
+        this.bodyPrefix.push(this.starttag(node, this.documenttagArgs.tagname, '\n', false,
+            { CLASS: this.documenttagArgs.CLASS }));
+
+        // 8. Insert closing tag to body suffix
+        this.bodySuffix.splice(0, 0, `</${this.documenttagArgs.tagname}>\n`);
+
+        // 9. Set up fragment
         this.fragment.push(...this.body);
-        this.htmlBody.push(...this.bodyPrefix.slice(1), ...this.bodyPreDocinfo, ...this.docinfo, ...this.body, ...this.bodySuffix.slice(0, this.bodySuffix.length - 1));
+
+        // 10. Combine all parts for HTML body
+        this.htmlBody.push(
+            ...this.bodyPrefix.slice(1),
+            ...this.bodyPreDocinfo,
+            ...this.docinfo,
+            ...this.body,
+            ...this.bodySuffix.slice(0, this.bodySuffix.length - 1)
+        );
+
+        // 11. Assert context is empty
+        console.assert(this.context.length === 0, `context not empty: length=${this.context.length}`);
     }
-
-    /*
-        # original python
-        def depart_document(self, node) -> None:
-            self.head_prefix.extend([self.doctype,
-                                    self.head_prefix_template %
-                                    {'lang': self.settings.language_code}])
-            self.html_prolog.append(self.doctype)
-            self.head = self.meta[:] + self.head
-            if 'name="dcterms.' in ''.join(self.meta):
-                self.head.append('<link rel="schema.dcterms"'
-                                ' href="http://purl.org/dc/terms/"/>')
-            if self.math_header:
-                if self.math_output == 'mathjax':
-                    self.head.extend(self.math_header)
-                else:
-                    self.stylesheet.extend(self.math_header)
-            if (self.settings.output_encoding  # may be None
-                and self.settings.output_encoding.lower() != 'unicode'):
-                # skip content-type meta tag with interpolated charset value:
-                self.html_head.extend(self.head[1:])
-            else:
-                self.html_head.extend(self.head)
-            self.body_prefix.append(self.starttag(node, **self.documenttag_args))
-            self.body_suffix.insert(0, f'</{self.documenttag_args["tagname"]}>\n')
-            self.fragment.extend(self.body)  # self.fragment is the "naked" body
-            self.html_body.extend(self.body_prefix[1:] + self.body_pre_docinfo
-                                + self.docinfo + self.body
-                                + self.body_suffix[:-1])
-            assert not self.context, f'len(context) = {len(self.context)}'
-
-      // javascript Experimental
-      this.headPrefix.push(this.doctype, this.headPrefixTemplate({ lang: this.settings!.languageCode }));
-      this.html_prolog.push(this.doctype)
-      this.meta.splice(0, 0, this.content_type % this.settings.output_encoding)
-      this.head.splice(0, 0, this.content_type % this.settings.output_encoding)
-      if 'name="dcterms.' in ''.join(this.meta):
-      this.head.push(
-      '<link rel="schema.dcterms" href="http://purl.org/dc/terms/">')
-      if this.math_header:
-      if this.math_output == 'mathjax':
-      this.head.extend(this.math_header)
-      else:
-      this.stylesheet.extend(this.math_header)
-      // skip content-type meta tag with interpolated charset value:
-      this.htmlHead.extend(this.head[1:])
-      this.bodyPrefix.push(this.starttag(node, 'div', { CLASS: 'document' }))
-      this.bodySuffix.insert(0, '</div>\n')
-      this.fragment.extend(this.body) // this.fragment is the "naked" body
-      this.htmlBody.extend(this.bodyPrefix[1:] + this.body_pre_docinfo
-      + this.docinfo + this.body
-      + this.body_suffix[:-1])
-      //        assert not this.context, 'len(context) = %s' % len(this.context)
-      }
-    */
 
     public visit_emphasis(node: NodeInterface): void {
         this.body.push(this.starttag(node, 'em', ''));
@@ -1123,81 +1143,166 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.body.splice(start, this.body.length - start);
     }
 
+    public object_image_types: Record<string, string> = {
+        '.svg': 'image/svg+xml',
+        '.swf': 'application/x-shockwave-flash',
+        '.mp4': 'video/mp4',
+        '.webm': 'video/webm',
+        '.ogg': 'video/ogg',
+    };
+
+    public visit_image(node: NodeInterface): void {
+
+        //
+        const atts: Attributes = {};
+        const uri = node.attributes.uri || '';
+        const ext = basename(uri).toLowerCase().split('.').pop() || '';
+        if (ext in this.object_image_types) {
+            atts.data = uri;
+            atts.type = this.object_image_types[ext];
+        } else {
+            atts.src = uri;
+            atts.alt = node.attributes.alt || uri;
+        }
+        // image size
+        if ('width' in node.attributes) {
+            atts.width = node.attributes.width;
+        }
+        if ('height' in node.attributes) {
+            atts.height = node.attributes.height;
+        }
+        if ('scale' in node.attributes) {
+            // TODO : Add PIL support
+            // if (PIL && (!('width' in node.attributes) || !('height' in node.attributes))
+            //     && this.settings.fileInsertionEnabled) {
+            //     try {
+            //         const imagepath = this.uri2path(uri);
+            //         const imgSize = PIL.Image.open(imagepath).size;
+            //         this.settings.recordDependencies.add(imagepath.asPosix());
+            //         if (!('width' in atts)) {
+            //             atts.width = `${imgSize[0]}px`;
+            //         }
+            //         if (!('height' in atts)) {
+            //             atts.height = `${imgSize[1]}px`;
+            //         }
+            //     } catch (e) {
+            //         this.document.reporter.warning(`Problem reading image file: ${e}`);
+            //     }
+            // }
+            for (const attName of ['width', 'height']) {
+                if (attName in atts) {
+                    const match = atts[attName].match(/^([0-9.]+)(\S*)$/);
+                    if (match) {
+                        atts[attName] = `${parseFloat(match[1]) * (parseFloat(node.attributes.scale) / 100)}${match[2]}`;
+                    }
+                }
+            }
+        }
+        const style: string[] = [];
+        for (const attName of ['width', 'height']) {
+            if (attName in atts) {
+                if (/^[0-9.]+$/.test(atts[attName])) {
+                    // Interpret unitless values as pixels.
+                    atts[attName] += 'px';
+                }
+                style.push(`${attName}: ${atts[attName]};`);
+                delete atts[attName];
+            }
+        }
+        if (style.length) {
+            atts.style = style.join(' ');
+        }
+        // No newlines around inline images.
+        let suffix = '';
+        if (!(node.parent instanceof nodes.TextElement)
+            || (node.parent instanceof nodes.reference
+                && !(node.parent.parent instanceof nodes.TextElement))) {
+            suffix = '\n';
+        } else {
+            suffix = '';
+        }
+        if ('align' in node.attributes) {
+            atts.class = `align-${node.attributes.align}`;
+        }
+        if (ext in this.object_image_types) {
+            // do NOT use an empty tag: incorrect rendering in browsers
+            this.body.push(this.starttag(node, 'object', '', false, atts)
+                + node.attributes.alt + '</object>' + suffix);
+        } else {
+            this.body.push(this.emptytag(node, 'img', suffix, atts));
+        }
+
+    };
+
+    public depart_image(node: NodeInterface): void {
+        // No additional processing needed.
+    }
+
     /*
-        TODO : IMAGE HANDLING
-          // Image types to place in an <object> element
-          object_image_types = {'.swf': 'application/x-shockwave-flash'}
+        def visit_image(self, node) -> None:
+            atts = {}
+            uri = node['uri']
+            ext = os.path.splitext(uri)[1].lower()
+            if ext in self.object_image_types:
+                atts['data'] = uri
+                atts['type'] = self.object_image_types[ext]
+            else:
+                atts['src'] = uri
+                atts['alt'] = node.get('alt', uri)
+            # image size
+            if 'width' in node:
+                atts['width'] = node['width']
+            if 'height' in node:
+                atts['height'] = node['height']
+            if 'scale' in node:
+                if (PIL and ('width' not in node or 'height' not in node)
+                    and self.settings.file_insertion_enabled):
+                    try:
+                        imagepath = self.uri2path(uri)
+                        with PIL.Image.open(imagepath) as img:
+                            img_size = img.size
+                    except (ValueError, OSError, UnicodeEncodeError) as e:
+                        self.document.reporter.warning(
+                            f'Problem reading image file: {e}')
+                    else:
+                        self.settings.record_dependencies.add(imagepath.as_posix())
+                        if 'width' not in atts:
+                            atts['width'] = '%dpx' % img_size[0]
+                        if 'height' not in atts:
+                            atts['height'] = '%dpx' % img_size[1]
+                for att_name in 'width', 'height':
+                    if att_name in atts:
+                        match = re.match(r'([0-9.]+)(\S*)$', atts[att_name])
+                        assert match
+                        atts[att_name] = '%s%s' % (
+                            float(match.group(1)) * (float(node['scale']) / 100),
+                            match.group(2))
+            style = []
+            for att_name in 'width', 'height':
+                if att_name in atts:
+                    if re.match(r'^[0-9.]+$', atts[att_name]):
+                        # Interpret unitless values as pixels.
+                        atts[att_name] += 'px'
+                    style.append('%s: %s;' % (att_name, atts[att_name]))
+                    del atts[att_name]
+            if style:
+                atts['style'] = ' '.join(style)
+            # No newlines around inline images.
+            if (not isinstance(node.parent, nodes.TextElement)
+                or isinstance(node.parent, nodes.reference)
+                and not isinstance(node.parent.parent, nodes.TextElement)):
+                suffix = '\n'
+            else:
+                suffix = ''
+            if 'align' in node:
+                atts['class'] = 'align-%s' % node['align']
+            if ext in self.object_image_types:
+                # do NOT use an empty tag: incorrect rendering in browsers
+                self.body.append(self.starttag(node, 'object', '', **atts)
+                                + node.get('alt', uri) + '</object>' + suffix)
+            else:
+                self.body.append(self.emptytag(node, 'img', suffix, **atts))
 
-          visit_image(node: NodeInterface): void {
-          atts = {}
-          uri = node.attributes['uri']
-          ext = os.path.splitext(uri)[1].lower()
-          if ext in this.object_image_types:
-          atts['data'] = uri
-          atts['type'] = this.object_image_types[ext]
-          else:
-          atts['src'] = uri
-          atts['alt'] = node.get('alt', uri)
-          // image size
-          if 'width' in node:
-          atts['width'] = node.attributes['width']
-          if 'height' in node:
-          atts['height'] = node.attributes['height']
-          if 'scale' in node:
-          if (PIL and not ('width' in node and 'height' in node)
-          and this.settings.file_insertion_enabled):
-          imagepath = urllib.url2pathname(uri)
-          try:
-          img = PIL.Image.open(
-          imagepath.encode(sys.getfilesystemencoding()))
-          except (IOError, UnicodeEncodeError):
-          pass // TODO: warn?
-          else:
-          this.settings.record_dependencies.add(
-          imagepath.replace('\\', '/'))
-          if 'width' not in atts:
-          atts['width'] = '%dpx' % img.size[0]
-          if 'height' not in atts:
-          atts['height'] = '%dpx' % img.size[1]
-          del img
-          for att_name in 'width', 'height':
-          if att_name in atts:
-          match = re.match(r'([0-9.]+)(\S*)$', atts[att_name])
-          assert match
-          atts[att_name] = '%s%s' % (
-          float(match.group(1)) * (float(node.attributes['scale']) / 100),
-          match.group(2))
-          style = []
-          for att_name in 'width', 'height':
-          if att_name in atts:
-          if re.match(r'^[0-9.]+$', atts[att_name]):
-          // Interpret unitless values as pixels.
-          atts[att_name] += 'px'
-          style.push('%s: %s;' % (att_name, atts[att_name]))
-          del atts[att_name]
-          if style:
-          atts['style'] = ' '.join(style)
-          if (isinstance(node.parent, nodes.TextElement) or
-          (isinstance(node.parent, nodes.reference) and
-          not isinstance(node.parent.parent, nodes.TextElement))):
-          // Inline context or surrounded by <a>...</a>.
-          suffix = ''
-          else:
-          suffix = '\n'
-          if 'align' in node:
-          atts['class'] = 'align-%s' % node.attributes['align']
-          if ext in this.object_image_types:
-          // do NOT use an empty tag: incorrect rendering in browsers
-          this.body.push(this.starttag(node, 'object', suffix, **atts) +
-          node.get('alt', uri) + '</object>' + suffix)
-          else:
-          this.body.push(this.emptytag(node, 'img', suffix, **atts))
-          }
-
-          depart_image(node: NodeInterface): void {
-          // this.body.push(this.context.pop())
-          }
-          pass
     */
 
     public visit_inline(node: NodeInterface): void {
