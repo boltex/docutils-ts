@@ -1,6 +1,6 @@
 import BaseWriter from '../writer.js';
 import { GenericNodeVisitor, Text } from '../nodes.js';
-import { Document, ElementInterface, NodeInterface } from "../types.js";
+import { Document, ElementInterface, NodeInterface, SettingsSpecType } from "../types.js";
 import { Settings } from "../settings.js";
 import { InvalidStateError } from "../exceptions.js";
 
@@ -76,8 +76,18 @@ class POJOTranslator extends GenericNodeVisitor {
  * Writer class for POJOWriter
  */
 class POJOWriter extends BaseWriter {
+
     private visitor?: POJOTranslator;
     private translatorClass: typeof POJOTranslator = POJOTranslator;
+
+    public settingsSpec: SettingsSpecType[] = [
+        [
+            '"Docutils-js POJO" Writer Options',
+            null,
+            []
+        ]
+    ];
+
     /**
      * Translate the document to plain old javascript object
      */
@@ -93,11 +103,5 @@ class POJOWriter extends BaseWriter {
         this.output = JSON.stringify(visitor.root, null, 2);
     }
 }
-/*
-POJOWriter.settingsSpec = [
-    '"Docutils-js POJO" Writer Options',
-    null,
-    []];
 
- */
 export default POJOWriter;
