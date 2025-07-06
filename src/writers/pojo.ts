@@ -10,6 +10,7 @@ const __version__ = '';
  * Translator class for Pojo writer
  */
 class POJOTranslator extends GenericNodeVisitor {
+
     private level: number;
     private ancestors: any[][];
     private generator: string;
@@ -20,6 +21,7 @@ class POJOTranslator extends GenericNodeVisitor {
     private settings: Settings;
     private fixedText: number;
     public root?: {};
+
     /**
       * Create a POJOTranslator
       * @param {nodes.document} document - the document to translate
@@ -44,11 +46,9 @@ class POJOTranslator extends GenericNodeVisitor {
 
     public default_visit(node: ElementInterface | NodeInterface): void {
         if ((node as ElementInterface).attlist) {
-
             const me = [node.tagname, (node as ElementInterface).attlist(), []];
             this.ancestors.push(me);
             this.level += 1;
-
         }
     }
 
@@ -56,7 +56,6 @@ class POJOTranslator extends GenericNodeVisitor {
         const me = this.ancestors.pop();
         if (this.level === 1) {
             this.root = me;
-            //          console.log(JSON.stringify(me));
         } else {
             const parent = this.ancestors[this.ancestors.length - 1];
             parent[2].push(me);
@@ -66,11 +65,10 @@ class POJOTranslator extends GenericNodeVisitor {
 
     public visit_Text(node: Text): void {
         this.ancestors[this.ancestors.length - 1][2].push(node.astext());
-        //      const text = escapeXml(node.astext())
-        //      this.output.push(text);
     }
 
     public depart_Text(node: Text): void {
+        // pass 
     }
 }
 
@@ -92,7 +90,7 @@ class POJOWriter extends BaseWriter {
         this.visitor = visitor;
         this.document.walkabout(visitor);
 
-        this.output = visitor.root;
+        this.output = JSON.stringify(visitor.root, null, 2);
     }
 }
 /*

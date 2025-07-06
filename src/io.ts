@@ -36,9 +36,6 @@ export class StringOutput extends Output<string> {
 
     public async write(data: string): Promise<string> {
         // self.destination = self.encode(data) // fixme encoding
-        if (Array.isArray(data)) {
-            data = JSON.stringify(data);
-        }
         this.destination = data;
         return this.destination;
     }

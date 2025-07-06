@@ -18,7 +18,7 @@ export default abstract class Writer extends Component {
      * Final translated form of `document` (Unicode string for text, binary
      * string for other forms); set by `translate`.
      */
-    public output?: string | {};
+    public output?: string | Uint8Array;
     /**
      * `docutils.io` Output object; where to write the document.
      * Set by `write`.

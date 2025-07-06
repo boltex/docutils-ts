@@ -1265,7 +1265,6 @@ class Element extends Node implements ElementInterface {
                     }
                     return false;
                 }) === -1) {
-                    // console.log(`returning index ${index} ${nodeToXml(this.children[index])}`);
                     return true;
                 }
                 return false;
