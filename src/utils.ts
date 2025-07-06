@@ -220,7 +220,7 @@ export function relativePath(source: string, target: string): string {
  *  >>> normalize_language_tag('de-CH-x_altquot')
  *  ['de-ch-x-altquot', 'de-ch', 'de-x-altquot', 'de']
  */
-function normalizedLanguageTag(tag: string): string[] {
+function normalizeLanguageTag(tag: string): string[] {
     // normalize:
     let myTag = tag.toLowerCase().replace(/-/g, "_");
     // split (except singletons, which mark the following tag as non-standard):
@@ -582,7 +582,18 @@ export function _getCallerFileAndLine(): [string | null | undefined, number | nu
     return [callerfile, callerlineno];
 }
 
+/** Return an XML text declaration.
+ * 
+ * Include an encoding declaration, if `encoding`
+ * is not 'unicode', '', or None.
+ */
+export function xmlDeclaration(encoding: string | 'unicode' | null = null): string {
+    if (encoding && encoding.toLowerCase() !== 'unicode') {
+        return `<?xml version="1.0" encoding="${encoding}"?>\n`;
+    }
+    return '<?xml version="1.0"?>\n';
+}
 
 export {
-    findCombiningChars, columnWidth, escape2null, splitEscapedWhitespace, columnIndicies, normalizedLanguageTag
+    findCombiningChars, columnWidth, escape2null, splitEscapedWhitespace, columnIndicies, normalizeLanguageTag as normalizedLanguageTag
 };

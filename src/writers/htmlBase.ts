@@ -126,7 +126,6 @@ class SimpleListChecker extends nodes.GenericNodeVisitor {
  * HTMLTranslator class
  */
 class HTMLTranslator extends nodes.NodeVisitor {
-    private xmlDeclaration: TemplateFunction = compile('<?xml version="1.0" encoding="<%=encoding%>"?>\n');
     private doctype: string = '<!DOCTYPE html>\n';
     private doctypeMathML: string = this.doctype;
     private headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%=lang%>" lang="<%=lang%>">\n<head>\n');
@@ -199,7 +198,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
     public constructor(document: Document) {
         super(document);
         this.settings = document.settings;
-        const settings = this.settings;
+        const settings: Settings = this.settings;
         const langCode = settings.languageCode;
         if (langCode !== undefined) {
             this.language = getLanguage(langCode, document.reporter)!;
@@ -221,7 +220,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
             }
         }
         if (myConfig && myConfig.xmlDeclaration) {
-            this.headPrefix.push(this.xmlDeclaration({ encoding: settings.outputEncoding }));
+            this.headPrefix.push(utils.xmlDeclaration(settings.outputEncoding));
         }
         this.head = this.meta.slice();
         this.stylesheet = [];
@@ -2122,8 +2121,8 @@ class HTMLBaseWriter extends BaseWriter {
                         "--template"
                     ],
                     {
-                        "default": "/local/home/jade/docutils-dev/docutils-monorepo/venv/lib/python3.7/site-packages/docutils/writers/html4css1/template.txt",
-                        "metavar": "<file>"
+                        default: "/local/home/jade/docutils-dev/docutils-monorepo/venv/lib/python3.7/site-packages/docutils/writers/html4css1/template.txt",
+                        metavar: "<file>"
                     }
                 ],
                 [
@@ -2132,9 +2131,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--stylesheet"
                     ],
                     {
-                        "metavar": "<URL[,URL,...]>",
-                        "overrides": "stylesheet_path",
-                        "validator": "validate_comma_separated_list"
+                        metavar: "<URL[,URL,...]>",
+                        overrides: "stylesheet_path",
+                        validator: "validate_comma_separated_list"
                     }
                 ],
                 [
@@ -2143,10 +2142,10 @@ class HTMLBaseWriter extends BaseWriter {
                         "--stylesheet-path"
                     ],
                     {
-                        "metavar": "<file[,file,...]>",
-                        "overrides": "stylesheet",
-                        "validator": "validate_comma_separated_list",
-                        "default": [
+                        metavar: "<file[,file,...]>",
+                        overrides: "stylesheet",
+                        validator: "validate_comma_separated_list",
+                        default: [
                             "html4css1.css"
                         ]
                     }
@@ -2157,9 +2156,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--embed-stylesheet"
                     ],
                     {
-                        "default": 1,
-                        "action": "store_true",
-                        "validator": "validate_boolean"
+                        default: 1,
+                        action: "store_true",
+                        validator: "validate_boolean"
                     }
                 ],
                 [
@@ -2168,8 +2167,8 @@ class HTMLBaseWriter extends BaseWriter {
                         "--link-stylesheet"
                     ],
                     {
-                        "dest": "embed_stylesheet",
-                        "action": "store_false"
+                        dest: "embed_stylesheet",
+                        action: "store_false"
                     }
                 ],
                 [
@@ -2178,9 +2177,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--stylesheet-dirs"
                     ],
                     {
-                        "metavar": "<dir[,dir,...]>",
-                        "validator": "validate_comma_separated_list",
-                        "default": [
+                        metavar: "<dir[,dir,...]>",
+                        validator: "validate_comma_separated_list",
+                        default: [
                             ".",
                             "/local/home/jade/docutils-dev/docutils-monorepo/venv/lib/python3.7/site-packages/docutils/writers/html4css1",
                             "/local/home/jade/docutils-dev/docutils-monorepo/venv/lib/python3.7/site-packages/docutils/writers/html5_polyglot"
@@ -2193,7 +2192,7 @@ class HTMLBaseWriter extends BaseWriter {
                         "--initial-header-level"
                     ],
                     {
-                        "choices": [
+                        choices: [
                             "1",
                             "2",
                             "3",
@@ -2201,8 +2200,8 @@ class HTMLBaseWriter extends BaseWriter {
                             "5",
                             "6"
                         ],
-                        "default": 1,
-                        "metavar": "<level>"
+                        default: 1,
+                        metavar: "<level>"
                     }
                 ],
                 [
@@ -2211,9 +2210,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--field-name-limit"
                     ],
                     {
-                        "default": 14,
-                        "metavar": "<level>",
-                        "validator": "validate_nonnegative_int"
+                        default: 14,
+                        metavar: "<level>",
+                        validator: "validate_nonnegative_int"
                     }
                 ],
                 [
@@ -2222,9 +2221,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--option-limit"
                     ],
                     {
-                        "default": 14,
-                        "metavar": "<level>",
-                        "validator": "validate_nonnegative_int"
+                        default: 14,
+                        metavar: "<level>",
+                        validator: "validate_nonnegative_int"
                     }
                 ],
                 [
@@ -2233,13 +2232,13 @@ class HTMLBaseWriter extends BaseWriter {
                         "--footnote-references"
                     ],
                     {
-                        "choices": [
+                        choices: [
                             "superscript",
                             "brackets"
                         ],
-                        "default": "brackets",
-                        "metavar": "<format>",
-                        "overrides": "trim_footnote_reference_space"
+                        default: "brackets",
+                        metavar: "<format>",
+                        overrides: "trim_footnote_reference_space"
                     }
                 ],
                 [
@@ -2248,14 +2247,14 @@ class HTMLBaseWriter extends BaseWriter {
                         "--attribution"
                     ],
                     {
-                        "choices": [
+                        choices: [
                             "dash",
                             "parentheses",
                             "parens",
                             "none"
                         ],
-                        "default": "dash",
-                        "metavar": "<format>"
+                        default: "dash",
+                        metavar: "<format>"
                     }
                 ],
                 [
@@ -2264,9 +2263,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--compact-lists"
                     ],
                     {
-                        "default": 1,
-                        "action": "store_true",
-                        "validator": "validate_boolean"
+                        default: 1,
+                        action: "store_true",
+                        validator: "validate_boolean"
                     }
                 ],
                 [
@@ -2275,8 +2274,8 @@ class HTMLBaseWriter extends BaseWriter {
                         "--no-compact-lists"
                     ],
                     {
-                        "dest": "compact_lists",
-                        "action": "store_false"
+                        dest: "compact_lists",
+                        action: "store_false"
                     }
                 ],
                 [
@@ -2285,9 +2284,9 @@ class HTMLBaseWriter extends BaseWriter {
                         "--compact-field-lists"
                     ],
                     {
-                        "default": 1,
-                        "action": "store_true",
-                        "validator": "validate_boolean"
+                        default: 1,
+                        action: "store_true",
+                        validator: "validate_boolean"
                     }
                 ],
                 [
@@ -2296,8 +2295,8 @@ class HTMLBaseWriter extends BaseWriter {
                         "--no-compact-field-lists"
                     ],
                     {
-                        "dest": "compact_field_lists",
-                        "action": "store_false"
+                        dest: "compact_field_lists",
+                        action: "store_false"
                     }
                 ],
                 [
@@ -2306,7 +2305,7 @@ class HTMLBaseWriter extends BaseWriter {
                         "--table-style"
                     ],
                     {
-                        "default": ""
+                        default: ""
                     }
                 ],
                 [
@@ -2315,7 +2314,7 @@ class HTMLBaseWriter extends BaseWriter {
                         "--math-output"
                     ],
                     {
-                        "default": "HTML math.css"
+                        default: "HTML math.css"
                     }
                 ],
                 [
@@ -2324,10 +2323,10 @@ class HTMLBaseWriter extends BaseWriter {
                         "--no-xml-declaration"
                     ],
                     {
-                        "dest": "xml_declaration",
-                        "default": 1,
-                        "action": "store_false",
-                        "validator": "validate_boolean"
+                        dest: "xml_declaration",
+                        default: 1,
+                        action: "store_false",
+                        validator: "validate_boolean"
                     }
                 ],
                 [
@@ -2336,8 +2335,8 @@ class HTMLBaseWriter extends BaseWriter {
                         "--cloak-email-addresses"
                     ],
                     {
-                        "action": "store_true",
-                        "validator": "validate_boolean"
+                        action: "store_true",
+                        validator: "validate_boolean"
                     }
                 ]
             ]
