@@ -92,7 +92,7 @@ class StateMachine implements StatemachineInterface {
 
     public language?: CoreLanguage;
 
-    public reporter?: ReporterInterface;
+    public reporter!: ReporterInterface;
 
     private observers: ObserverCallback[];
 

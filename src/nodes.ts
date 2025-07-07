@@ -516,6 +516,7 @@ abstract class Node implements NodeInterface {
     protected set children(value: NodeInterface[]) {
         this._children = value;
     }
+
     public isSetup: boolean = false;
     /**
    * List attributes which are defined for every Element-derived class
@@ -852,6 +853,109 @@ abstract class Node implements NodeInterface {
         return r;
     }
 
+    // * NOTE : use traverse() instead of findall() for new code.
+
+    // private *_fastFindall(cls: NodeClass): Iterable<NodeInterface> {
+    //     // Specialized findall() that only supports instance checks.
+    //     if (this instanceof cls) {
+    //         yield this;
+    //     }
+    //     for (const child of this.children) {
+    //         // @ts-ignore
+    //         yield* child._fastFindall(cls);
+    //     }
+    // }
+
+    // private *_superfastFindall(): Iterable<NodeInterface> {
+    //     // Specialized findall() that doesn't check for a condition.
+    //     yield this;
+    //     for (const child of this.children) {
+    //         // @ts-ignore
+    //         yield* child._superfastFindall();
+    //     }
+    // }
+
+    // public *findall(args: TraverseArgs): Iterable<NodeInterface> {
+    //     let {
+    //         condition, includeSelf = true, descend = true, siblings = false, ascend = false
+    //     } = args;
+
+    //     if (ascend) {
+    //         siblings = true;
+    //     }
+
+    //     // Check for special argument combinations that allow using optimized versions
+    //     if (includeSelf && descend && !siblings) {
+    //         if (condition === null || condition === undefined) {
+    //             yield* this._superfastFindall();
+    //             return;
+    //         } else if (typeof condition !== 'function' &&
+    //             (condition.prototype instanceof Node || condition === Node)) {
+    //             yield* this._fastFindall(condition);
+    //             return;
+    //         }
+    //     }
+
+    //     // Check if condition is a class and convert it to a function
+    //     if (typeof condition !== 'function' && condition !== null && condition !== undefined) {
+    //         const nodeClass = condition;
+    //         const originalCondition = condition;
+    //         condition = (node: NodeInterface): boolean => node instanceof nodeClass;
+    //     }
+
+    //     // Include self if requested and it matches the condition
+    //     if (includeSelf && (condition === null || condition === undefined || condition(this))) {
+    //         yield this;
+    //     }
+
+    //     // Process all children recursively if requested
+    //     if (descend && this._children.length) {
+    //         for (const child of this._children) {
+    //             yield* child.findall({
+    //                 condition,
+    //                 includeSelf: true,
+    //                 descend: true,
+    //                 siblings: false,
+    //                 ascend: false
+    //             });
+    //         }
+    //     }
+
+    //     // Process siblings and possibly ascend up the tree
+    //     if (siblings || ascend) {
+    //         let node: NodeInterface = this as NodeInterface;
+    //         while (node.parent) {
+    //             const parent = node.parent as ElementInterface;
+    //             const children = parent.getChildren();
+    //             let index = children.indexOf(node);
+
+    //             // Extra check since Text nodes might have value-equality issues
+    //             while (children[index] !== node) {
+    //                 index = children.indexOf(node, index + 1);
+    //                 if (index === -1) break;
+    //             }
+
+    //             // Process all following siblings
+    //             for (const sibling of children.slice(index + 1)) {
+    //                 yield* sibling.findall({
+    //                     condition,
+    //                     includeSelf: true,
+    //                     descend,
+    //                     siblings: false,
+    //                     ascend: false
+    //                 });
+    //             }
+
+    //             // If not ascending, stop after processing siblings
+    //             if (!ascend) {
+    //                 break;
+    //             } else {
+    //                 node = parent;
+    //             }
+    //         }
+    //     }
+    // }
+
     public add(iNodes: NodeInterface[] | NodeInterface): void {
         throw new UnimplementedError("");
     }
@@ -1107,7 +1211,7 @@ class Element extends Node implements ElementInterface {
     }
 
 
-    public _domNode(domroot: globalThis.Document): {} {
+    public _domNode(domroot: globalThis.Document): HTMLElement {
 
         const element = domroot.createElement(this.tagname);
         const l = this.attlist();
@@ -1122,8 +1226,7 @@ class Element extends Node implements ElementInterface {
             element.setAttribute(attribute, myVal);
         });
         this.children.forEach((child): void => {
-            // @ts-ignore
-            element.appendChild(child._domNode(domroot));
+            element.appendChild((child as Element)._domNode(domroot));
         });
         return element;
     }
@@ -1426,8 +1529,7 @@ class Text extends Node {
         this.children = [];
     }
 
-    public _domNode(domroot: globalThis.Document): {} {
-
+    public _domNode(domroot: globalThis.Document): any {
         return domroot.createTextNode(this.data);
     }
 
@@ -1521,7 +1623,10 @@ class document extends Element implements Document {
 
     public nameIds: NameIds;
 
-    private ids: Ids;
+    public ids: Ids;
+
+    /** Keeps track of how many IDs we’ve emitted for each prefix. */
+    private idCounter: Map<string, number> = new Map();
 
     private nameTypes: NameTypes;
 
@@ -1575,42 +1680,71 @@ class document extends Element implements Document {
         this.document = this;
     }
 
-    public setId(node: NodeInterface, msgnode?: NodeInterface): string {
-        let msg;
-        let id = '';
-        node.attributes.ids.forEach((myId: string): void => {
-            if (myId in this.ids && this.ids[myId] !== node) {
-                msg = this.reporter.severe(`Duplicate ID: "${myId}".`);
-                if (msgnode !== undefined && msg !== undefined) {
-                    msgnode.add(msg);
+    public setId(node: NodeInterface, msgnode?: NodeInterface, suggestedPrefix: string = ''): string {
+        // If node already has IDs, register them and check for duplicates
+        if (node.attributes.ids.length > 0) {
+            const id = node.attributes.ids[node.attributes.ids.length - 1];
+            for (const myId of node.attributes.ids) {
+                if (!(myId in this.ids)) {
+                    this.ids[myId] = node;
+                }
+                if (this.ids[myId] !== node) {
+                    const msg = this.reporter.severe(
+                        `Duplicate ID: "${myId}" used by ${this.ids[myId].starttag()} and ${node.starttag()}`
+                    );
+                    if (msgnode !== undefined && msg !== undefined) {
+                        msgnode.add(msg);
+                    }
                 }
             }
-        });
-        if (node.attributes.ids.length === 0) {
-            let myBreak = false;
-
-            for (const name of node.attributes.names) {
-                id = this.idPrefix + makeId(name);
-                if (id && this.attributes.ids.indexOf(id) === -1) {
-                    myBreak = true;
-                    break;
-                }
-            }
-            if (!myBreak) {
-                id = "";
-                while (!id || (id in this.attributes.ids)) {
-                    id = (this.idPrefix + this.autoIdPrefix
-                        + this.idStart);
-                    this.idStart += 1;
-                }
-            }
-            node.attributes.ids.push(id);
+            return id;
         }
+
+        // Generate and set ID
+        let baseId = '';
+        let id = '';
+
+        // Try to create ID from node names
+        for (const name of node.attributes.names) {
+            if (this.idPrefix) {  // allow names starting with numbers
+                baseId = makeId('x' + name).substring(1);
+            } else {
+                baseId = makeId(name);
+            }
+            id = this.idPrefix + baseId;
+            if (baseId && !(id in this.ids)) {
+                break;
+            }
+        }
+
+        // If no suitable ID found from names, generate one
+        if (!baseId || (id in this.ids)) {
+            let prefix;
+            if (baseId && this.autoIdPrefix.endsWith('%')) {
+                // Disambiguate name-derived ID
+                prefix = id + '-';
+            } else {
+                prefix = this.idPrefix + this.autoIdPrefix;
+                if (prefix.endsWith('%')) {
+                    prefix = `${prefix.slice(0, -1)}${suggestedPrefix || makeId(node.tagname)}-`;
+                }
+            }
+
+            // Keep incrementing counter until unique ID found
+            while (true) {
+                const count = (this.idCounter.get(prefix) || 0) + 1;
+                this.idCounter.set(prefix, count);
+                id = `${prefix}${count}`;
+                if (!(id in this.ids)) break;
+            }
+        }
+
+        node.attributes.ids.push(id);
         this.ids[id] = node;
         return id;
     }
 
-    public setNameIdMap(node: NodeInterface, id: string, msgnode: NodeInterface, explicit?: boolean): void {
+    public setNameIdMap(node: NodeInterface, id: string, msgnode?: NodeInterface, explicit?: boolean): void {
         node.attributes.names.forEach((name: string): void => {
             if (name in this.nameIds) {
                 this.setDuplicateNameId(node, id, name, msgnode, explicit);
@@ -1621,7 +1755,7 @@ class document extends Element implements Document {
         });
     }
 
-    public setDuplicateNameId(node: NodeInterface, id: string, name: string, msgnode: NodeInterface, explicit?: boolean): void {
+    public setDuplicateNameId(node: NodeInterface, id: string, name: string, msgnode?: NodeInterface, explicit?: boolean): void {
         const oldId = this.nameIds[name];
         const oldExplicit = this.nameTypes[name];
         this.nameTypes[name] = oldExplicit || explicit || false;
@@ -1674,7 +1808,7 @@ class document extends Element implements Document {
                 `Duplicate implicit target name: "${name}".`, [],
                 { backrefs: [id], base_node: node }
             );
-            if (msgnode != null && msg !== undefined) {
+            if (msgnode != null) {
                 msgnode.add(msg);
             }
         }
@@ -1684,16 +1818,14 @@ class document extends Element implements Document {
         return Object.keys(this.nameIds).includes(name);
     }
 
-    public noteImplicitTarget(target: NodeInterface, msgnode: NodeInterface): void {
+    public noteImplicitTarget(target: NodeInterface, msgnode?: NodeInterface): void {
         const id = this.setId(target, msgnode);
         this.setNameIdMap(target, id, msgnode);
     }
 
     public noteExplicitTarget(target: NodeInterface, msgnode?: NodeInterface): void {
-        if (msgnode !== undefined) {
-            const id = this.setId(target, msgnode);
-            this.setNameIdMap(target, id, msgnode, true);
-        }
+        const id = this.setId(target, msgnode);
+        this.setNameIdMap(target, id, msgnode, true);
     }
 
     public noteRefname(node: NodeInterface): void {
@@ -1807,7 +1939,7 @@ class document extends Element implements Document {
         subref.attributes.refname = whitespaceNormalizeName(refname);
     }
 
-    public notePending(pending: NodeInterface, priority: number): void {
+    public notePending(pending: NodeInterface, priority?: number): void {
         this.transformer.addPending(pending, priority);
     }
 
@@ -2516,10 +2648,10 @@ class pending extends Element {
 
     public constructor(
         transform: {},
-        details: {},
+        details?: {},
         rawsource = "",
-        children: NodeInterface[],
-        attributes: Attributes
+        children?: NodeInterface[],
+        attributes?: Attributes
     ) {
         super(rawsource, children, attributes);
         /** The `docutils.transforms.Transform` class implementing the pending

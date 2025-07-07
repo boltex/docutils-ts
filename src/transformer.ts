@@ -169,7 +169,7 @@ class Transformer implements TransformerInterface {
         return `${leftPad(priority, 3, '0')}-${leftPad(this.serialno, 3, '0')}`;
     }
 
-    public addPending(pending: NodeInterface, priority: number): void {
+    public addPending(pending: NodeInterface, priority?: number): void {
         // fixme implement
     }
 }

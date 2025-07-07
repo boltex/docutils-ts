@@ -233,9 +233,13 @@ export interface Ids {
 }
 
 export interface Document extends ElementInterface {
+
+    // Note: can / should have the props of a node, but not all of them are used here.
+
     logger: LoggerType;
     transformMessages: Systemmessage[];
     nameIds: NameIds;
+    ids: Ids;
     parseMessages: Systemmessage[];
     substitutionDefs: SubstitutionDefs;
 
@@ -246,9 +250,12 @@ export interface Document extends ElementInterface {
     uuid?: string;
     transformer: Transformer;
 
+    hasName(name: string): boolean
+    notePending(pending: NodeInterface, priority?: number): void
+
     noteTransformMessage(message: Systemmessage): void;
 
-    noteImplicitTarget(target: NodeInterface, msgnode: NodeInterface): void;
+    noteImplicitTarget(target: NodeInterface, msgnode?: NodeInterface): void;
 
     noteRefname(ref: reference): void;
 
@@ -375,6 +382,10 @@ export interface States {
 export interface StatemachineInterface {
     logger: LoggerType;
     stateFactory?: Statefactory;
+    reporter: ReporterInterface;
+    matchTitles?: boolean;
+    node?: ElementInterface;
+    document?: Document
 
     createStateMachine(rstStateMachine: RSTStateMachine, initialState?: string, stateFactory?: Statefactory): StatemachineInterface;
     runtimeInit(): void;
@@ -409,7 +420,6 @@ export interface StatemachineInterface {
     nextLine(n: number): string | undefined;
     notifyObservers(): void;
     previousLine(n: number): string;
-
     hasState(stateName: string): boolean;
 
     getState2(stateName: string): StateInterface;

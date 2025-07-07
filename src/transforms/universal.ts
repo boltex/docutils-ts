@@ -1,8 +1,9 @@
 import * as nodes from '../nodes.js';
 import * as utils from '../utils.js';
 import Transform from '../transform.js';
+import dayjs from 'dayjs';
 
-import { NodeInterface } from "../types.js";
+import { ElementInterface, NodeInterface } from "../types.js";
 
 class Decorations extends Transform {
     public apply(): void {
@@ -45,7 +46,7 @@ class Decorations extends Transform {
                     new nodes.Text('.\n'));
             }
             if (core.datestamp) {
-                const datestamp = 'fixme';// get time
+                const datestamp = dayjs().format(utils.strftimeToDayjsFormat(settings.datestamp! || '%Y-%m-%d %H:%M UTC'));
                 text.push(new nodes.Text(`Generated on: ${datestamp}\n`));
             }
             if (core.generator) {
@@ -95,25 +96,131 @@ Messages.defaultPriority = 860;
  */
 class FilterMessages extends Transform {
     public apply(): void {
-        this.document.traverse({ condition: nodes.system_message }).forEach((node, i): void => {
+        const removedIds: string[] = [];  // IDs of removed system messages
+
+        // Step 1: Remove system messages below threshold
+        this.document.traverse({ condition: nodes.system_message }).forEach((node): void => {
             if (node.attributes.level < this.document.reporter.reportLevel) {
-                //node.parent!.children.pop(i);
+                // Remove the node from its parent
+                const parent = node.parent as ElementInterface;
+                const index = parent.getChildren().indexOf(node);
+                if (index !== -1) {
+                    parent.removeChild(index);
+
+                    // Remove IDs and collect removed IDs
+                    if (Array.isArray(node.attributes.ids)) {
+                        node.attributes.ids.forEach(id => {
+                            if (this.document.ids[id]) {
+                                delete this.document.ids[id];  // Remove ID registration
+                                removedIds.push(id);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
+        // Step 2: Convert problematic nodes referencing removed messages to Text nodes
+        this.document.traverse({ condition: nodes.problematic }).forEach((node): void => {
+            if ('refid' in node.attributes && removedIds.includes(node.attributes.refid)) {
+                const parent = node.parent as ElementInterface;
+                const index = parent.getChildren().indexOf(node);
+                if (index !== -1) {
+                    // Replace with Text node
+                    const textNode = new nodes.Text(node.astext());
+                    parent.getChildren()[index] = textNode;
+                    textNode._parent = parent;
+                }
+            }
+        });
+
+        // Step 3: Remove empty "system-messages" sections
+        this.document.traverse({ condition: nodes.section }).forEach((node): void => {
+            if (Array.isArray(node.attributes.classes) &&
+                node.attributes.classes.includes("system-messages") &&
+                node.getNumChildren() === 1) {
+                const parent = node.parent as ElementInterface;
+                const index = parent.getChildren().indexOf(node);
+                if (index !== -1) {
+                    parent.removeChild(index);
+                }
             }
         });
     }
 }
 FilterMessages.defaultPriority = 870;
 
+// Original Python:
+
+// * NOTE : use traverse() instead of findall() (it returns an array instead of being a generator).
+/*
+
+class FilterMessages(Transform):
+
+    """
+    Remove system messages below verbosity threshold.
+
+    Also convert <problematic> nodes referencing removed messages
+    to <Text> nodes and remove "System Messages" section if empty.
+    """
+
+    default_priority = 870
+
+    def apply(self) -> None:
+        removed_ids = []  # IDs of removed system messages
+        for node in tuple(self.document.findall(nodes.system_message)):
+            if node['level'] < self.document.reporter.report_level:
+                node.parent.remove(node)
+                for _id in node['ids']:
+                    self.document.ids.pop(_id, None)  # remove ID registration
+                    removed_ids.append(_id)
+        for node in tuple(self.document.findall(nodes.problematic)):
+            if 'refid' in node and node['refid'] in removed_ids:
+                node.parent.replace(node, nodes.Text(node.astext()))
+        for node in self.document.findall(nodes.section):
+            if "system-messages" in node['classes'] and len(node) == 1:
+                node.parent.remove(node)
+*/
+
 /**
  * Append all post-parse system messages to the end of the document.
  * Used for testing purposes.
- * @todo unimplemented
  */
 class TestMessages extends Transform {
     public apply(): void {
+        // Append all transform messages without a parent to the document
+        for (const msg of this.document.transformMessages) {
+            if (!msg.parent) {
+                this.document.append(msg);
+            }
+        }
     }
 }
 TestMessages.defaultPriority = 880;
+
+// Original Python:
+/*
+
+class TestMessages(Transform):
+
+    """
+    Append all post-parse system messages to the end of the document.
+
+    Used for testing purposes.
+    """
+
+    # marker for pytest to ignore this class during test discovery
+    __test__ = False
+
+    default_priority = 880
+
+    def apply(self) -> None:
+        for msg in self.document.transform_messages:
+            if not msg.parent:
+                self.document += msg
+
+*/
+
 
 export {
     Decorations, Messages, FilterMessages, TestMessages,

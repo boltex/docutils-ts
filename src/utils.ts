@@ -594,6 +594,44 @@ export function xmlDeclaration(encoding: string | 'unicode' | null = null): stri
     return '<?xml version="1.0"?>\n';
 }
 
+export function strftimeToDayjsFormat(pyFormat: string): string {
+    // Map of Python strftime tokens to Day.js tokens
+    const tokenMap: { [key: string]: string } = {
+        '%Y': 'YYYY', // Year with century
+        '%y': 'YY',   // Year without century
+        '%m': 'MM',   // Month as zero-padded decimal
+        '%-m': 'M',   // Month as decimal (no zero)
+        '%B': 'MMMM', // Full month name
+        '%b': 'MMM',  // Abbreviated month name
+        '%d': 'DD',   // Day of month zero-padded
+        '%-d': 'D',   // Day of month (no zero)
+        '%H': 'HH',   // Hour (24-hour, zero-padded)
+        '%-H': 'H',   // Hour (24-hour, no zero)
+        '%I': 'hh',   // Hour (12-hour, zero-padded)
+        '%-I': 'h',   // Hour (12-hour, no zero)
+        '%p': 'A',    // AM/PM
+        '%M': 'mm',   // Minute zero-padded
+        '%-M': 'm',   // Minute (no zero)
+        '%S': 'ss',   // Second zero-padded
+        '%-S': 's',   // Second (no zero)
+        '%f': 'SSS',  // Microsecond (approximate, JS only has ms)
+        '%a': 'ddd',  // Abbreviated weekday
+        '%A': 'dddd', // Full weekday
+        '%w': 'd',    // Weekday as decimal (0=Sunday)
+        '%j': 'DDDD', // Day of year
+        '%U': 'ww',   // Week number (Sunday first, not exact)
+        '%W': 'ww',   // Week number (Monday first, not exact)
+        '%z': 'ZZ',   // UTC offset
+        '%Z': 'z',    // Timezone name
+        '%%': '%'     // Literal %
+    };
+
+    // Replace tokens
+    return pyFormat.replace(/%(-?[a-zA-Z%])/g, (match) => {
+        return tokenMap[match] || match;
+    });
+}
+
 export {
     findCombiningChars, columnWidth, escape2null, splitEscapedWhitespace, columnIndicies, normalizeLanguageTag as normalizedLanguageTag
 };

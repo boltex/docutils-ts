@@ -8,10 +8,10 @@ import { setClasses } from "../roles.js";
 import { fullyNormalizeName, whitespaceNormalizeName } from "../../../utils/nameUtils.js";
 
 class Image extends Directive {
-    private static alignHValues: string[] = ['left', 'center', 'right'];
-    private static alignVValues: string[] = ['top', 'middle', 'bottom'];
-    private static loadingValues: string[] = ['embed', 'link', 'lazy'];
-    private static alignValues: string[] = [...this.alignHValues, ...this.alignVValues];
+    public static alignHValues: string[] = ['left', 'center', 'right'];
+    public static alignVValues: string[] = ['top', 'middle', 'bottom'];
+    public static loadingValues: string[] = ['embed', 'link', 'lazy'];
+    public static alignValues: string[] = [...this.alignHValues, ...this.alignVValues];
 
     public static requiredArguments: number = 1;
     public static optionalArguments: number = 0;
@@ -104,97 +104,142 @@ class Image extends Directive {
 }
 
 
-
-// Original Python
-/*
-
-class Image(Directive):
-
-    align_h_values = ('left', 'center', 'right')
-    align_v_values = ('top', 'middle', 'bottom')
-    align_values = align_v_values + align_h_values
-    loading_values = ('embed', 'link', 'lazy')
-
-    def align(argument):
-        # This is not callable as `self.align()`.  We cannot make it a
-        # staticmethod because we're saving an unbound method in
-        # option_spec below.
-        return directives.choice(argument, Image.align_values)
-
-    def loading(argument):
-        # This is not callable as `self.loading()` (see above).
-        return directives.choice(argument, Image.loading_values)
-
-    required_arguments = 1
-    optional_arguments = 0
-    final_argument_whitespace = True
-    option_spec = {'alt': directives.unchanged,
-                   'height': directives.length_or_unitless,
-                   'width': directives.length_or_percentage_or_unitless,
-                   'scale': directives.percentage,
-                   'align': align,
-                   'target': directives.unchanged_required,
-                   'loading': loading,
-                   'class': directives.class_option,
-                   'name': directives.unchanged}
-
-    def run(self):
-        if 'align' in self.options:
-            if isinstance(self.state, states.SubstitutionDef):
-                # Check for align_v_values.
-                if self.options['align'] not in self.align_v_values:
-                    raise self.error(
-                        'Error in "%s" directive: "%s" is not a valid value '
-                        'for the "align" option within a substitution '
-                        'definition.  Valid values for "align" are: "%s".'
-                        % (self.name, self.options['align'],
-                           '", "'.join(self.align_v_values)))
-            elif self.options['align'] not in self.align_h_values:
-                raise self.error(
-                    'Error in "%s" directive: "%s" is not a valid value for '
-                    'the "align" option.  Valid values for "align" are: "%s".'
-                    % (self.name, self.options['align'],
-                       '", "'.join(self.align_h_values)))
-        messages = []
-        reference = directives.uri(self.arguments[0])
-        self.options['uri'] = reference
-        reference_node = None
-        if 'target' in self.options:
-            block = states.escape2null(
-                self.options['target']).splitlines()
-            block = list(block)
-            target_type, data = self.state.parse_target(
-                block, self.block_text, self.lineno)
-            if target_type == 'refuri':
-                reference_node = nodes.reference(refuri=data)
-            elif target_type == 'refname':
-                reference_node = nodes.reference(
-                    refname=fully_normalize_name(data),
-                    name=whitespace_normalize_name(data))
-                reference_node.indirect_reference_name = data
-                self.state.document.note_refname(reference_node)
-            else:                           # malformed target
-                messages.append(data)       # data is a system message
-            del self.options['target']
-
-
-        options = normalize_options(self.options)
-        image_node = nodes.image(self.block_text, **options)
-        (image_node.source,
-         image_node.line) = self.state_machine.get_source_and_line(self.lineno)
-        self.add_name(image_node)
-        if reference_node:
-            reference_node += image_node
-            return messages + [reference_node]
-        else:
-            return messages + [image_node]
-
-
-
-*/
-
 class Figure extends Image {
-    // 
+    public static hasContent = true;
+
+    // Only horizontal alignments for figures
+    public static align(argument: any): string {
+        return directives.choice(argument, Image.alignHValues);
+    }
+
+    public static figwidthValue(argument: any): string {
+        if (typeof argument === "string" && argument.toLowerCase() === "image") {
+            return "image";
+        } else {
+            // Default unit is px
+            return directives.lengthOrPercentageOrUnitless(argument, "px");
+        }
+    }
+
+    public static optionSpec: OptionSpec = {
+        ...Image.optionSpec,
+        figwidth: Figure.figwidthValue,
+        figclass: directives.classOption,
+        figname: directives.unchanged,
+        align: Figure.align,
+    };
+
+    public run(): any[] {
+        // Extract and remove figure-specific options
+        const figwidth = this.options?.figwidth ? this.options.figwidth : undefined;
+        if (figwidth !== undefined) delete this.options.figwidth;
+        const figclasses = this.options?.figclass ? this.options.figclass : undefined;
+        if (figclasses !== undefined) delete this.options.figclass;
+        const figname = this.options?.figname ? this.options.figname : undefined;
+        if (figname !== undefined) delete this.options.figname;
+        const align = this.options?.align ? this.options.align : undefined;
+        if (align !== undefined) delete this.options.align;
+
+        // Run the Image directive logic
+        const imageResults = super.run();
+        const imageNode = imageResults.find((n: any) => n instanceof nodes.image || n instanceof nodes.system_message);
+
+        if (!imageNode || imageNode instanceof nodes.system_message) {
+            return [imageNode];
+        }
+
+        // Create the figure node and set source/line info
+        const figureNode = new nodes.figure('', [imageNode]);
+        if (this.stateMachine) {
+            const [source, line] = this.stateMachine.getSourceAndLine(this.lineno);
+            figureNode.source = source;
+            figureNode.line = line;
+        }
+
+        // Handle figwidth
+        if (figwidth === "image") {
+            // TODO: Implement image size reading if possible when a PIL equivalent is available
+            // figureNode.width = ...;
+        } else if (figwidth !== undefined) {
+            figureNode.attributes.width = figwidth;
+        }
+
+        // Handle figclass
+        if (figclasses) {
+            figureNode.attributes.classes = (figureNode.attributes.classes || []).concat(figclasses);
+        }
+
+        // Handle figname
+        if (figname) {
+            figureNode.names = (figureNode.names || []);
+            figureNode.names.push(fullyNormalizeName(figname));
+            this.state.document?.noteExplicitTarget?.(figureNode, figureNode);
+        }
+
+        // Handle align
+        if (align) {
+            figureNode.attributes.align = align;
+        }
+
+        // Handle content (caption and legend)
+        if (this.content && this.content.length > 0) {
+            // Create anonymous container for parsing
+            const node = new nodes.Element();
+
+            // Parse the content
+            this.state.nestedParse(
+                new StringList(this.content),
+                this.contentOffset,
+                node
+            );
+
+            // Process each child node
+            const nodeChildren = node.getChildren();
+            let outsideIndex = 0;
+            for (let i = 0; i < nodeChildren.length; i++) {
+                outsideIndex = i;
+                const child = nodeChildren[i];
+
+                // Skip temporary nodes that will be removed by transforms
+                if (child instanceof nodes.target || child instanceof nodes.pending) {
+                    figureNode.add(child);
+                    continue;
+                }
+
+                // Handle paragraph as caption
+                if (child instanceof nodes.paragraph) {
+                    const caption = new nodes.caption(child.rawsource, '', child.getChildren());
+                    if (child.source) caption.source = child.source;
+                    if (child.line !== undefined) caption.line = child.line;
+                    figureNode.add(caption);
+                    break;
+                }
+
+                // Handle empty comment
+                if (child instanceof nodes.comment && child.getNumChildren() === 0) {
+                    break;
+                }
+
+                // Error if not a paragraph or empty comment
+                const error = this.stateMachine.reporter.error(
+                    'Figure caption must be a paragraph or empty comment.',
+                    [new nodes.literal_block(this.blockText, this.blockText)],
+                    { line: this.lineno }
+                );
+                return [figureNode, error];
+            }
+
+            // Add remaining content as legend if any
+            if (node.getNumChildren() > (outsideIndex + 1)) {
+                const legendChildren = node.getChildren().slice(outsideIndex + 1);
+                const legend = new nodes.legend('', [...legendChildren]);
+                figureNode.add(legend);
+            }
+        }
+
+        return [figureNode];
+    }
+
 }
 
 export { Image, Figure };
