@@ -385,6 +385,42 @@ class GenericNodeVisitor extends NodeVisitor {
     }
 }
 
+/**
+ * Make a complete copy of a tree or branch, including element attributes.
+ */
+class TreeCopyVisitor extends GenericNodeVisitor {
+
+    constructor(document: Document) {
+        super(document);
+        this.parentStack = [];
+        this.parent = [];
+    }
+
+    public getTreeCopy(): NodeInterface {
+        if (this.parent.length === 0) {
+            throw new ApplicationError("No tree copy available, parent stack is empty.");
+        }
+        return this.parent[0];
+    }
+
+    public default_visit(node: NodeInterface): void {
+        /* Copy the current node, and make it the new acting parent. */
+        const newnode = node.copy();
+        this.parent.push(newnode);
+        this.parentStack.push(this.parent);
+        this.parent = newnode;
+    }
+
+    public default_departure(node: NodeInterface): void {
+        /* Restore the previous acting parent. */
+        if (this.parentStack.length === 0) {
+            throw new ApplicationError("No parent stack available, cannot depart.");
+        }
+        this.parent = this.parentStack.pop() || [];
+    }
+
+}
+
 // fixme
 // GenericNodeVisitor.nodeClassNames = nodeClassNames;
 
@@ -488,6 +524,27 @@ abstract class Node implements NodeInterface {
 
     public append(item: NodeInterface): void {
         throw new Error('Cant append to underived Node');
+    }
+
+    public insert(index: number, item: NodeInterface): void {
+        throw new Error('Cant append to underived Node');
+
+    }
+    public pop(i?: number): NodeInterface {
+        throw new Error('Cant insert to underived Node');
+
+    }
+    public remove(item: NodeInterface): void {
+        throw new Error('Cant pop to underived Node');
+    }
+    public clear(): void {
+        throw new Error('Cant clear to underived Node');
+    }
+    public replace(old: NodeInterface, newItem: NodeInterface | NodeInterface[]): void {
+        throw new Error('Cant replace to underived Node');
+    }
+    public replaceSelf(newItem: NodeInterface | NodeInterface[]): void {
+        throw new Error('Cant replaceSelf to underived Node');
     }
 
     public getChild(index: number): NodeInterface {
@@ -1146,6 +1203,8 @@ class Element extends Node implements ElementInterface {
    */
     public tagname: string = "";
 
+    // Note: Node.attributes.ids is an array of strings
+    // while document.ids is a dictionary of string to NodeInterface.
     public attributes: Attributes;
 
 
@@ -1241,13 +1300,82 @@ class Element extends Node implements ElementInterface {
         return this.children.map((x): string => x.astext()).join(this.childTextSeparator);
     }
 
+    public append(item: NodeInterface): void {
+        this.setupChild(item);
+        this.children.push(item);
+    }
+
     public extend(...items: any[]): void {
         items.forEach(this.append.bind(this));
     }
 
-    public append(item: NodeInterface): void {
-        this.setupChild(item);
-        this.children.push(item);
+    public insert(index: number, item: NodeInterface): void {
+        if (item instanceof Node) {
+            this.setupChild(item);
+            this.children.splice(index, 0, item);
+        } else if (item !== null && item !== undefined) {
+            this.children.splice(index, 0, item);
+        }
+    }
+
+    public pop(i: number = -1): NodeInterface {
+        return this.children.splice(i, 1)[0];
+    }
+
+    public remove(item: NodeInterface): void {
+        const index = this.children.indexOf(item);
+        if (index === -1) {
+            throw new ApplicationError(`Node ${item} not found in children`);
+        }
+        this.children.splice(index, 1);
+    }
+
+    public clear(): void {
+        this.children.length = 0;
+    }
+
+    public replace(old: NodeInterface, newItem: NodeInterface | NodeInterface[]): void {
+        /**
+       Replace one child `Node` with another child or children.
+       */
+        const index = this.children.indexOf(old);
+        if (index === -1) {
+            throw new ApplicationError(`Node ${old} not found in children`);
+        }
+        if (newItem instanceof Node) {
+            this.setupChild(newItem as Node);
+            this.children[index] = newItem;
+        } else if (newItem !== null && newItem !== undefined && Array.isArray(newItem)) {
+            this.children.splice(index, 1, ...newItem);
+        }
+    }
+
+    public replaceSelf(newItem: NodeInterface | NodeInterface[]): void {
+        /**
+       Replace `self` node with `new`, where `new` is a node or a
+       list of nodes.
+       */
+        let update: NodeInterface | NodeInterface[] | null = newItem;
+        if (!Array.isArray(newItem)) {
+            // `new` is a single node; update first child.
+            try {
+                update = newItem.getChildren()[0];
+            } catch (error) {
+                update = null;
+            }
+        }
+        if (update instanceof Element) {
+            update.updateBasicAtts(this);
+        } else {
+            // `update` is a Text node or `new` is an empty list.
+            // Assert that we aren't losing any attributes.
+            this.basicAttributes.forEach((att): void => {
+                if (this.attributes[att]) {
+                    throw new ApplicationError(`Losing "${att}" attribute: ${this.attributes[att]}`);
+                }
+            });
+        }
+        this.parent.replace(this, newItem);
     }
 
     public add(item: NodeInterface[] | NodeInterface): void {
@@ -2642,7 +2770,7 @@ class system_message extends Element implements Systemmessage {
  *  transforms.
  */
 class pending extends Element {
-    public details: {};
+    public details: Record<string, any>;
 
     public transform: {};
 
@@ -2888,7 +3016,7 @@ class generated extends TextElement {
 //  Auxiliary Classes, Functions, and Data
 
 export {
-    Node, whitespaceNormalizeName, NodeVisitor, GenericNodeVisitor,
+    Node, whitespaceNormalizeName, NodeVisitor, GenericNodeVisitor, TreeCopyVisitor,
     SparseNodeVisitor, Element, TextElement,
     Text, abbreviation, acronym, address, admonition, attention,
     attribution, author, authors, block_quote, bullet_list, caption,

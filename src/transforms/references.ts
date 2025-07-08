@@ -60,7 +60,7 @@ PropagateTargets.defaultPriority = 260;
  *  
  */
 
-class AnonymousHyperlinks extends Transform {
+export class AnonymousHyperlinks extends Transform {
     public apply(): void {
         const anonymousRefs = [];
         const anonymousTargets = [];

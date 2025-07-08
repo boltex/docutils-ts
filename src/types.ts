@@ -144,7 +144,13 @@ export interface NodeInterface extends SourceLocation {
     clearChildren(): void;
     getChildren(): NodeInterface[];
     append(item: NodeInterface): void;
+    insert(index: number, item: NodeInterface): void;
+    pop(i?: number): NodeInterface;
+    remove(item: NodeInterface): void;
     removeChild(index: number): void;
+    clear(): void;
+    replace(old: NodeInterface, newItem: NodeInterface | NodeInterface[]): void;
+    replaceSelf(newItem: NodeInterface | NodeInterface[]): void;
 
     traverse(args: TraverseArgs): NodeInterface[];
 
@@ -190,6 +196,12 @@ export interface NodeInterface extends SourceLocation {
 
     isAdmonition(): boolean;
     isSetup: boolean;
+}
+
+export interface PendingInterface extends NodeInterface {
+    details: Record<string, any>;
+    transform: Record<string, any>;
+
 }
 
 export interface Attributes {
@@ -263,7 +275,7 @@ export interface Document extends ElementInterface {
 
     noteIndirectTarget(target: NodeInterface): void;
 
-    setId(p: NodeInterface, msgnode?: ElementInterface): string;
+    setId(p: NodeInterface, msgnode?: ElementInterface, suggestedPrefix?: string): string;
 
     noteFootnoteRef(refnode: NodeInterface): void;
 

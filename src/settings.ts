@@ -17,6 +17,17 @@ export interface DocutilsCoreOptionParser {
     footnoteBacklinks?: boolean;
     /** DocutilsCoreOptionParser: Disable section numbering by Docutils. */
     sectnumXform?: number;
+
+    /** Stores the value of the `"sectnum" directive`_'s "depth" option if sectnum_xform_ is False. */
+    sectnumDepth?: number;
+    /** Stores the value of the `"sectnum" directive`_'s "prefix" option if sectnum_xform_ is False. */
+    sectnumPrefix?: string;
+    /** Stores the value of the `"sectnum" directive`_'s "start" option if sectnum_xform_ is False. */
+    sectnumStart?: number;
+    /** Stores the value of the `"sectnum" directive`_'s "suffix" option if sectnum_xform_ is False. */
+    sectnumSuffix?: string;
+
+
     /** DocutilsCoreOptionParser: Leave comment elements in the document tree. (default) */
     stripComments?: string;
     /** DocutilsCoreOptionParser: Remove all elements with classes="<class>" from the document tree. Warning: potentially dangerous; use with caution. (Multiple-use option.) */

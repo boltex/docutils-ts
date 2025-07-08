@@ -5,16 +5,17 @@ import {
     NodeInterface,
     TransformInterface,
     LoggerType,
+    PendingInterface,
 } from "./types.js";
 
 
 export default abstract class Transform implements TransformInterface {
     public document: Document;
-    public startNode?: NodeInterface;
+    public startNode?: PendingInterface;
     public language?: CoreLanguage;
     public static defaultPriority: number;
     protected logger: LoggerType;
-    public constructor(document: Document, startNode?: NodeInterface) {
+    public constructor(document: Document, startNode?: PendingInterface) {
         this.document = document;
         this.logger = document.logger;
         this.startNode = startNode;

@@ -17,10 +17,10 @@ This project is a stabilized and functioning port of Kay McCormick's original wo
 - ✅ Core RST parsing and rendering
 - ✅ HTML and XML output writers
 - ✅ Command-line utilities
-- 🔄 Directives (partially implemented)
+- 🔄 Directives (in progress)
 - 🔄 Transformers (in progress)
 
-Contributors are welcome to help complete the remaining features!
+See [TODO.md](./TODO.md) for precise list. Contributors are welcome to help complete the remaining features!
 
 ## ✨ Features
 
@@ -176,7 +176,7 @@ Contributions are welcome! This project aims to bring full reStructuredText capa
 8. Push to the branch: `git push origin feature/amazing-feature`
 9. Open a Pull Request
 
-See `TODO.md` or the [project's issues page](https://github.com/boltex/docutils-ts/issues) for features that need implementation and `SPECIFICATION.md` for design guidelines.
+See [TODO.md](./TODO.md) or the [project's issues page](https://github.com/boltex/docutils-ts/issues) for features that need implementation and `SPECIFICATION.md` for design guidelines.
 
 ## 🙏 Acknowledgements
 

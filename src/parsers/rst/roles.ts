@@ -148,6 +148,27 @@ registerGenericRole('subscript', nodes.subscript);
 registerGenericRole('superscript', nodes.superscript);
 registerGenericRole('title-reference', nodes.title_reference);
 
+export function normalizeOptions(options: any): any {
+    /**
+     * Return normalized dictionary of role/directive options.
+     *
+     * * ``None`` is replaced by an empty dictionary.
+     * * The key 'class' is renamed to 'classes'.
+     */
+    if (options == null) {
+        return {};
+    }
+    const nOptions = { ...options };
+    if ('class' in nOptions) {
+        if ('classes' in nOptions) {
+            throw new Error('Cannot have both "class" and "classes" in options.');
+        }
+        nOptions.classes = nOptions.class;
+        delete nOptions.class;
+    }
+    return nOptions;
+}
+
 export { setClasses };
 
 export default roleInterface;
