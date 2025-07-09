@@ -15,6 +15,7 @@ export default abstract class Transform implements TransformInterface {
     public language?: CoreLanguage;
     public static defaultPriority: number;
     protected logger: LoggerType;
+
     public constructor(document: Document, startNode?: PendingInterface) {
         this.document = document;
         this.logger = document.logger;
@@ -26,7 +27,7 @@ export default abstract class Transform implements TransformInterface {
         this._init(document, startNode);
     }
 
-    public _init(document: Document, startNode: NodeInterface | undefined): void {
+    public _init(document: Document, startNode: PendingInterface | undefined): void {
 
     }
 

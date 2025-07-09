@@ -144,6 +144,7 @@ export interface NodeInterface extends SourceLocation {
     clearChildren(): void;
     getChildren(): NodeInterface[];
     append(item: NodeInterface): void;
+    extend(...items: NodeInterface[]): void;
     insert(index: number, item: NodeInterface): void;
     pop(i?: number): NodeInterface;
     remove(item: NodeInterface): void;
@@ -200,8 +201,7 @@ export interface NodeInterface extends SourceLocation {
 
 export interface PendingInterface extends NodeInterface {
     details: Record<string, any>;
-    transform: Record<string, any>;
-
+    transform: TransformType;
 }
 
 export interface Attributes {
@@ -585,8 +585,10 @@ export interface ReadInputCallback<T> {
 
 export interface TransformType {
     defaultPriority: number;
-    new(document: Document, startNode?: NodeInterface | null): TransformType;
-    apply(kwargs?: any): void;
+    new(document: Document, startNode?: PendingInterface): {
+        apply(kwargs?: any): void;
+    };
+    // apply(kwargs?: any): void;
 }
 
 export interface Components {

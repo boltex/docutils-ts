@@ -29,7 +29,7 @@ abstract class BaseAdmonition extends Directive {
 
             admonitionNode.append(title);
             if (messages.length > 0) {
-                admonitionNode.extend(messages);
+                admonitionNode.extend(...messages);
             }
 
             if (!('classes' in options)) {

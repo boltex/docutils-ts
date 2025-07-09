@@ -8,6 +8,7 @@ import {
     TransformType,
     LoggerType,
     ReferenceResolver,
+    PendingInterface,
 } from "./types.js";
 import { ApplicationError } from "./exceptions.js";
 
@@ -20,12 +21,12 @@ function leftPad(num: number, len: number, pad: string): string {
  */
 class Transformer implements TransformerInterface {
     private logger: LoggerType;
-    public transforms: [string, TransformType, NodeInterface | null, Record<string, any>][];
+    public transforms: [string, TransformType, PendingInterface | undefined, Record<string, any>][];
     public unknownReferenceResolvers: ReferenceResolver[];
     public document: Document;
     // this.applied.push([priority, TransformClass, pending, kwargs]);
 
-    public applied: [string, TransformType, NodeInterface | null, Record<string, any>][];
+    public applied: [string, TransformType, PendingInterface | undefined, Record<string, any>][];
     public sorted: number;
     public components: Components;
     public serialno: number;
@@ -148,7 +149,7 @@ class Transformer implements TransformerInterface {
             //          console.log(`priority string is ${priorityString}`);
             //          console.log(`I have ${transformClass}`);
             this.transforms.push(
-                [priorityString, transformClass, null, {}],
+                [priorityString, transformClass, undefined, {}],
             );
             this.sorted = 0;
         });
@@ -169,9 +170,42 @@ class Transformer implements TransformerInterface {
         return `${leftPad(priority, 3, '0')}-${leftPad(this.serialno, 3, '0')}`;
     }
 
-    public addPending(pending: NodeInterface, priority?: number): void {
-        // fixme implement
+    /**
+     * Store a transform with an associated `pending` node.
+     */
+    public addPending(pending: PendingInterface, priority?: number): void {
+        const transformClass = pending.transform;
+        if (typeof transformClass === 'undefined') {
+            throw new Error('pending node does not have a transform');
+        }
+        if (priority === undefined) {
+            priority = transformClass.defaultPriority;
+        }
+        const priorityString = this.getPriorityString(transformClass, priority);
+        this.transforms.push(
+            [priorityString, transformClass, pending, {}],
+        );
+        this.sorted = 0;
+
+
+
     }
+
+    // Original add_pending method commented out
+    /*
+
+    def add_pending(self, pending, priority=None) -> None:
+        """Store a transform with an associated `pending` node."""
+        transform_class = pending.transform
+        if priority is None:
+            priority = transform_class.default_priority
+        priority_string = self.get_priority_string(priority)
+        self.transforms.append(
+            (priority_string, transform_class, pending, {}))
+        self.sorted = False
+
+    */
+
 }
 
 export default Transformer;

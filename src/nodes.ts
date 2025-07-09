@@ -41,6 +41,8 @@ import {
     NameTypes,
     Ids,
     LoggerType,
+    TransformType,
+    PendingInterface,
 } from "./types.js";
 import { Settings } from "./settings.js";
 import { fullyNormalizeName, whitespaceNormalizeName } from "./utils/nameUtils.js";
@@ -393,7 +395,7 @@ class TreeCopyVisitor extends GenericNodeVisitor {
     constructor(document: Document) {
         super(document);
         this.parentStack = [];
-        this.parent = [];
+        this.parent = []; // starts as list but is also used as node! (see default_visit)
     }
 
     public getTreeCopy(): NodeInterface {
@@ -406,7 +408,12 @@ class TreeCopyVisitor extends GenericNodeVisitor {
     public default_visit(node: NodeInterface): void {
         /* Copy the current node, and make it the new acting parent. */
         const newnode = node.copy();
-        this.parent.push(newnode);
+        if (Array.isArray(this.parent)) {
+            // If parent is an array, normal push
+            this.parent.push(newnode);
+        } else {
+            this.parent.append(newnode);
+        }
         this.parentStack.push(this.parent);
         this.parent = newnode;
     }
@@ -524,6 +531,10 @@ abstract class Node implements NodeInterface {
 
     public append(item: NodeInterface): void {
         throw new Error('Cant append to underived Node');
+    }
+
+    public extend(...items: NodeInterface[]): void {
+        throw new Error('Cant extend to underived Node');
     }
 
     public insert(index: number, item: NodeInterface): void {
@@ -1305,7 +1316,7 @@ class Element extends Node implements ElementInterface {
         this.children.push(item);
     }
 
-    public extend(...items: any[]): void {
+    public extend(...items: NodeInterface[]): void {
         items.forEach(this.append.bind(this));
     }
 
@@ -1517,12 +1528,20 @@ class Element extends Node implements ElementInterface {
             children?: NodeInterface[],
             attributes?: Attributes
         ) => NodeInterface;
-        return new ctor(this.rawsource, this.children, this.attributes);
+
+        const obj = new ctor(this.rawsource, [], this.attributes);
+        obj.document = this.document;
+        obj.source = this.source;
+        obj.line = this.line;
+        return obj;
     }
 
     public deepcopy(): NodeInterface {
-        return this.copy();
+        const copy = this.copy();
+        copy.extend(...this.children.map((child): NodeInterface => child.deepcopy()));
+        return copy;
     }
+
 
     /*
     Update basic attributes ('ids', 'names', 'classes',
@@ -1633,7 +1652,14 @@ class Text extends Node {
     }
 
     public copy(): NodeInterface {
-        return this.constructor(this.data, this.rawsource);
+
+        const ctor = this.constructor as new (
+            data: string,
+            rawsource?: string,
+        ) => NodeInterface;
+
+        const obj = new ctor(this.data, this.rawsource);
+        return obj;
     }
 
     public deepcopy(): NodeInterface {
@@ -1684,18 +1710,77 @@ class Text extends Node {
 
 class TextElement extends Element implements TextElementInterface {
     public constructor(
-        rawsource?: string,
-        text?: string,
-        children?: NodeInterface[],
-        attributes?: Attributes
+        rawsource: string = '',
+        text: string = '',
+        children: NodeInterface[] = [],
+        attributes: Attributes = {}
     ) {
-        const cAry = children || [];
-        if (Array.isArray(text)) {
+        if (Array.isArray(text) && text.length > 0) {
             throw new InvalidArgumentsError("text should not be an array");
         }
-        super(rawsource, (typeof text !== "undefined" && text !== "") ? [new Text(text), ...cAry] : cAry, attributes);
+
+        if (text) {
+            // If text has content, create a Text node and add it as first child
+            const textnode = new Text(text);
+            super(rawsource, [textnode, ...children], attributes);
+        } else {
+            // Otherwise just use the children as-is
+            super(rawsource, children, attributes);
+        }
     }
+
+    // in TypeScript with positional parameters, you'll need to override the copy method in TextElement
+    public copy(): NodeInterface {
+        const ctor = this.constructor as new (
+            rawsource?: string,
+            text?: string,
+            children?: NodeInterface[],
+            attributes?: Attributes
+        ) => NodeInterface;
+
+        const obj = new ctor(this.rawsource, '', [], this.attributes);
+        obj.document = this.document;
+        obj.source = this.source;
+        obj.line = this.line;
+        return obj;
+    }
+
 }
+
+/*
+class TextElement(Element):
+    """
+    An element which directly contains text.
+
+    Its children are all `Text` or `Inline` subclass nodes.  You can
+    check whether an element's context is inline simply by checking whether
+    its immediate parent is a `TextElement` instance (including subclasses).
+    This is handy for nodes like `image` that can appear both inline and as
+    standalone body elements.
+
+    If passing children to `__init__()`, make sure to set `text` to
+    ``''`` or some other suitable value.
+    """
+    content_model: Final = (((Text, Inline), '*'),)
+    # (#PCDATA | %inline.elements;)*
+
+    child_text_separator: Final = ''
+    """Separator for child nodes, used by `astext()` method."""
+
+    def __init__(self,
+                 rawsource: str = '',
+                 text: str = '',
+                 *children,
+                 **attributes: Any,
+                 ) -> None:
+        if text:
+            textnode = Text(text)
+            Element.__init__(self, rawsource, textnode, *children,
+                             **attributes)
+        else:
+            Element.__init__(self, rawsource, *children, **attributes)
+*/
+
 
 export interface TransformerInterface {
     addPending(pending: NodeInterface, priority: number): void;
@@ -2067,7 +2152,7 @@ class document extends Element implements Document {
         subref.attributes.refname = whitespaceNormalizeName(refname);
     }
 
-    public notePending(pending: NodeInterface, priority?: number): void {
+    public notePending(pending: PendingInterface, priority?: number): void {
         this.transformer.addPending(pending, priority);
     }
 
@@ -2087,6 +2172,38 @@ class document extends Element implements Document {
             this.currentLine = offset + 1;
         }
     }
+
+    public copy(): NodeInterface {
+        const ctor = this.constructor as new (
+            settings: Settings,
+            reporter: ReporterInterface,
+            logger: LoggerType,
+            rawsource?: string,
+            children?: NodeInterface[],
+            attributes?: Attributes
+        ) => NodeInterface;
+
+        const obj = new ctor(
+            this.settings,
+            this.reporter,
+            this.logger,
+            this.rawsource,
+            [],
+            this.attributes
+        );
+        obj.source = this.source;
+        obj.line = this.line;
+        return obj;
+    }
+    /*
+    def copy(self) -> Self:
+        obj = self.__class__(self.settings, self.reporter,
+                             **self.attributes)
+        obj.source = self.source
+        obj.line = self.line
+        return obj
+
+    */
 
     public getDecoration(): decoration {
         if (!this.decoration) {
@@ -2772,10 +2889,10 @@ class system_message extends Element implements Systemmessage {
 class pending extends Element {
     public details: Record<string, any>;
 
-    public transform: {};
+    public transform: TransformType;
 
     public constructor(
-        transform: {},
+        transform: TransformType,
         details?: {},
         rawsource = "",
         children?: NodeInterface[],
@@ -2789,43 +2906,6 @@ class pending extends Element {
         /** Detail data (dictionary) required by the pending operation. */
         this.details = details || {};
     }
-
-    // TODO : implement this from the Python code
-    /*
-
-    def pformat(self, indent: str = '    ', level: int = 0) -> str:
-        internals = ['.. internal attributes:',
-                     '     .transform: %s.%s' % (self.transform.__module__,
-                                                 self.transform.__name__),
-                     '     .details:']
-        details = sorted(self.details.items())
-        for key, value in details:
-            if isinstance(value, Node):
-                internals.append('%7s%s:' % ('', key))
-                internals.extend(['%9s%s' % ('', line)
-                                  for line in value.pformat().splitlines()])
-            elif (value
-                  and isinstance(value, list)
-                  and isinstance(value[0], Node)):
-                internals.append('%7s%s:' % ('', key))
-                for v in value:
-                    internals.extend(['%9s%s' % ('', line)
-                                      for line in v.pformat().splitlines()])
-            else:
-                internals.append('%7s%s: %r' % ('', key, value))
-        return (Element.pformat(self, indent, level)
-                + ''.join(('    %s%s\n' % (indent * level, line))
-                          for line in internals))
-
-    def copy(self) -> Self:
-        obj = self.__class__(self.transform, self.details, self.rawsource,
-                             **self.attributes)
-        obj._document = self._document
-        obj.source = self.source
-        obj.line = self.line
-        return obj
-
-    */
 
     public pformat(indent = '    ', level = 0): string {
         const internals: string[] = [
@@ -2853,14 +2933,67 @@ class pending extends Element {
 
     }
 
-    public copy(): pending {
-        const obj = new pending(this.transform, this.details, this.rawsource, this.children, this.attributes);
+    /*
+
+    def pformat(self, indent: str = '    ', level: int = 0) -> str:
+        internals = ['.. internal attributes:',
+                     '     .transform: %s.%s' % (self.transform.__module__,
+                                                 self.transform.__name__),
+                     '     .details:']
+        details = sorted(self.details.items())
+        for key, value in details:
+            if isinstance(value, Node):
+                internals.append('%7s%s:' % ('', key))
+                internals.extend(['%9s%s' % ('', line)
+                                  for line in value.pformat().splitlines()])
+            elif (value
+                  and isinstance(value, list)
+                  and isinstance(value[0], Node)):
+                internals.append('%7s%s:' % ('', key))
+                for v in value:
+                    internals.extend(['%9s%s' % ('', line)
+                                      for line in v.pformat().splitlines()])
+            else:
+                internals.append('%7s%s: %r' % ('', key, value))
+        return (Element.pformat(self, indent, level)
+                + ''.join(('    %s%s\n' % (indent * level, line))
+                          for line in internals))
+
+    */
+
+
+    public copy(): NodeInterface {
+        const ctor = this.constructor as new (
+            transform: TransformType,
+            details?: {},
+            rawsource?: string,
+            children?: NodeInterface[],
+            attributes?: Attributes
+        ) => NodeInterface;
+
+        const obj = new ctor(
+            this.transform,
+            this.details,
+            this.rawsource,
+            [],
+            this.attributes
+        );
         obj.document = this.document;
         obj.source = this.source;
         obj.line = this.line;
         return obj;
     }
 
+    /*
+    def copy(self) -> Self:
+        obj = self.__class__(self.transform, self.details, self.rawsource,
+                             **self.attributes)
+        obj._document = self._document
+        obj.source = self.source
+        obj.line = self.line
+        return obj
+
+    */
 
 }
 

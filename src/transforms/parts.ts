@@ -14,6 +14,8 @@ import {
 */
 export class SectNum extends Transform {
 
+    static defaultPriority = 710;
+
     private maxDepth?: number;
     private startValue?: number;
     private prefix?: string;
@@ -70,8 +72,6 @@ export class SectNum extends Transform {
 
 }
 
-SectNum.defaultPriority = 710;
-
 /**
  * This transform generates a table of contents from the entire document tree
  * or from a single branch.  It locates "section" elements and builds them
@@ -92,6 +92,8 @@ export class Contents extends Transform {
 
     public backlinks: string | undefined;
     public tocId?: string;
+
+    static defaultPriority = 720;
 
     public apply(): void {
         // let the writer (or output software) build the contents list?
@@ -185,8 +187,6 @@ export class Contents extends Transform {
     }
 
 }
-
-Contents.defaultPriority = 720;
 
 class ContentsFilter extends nodes.TreeCopyVisitor {
 

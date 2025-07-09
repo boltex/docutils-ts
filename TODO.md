@@ -10,10 +10,10 @@
 - [x] `error` → `admonitions.Error`
 - [x] `important` → `admonitions.Important`
 - [x] `note` → `admonitions.Note`
-- [ ] `tip` → `admonitions.Tip`
-- [ ] `hint` → `admonitions.Hint`
-- [ ] `warning` → `admonitions.Warning`
-- [ ] `admonition` → `admonitions.Admonition`
+- [x] `tip` → `admonitions.Tip`
+- [x] `hint` → `admonitions.Hint`
+- [x] `warning` → `admonitions.Warning`
+- [x] `admonition` → `admonitions.Admonition`
 
 #### Body
 
@@ -45,9 +45,9 @@
 #### Parts
 
 - [x] `contents` → `parts.Contents`
-- [ ] `sectnum` → `parts.Sectnum`
-- [ ] `header` → `parts.Header`
-- [ ] `footer` → `parts.Footer`
+- [x] `sectnum` → `parts.Sectnum`
+- [x] `header` → `parts.Header`
+- [x] `footer` → `parts.Footer`
   <!-- - [ ] `footnotes` → `parts.footnotes` (commented in source) -->
   <!-- - [ ] `citations` → `parts.citations` (commented in source) -->
 

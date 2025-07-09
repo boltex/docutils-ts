@@ -1,6 +1,6 @@
 import * as nodes from '../nodes.js';
 import Transform from '../transform.js';
-import { Document, ElementInterface, NodeInterface } from "../types.js";
+import { Document, ElementInterface, NodeInterface, PendingInterface } from "../types.js";
 
 /**
  * TitlePromoter transform.
@@ -117,7 +117,7 @@ SectionSubTitle.defaultPriority = 350;
 export class DocInfo extends Transform {
     private biblioNodes: any;
 
-    public _init(document: Document, startNode: NodeInterface | undefined): void {
+    public _init(document: Document, startNode: PendingInterface | undefined): void {
         super._init(document, startNode);
 
         this.biblioNodes = {
