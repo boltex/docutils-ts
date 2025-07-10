@@ -35,7 +35,6 @@ export class Contents extends Directive {
 
         const document = this.stateMachine.document!;
         const language = languages.getLanguage(document.settings.languageCode, document.reporter)!;
-        const languageModule = { labels: { contents: 'Contents' } }; // Placeholder
 
         let title: nodes.title | null = null;
         const messages: nodes.Node[] = [];
@@ -75,7 +74,7 @@ export class Contents extends Directive {
             name = title.astext();
             topic.append(title);
         } else {
-            name = languageModule.labels.contents;
+            name = language.labels['contents'];
         }
 
         name = fullyNormalizeName(name);

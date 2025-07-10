@@ -50,15 +50,20 @@ abstract class TitlePromoter extends Transform {
         //       attribute from section
         subtitle.updateAllAttsConcatenating(subsection, true, true);
 
-        // Transfer the contents of the subsection's title to the
-        // subtitle:
+        // Transfer the contents of the subsection's title to the subtitle
         subtitle.add(subsection.getChild(0).getChildren());
-        node.add([
+
+        const newChildren = [
             node.getChild(0), // title
             subtitle,
             ...node.getChildren().slice(1, index),
             ...subsection.getChildren().slice(1)
-        ]);
+        ];
+
+        // Replace all children (not add to them)
+        node.clearChildren();
+        node.add(newChildren);
+
         return 1;
     }
 
@@ -100,8 +105,17 @@ export class SectionSubTitle extends TitlePromoter {
 
     public apply(): void {
         let reader = this.document.settings;
+
         if (!reader || (reader.sectsubtitleXform || typeof reader.sectsubtitleXform === 'undefined')) {
+
             this.document.traverse({ condition: nodes.section }).forEach((section): void => {
+
+                // make sure the codition was applied when getting the nodes 
+
+                if (!(section instanceof nodes.section)) {
+                    throw new TypeError('SectionSubTitle transform requires a section node.');
+                }
+
                 // On our way through the node tree, we are deleting
                 // sections, but we call self.promote_subtitle for those
                 // sections nonetheless.  To do: Write a test case which

@@ -1849,7 +1849,7 @@ class document extends Element implements Document {
 
     private symbolFootnoteStart: number;
     private idPrefix: string = "";
-    private autoIdPrefix: string = "";
+    private autoIdPrefix: string = "%";
     public logger: LoggerType;
 
     /** Private constructor */
@@ -1902,7 +1902,7 @@ class document extends Element implements Document {
                     this.ids[myId] = node;
                 }
                 if (this.ids[myId] !== node) {
-                    const msg = this.reporter.severe(
+                    const msg = this.reporter.error(
                         `Duplicate ID: "${myId}" used by ${this.ids[myId].starttag()} and ${node.starttag()}`
                     );
                     if (msgnode !== undefined && msg !== undefined) {
