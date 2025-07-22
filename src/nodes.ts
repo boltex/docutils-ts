@@ -431,94 +431,6 @@ class TreeCopyVisitor extends GenericNodeVisitor {
 // fixme
 // GenericNodeVisitor.nodeClassNames = nodeClassNames;
 
-// ========
-//  Mixins
-// ========
-
-class Resolvable {
-    //    resolved = 0
-}
-
-class BackLinkable {
-    public backrefs: string[] = [];
-
-    public addBackref(refid: string): void {
-        this.backrefs.push(refid);
-    }
-}
-
-// ====================
-//  Element Categories
-// ====================
-
-class Root {
-}
-
-class Titular {
-}
-
-/**
- * Category of Node which may occur before Bibliographic Nodes.
- */
-class PreBibliographic {
-}
-
-class Bibliographic {
-}
-
-class Decorative extends PreBibliographic {
-}
-
-class Structural {
-}
-
-class Body {
-}
-
-class General extends Body {
-}
-
-/** List-like elements. */
-class Sequential extends Body {
-}
-
-class Admonition extends Body {
-}
-
-/** Special internal body elements.  */
-class Special extends Body {
-}
-
-/** Internal elements that don't appear in output. */
-class Invisible extends PreBibliographic {
-}
-
-class Part {
-}
-
-class Inline {
-}
-
-class Referential extends Resolvable {
-}
-
-class Targetable extends Resolvable {
-    // referenced = 0
-    // indirect_reference_name = null
-    /* Holds the whitespace_normalized_name (contains mixed case) of a target.
-  Required for MoinMoin/reST compatibility.
-  */
-}
-
-/** Contains a `label` as its first element. */
-class Labeled {
-}
-
-// ==============================
-//  Functional Node: NodeInterface Base Classes
-// ==============================
-
-
 /**
  * Node class.
  *
@@ -548,7 +460,17 @@ abstract class Node implements NodeInterface {
     public remove(item: NodeInterface): void {
         throw new Error('Cant pop to underived Node');
     }
+
+    public index(item: NodeInterface, start?: number, stop?: number): number {
+        throw new Error('Cant index to underived Node');
+    }
+
+    public previousSibling(): NodeInterface | undefined {
+        throw new Error('Cant previousSibling to underived Node');
+    }
+
     public clear(): void {
+        throw new Error('Cant clear to underived Node');
         throw new Error('Cant clear to underived Node');
     }
     public replace(old: NodeInterface, newItem: NodeInterface | NodeInterface[]): void {
@@ -556,6 +478,10 @@ abstract class Node implements NodeInterface {
     }
     public replaceSelf(newItem: NodeInterface | NodeInterface[]): void {
         throw new Error('Cant replaceSelf to underived Node');
+    }
+
+    public replaceAt(index: number, newItem: NodeInterface | NodeInterface[]): void {
+        throw new Error('Cant replaceAt to underived Node');
     }
 
     public getChild(index: number): NodeInterface {
@@ -695,6 +621,10 @@ abstract class Node implements NodeInterface {
     abstract deepcopy(): NodeInterface;
 
     abstract _domNode(domroot: globalThis.Document): {};
+
+    public validate(recursive?: boolean): void {
+        throw new Error('Cant validate to underived Node');
+    }
 
     public setupChild(child: NodeInterface): void {
         (child as Node)._parent = this;
@@ -1193,6 +1123,48 @@ abstract class Node implements NodeInterface {
  *  This is equivalent to ``element.extend([node1, node2])``.
  *
  * @extends module:nodes~Node
+ * 
+ * ******************** ORIGINAL OVERRIDEN METHODS ********************
+ * 
+    def __getitem__(self, key: str | int | slice) -> Any:
+        if isinstance(key, str):
+            return self.attributes[key]
+        elif isinstance(key, int):
+            return self.children[key]
+        elif isinstance(key, slice):
+            assert key.step in (None, 1), 'cannot handle slice with stride'
+            return self.children[key.start:key.stop]
+        else:
+            raise TypeError('element index must be an integer, a slice, or '
+                            'an attribute name string')
+
+    def __setitem__(self, key, item) -> None:
+        if isinstance(key, str):
+            self.attributes[str(key)] = item
+        elif isinstance(key, int):
+            self.setup_child(item)
+            self.children[key] = item
+        elif isinstance(key, slice):
+            assert key.step in (None, 1), 'cannot handle slice with stride'
+            for node in item:
+                self.setup_child(node)
+            self.children[key.start:key.stop] = item
+        else:
+            raise TypeError('element index must be an integer, a slice, or '
+                            'an attribute name string')
+
+    def __delitem__(self, key: str | int | slice) -> None:
+        if isinstance(key, str):
+            del self.attributes[key]
+        elif isinstance(key, int):
+            del self.children[key]
+        elif isinstance(key, slice):
+            assert key.step in (None, 1), 'cannot handle slice with stride'
+            del self.children[key.start:key.stop]
+        else:
+            raise TypeError('element index must be an integer, a simple 
+
+ * 
  */
 class Element extends Node implements ElementInterface {
     public nodeName: any;
@@ -1320,12 +1292,19 @@ class Element extends Node implements ElementInterface {
         items.forEach(this.append.bind(this));
     }
 
-    public insert(index: number, item: NodeInterface): void {
+    public insert(index: number, item: NodeInterface | NodeInterface[]): void {
         if (item instanceof Node) {
             this.setupChild(item);
             this.children.splice(index, 0, item);
-        } else if (item !== null && item !== undefined) {
-            this.children.splice(index, 0, item);
+        } else if (item !== null && item !== undefined && Array.isArray(item)) {
+            for (const child of item) {
+                if (!(child instanceof Node)) {
+                    throw new InvalidArgumentsError("item must be a Node or an array of Nodes");
+                }
+                this.setupChild(child);
+            }
+            // If item is an array, insert all items at index.
+            this.children.splice(index, 0, ...item);
         }
     }
 
@@ -1339,6 +1318,31 @@ class Element extends Node implements ElementInterface {
             throw new ApplicationError(`Node ${item} not found in children`);
         }
         this.children.splice(index, 1);
+    }
+
+    public index(item: NodeInterface, start: number = 0, stop: number = Number.MAX_SAFE_INTEGER): number {
+        /**
+       Return the index of the first occurrence of `item` in the
+       children list, starting at `start` and stopping before `stop`.
+       If `item` is not found, raise an error.
+       */
+        const index = this.children.indexOf(item, start);
+        if (index === -1 || index >= stop) {
+            throw new ApplicationError(`Node ${item} not found in children between ${start} and ${stop}`);
+        }
+        return index;
+    }
+
+    public previousSibling(): NodeInterface | undefined {
+        /**
+       Return preceding sibling node or ``None``.
+       */
+        try {
+            const i = this.parent.index(this);
+            return i > 0 ? this.parent.getChild(i - 1) : undefined;
+        } catch (error) {
+            return undefined;
+        }
     }
 
     public clear(): void {
@@ -1357,6 +1361,12 @@ class Element extends Node implements ElementInterface {
             this.setupChild(newItem as Node);
             this.children[index] = newItem;
         } else if (newItem !== null && newItem !== undefined && Array.isArray(newItem)) {
+            newItem.forEach((item): void => {
+                if (!(item instanceof Node)) {
+                    throw new InvalidArgumentsError("newItem must be a Node or an array of Nodes");
+                }
+                this.setupChild(item);
+            });
             this.children.splice(index, 1, ...newItem);
         }
     }
@@ -1387,6 +1397,30 @@ class Element extends Node implements ElementInterface {
             });
         }
         this.parent.replace(this, newItem);
+    }
+
+    public replaceAt(index: number, newItem: NodeInterface | NodeInterface[]): void {
+        /**
+       Replace child at `index` with `new`, where `new` is a node or a
+       list of nodes.
+       */
+        if (index < 0 || index >= this.children.length) {
+            throw new ApplicationError(`Index ${index} out of range for children`);
+        }
+        if (newItem instanceof Node) {
+            this.setupChild(newItem);
+            this.children[index] = newItem;
+        } else if (Array.isArray(newItem)) {
+            newItem.forEach((item): void => {
+                if (!(item instanceof Node)) {
+                    throw new InvalidArgumentsError("newItem must be a Node or an array of Nodes");
+                }
+                this.setupChild(item);
+            });
+            this.children.splice(index, 1, ...newItem);
+        } else {
+            throw new InvalidArgumentsError("newItem must be a Node or an array of Nodes");
+        }
     }
 
     public add(item: NodeInterface[] | NodeInterface): void {
@@ -1598,11 +1632,234 @@ class Element extends Node implements ElementInterface {
             byId.referenced = 1;
         }
     }
+
+
+    public validate(recursive = true): void {
+        // not implemented for now.
+    }
+
 }
 
-// =====================
-//  Decorative Elements
-// =====================
+
+// ====================
+//  Element Categories
+// ====================
+//
+// See https://docutils.sourceforge.io/docs/ref/doctree.html#element-hierarchy.
+
+/**
+ * Element at the root of a document tree.
+ */
+class Root {
+}
+
+/**
+ * Structural elements
+ */
+class Structural {
+}
+
+/**
+ * Structural subelements are children of Structural elements.
+ *
+ * Most Structural elements accept only specific SubStructural elements.
+ */
+class SubStructural {
+}
+
+/**
+ * Bibliographic Elements (displayed document meta-data).
+ */
+class Bibliographic {
+}
+
+/**
+ * Body elements
+ */
+class Body {
+}
+
+/**
+ * Admonitions (distinctive and self-contained notices).
+ */
+class Admonition extends Body {
+}
+
+/**
+ * List-like body elements.
+ */
+class Sequential extends Body {
+}
+
+/**
+ * Miscellaneous body elements.
+ */
+class General extends Body {
+}
+
+/**
+ * Special internal body elements.
+ */
+class Special extends Body {
+}
+
+/**
+ * Body Subelements always occur within specific parent elements.
+ */
+class Part {
+}
+
+/**
+ * Decorative elements (`header` and `footer`).
+ * 
+ * Children of `decoration`.
+ */
+class Decorative {
+}
+
+/**
+ * Inline elements contain text data and possibly other inline elements.
+ */
+class Inline {
+}
+
+
+// Orthogonal categories and Mixins
+// ================================
+
+/**
+ * Elements which may occur before Bibliographic Elements.
+ */
+class PreBibliographic {
+}
+
+/** 
+ * Internal elements that don't appear in output. 
+ */
+class Invisible extends PreBibliographic {
+}
+
+/**
+ * Contains a `label` as its first element.
+ */
+class Labeled {
+}
+
+class Resolvable {
+    resolved = false;
+}
+
+/**
+ * Mixin for Elements that accept a "backrefs" attribute.
+ */
+class BackLinkable {
+    public backrefs: string[] = [];
+
+    public addBackref(refid: string): void {
+        this.backrefs.push(refid);
+    }
+}
+/**
+ * Elements holding a cross-reference (outgoing hyperlink).
+ */
+class Referential extends Resolvable {
+}
+
+/**
+ * Cross-reference targets (incoming hyperlink).
+ */
+class Targetable extends Resolvable {
+    referenced = 0;
+    indirect_reference_name?: string;
+    /*
+        Holds the whitespace_normalized_name (contains mixed case) of a target.
+        Required for MoinMoin/reST compatibility.
+    */
+}
+
+/**
+ * Title, sub-title, or informal heading (rubric).
+ */
+class Titular {
+}
+
+/**
+ * An element which directly contains text.
+ *
+ * Its children are all `Text` or `Inline` subclass nodes.  You can
+ * check whether an element's context is inline simply by checking whether
+ * its immediate parent is a `TextElement` instance (including subclasses).
+ * This is handy for nodes like `image` that can appear both inline and as
+ *  standalone body elements.
+ * 
+ * If passing children to `__init__()`, make sure to set `text` to
+ * ``''`` or some other suitable value.
+ */
+class TextElement extends Element implements TextElementInterface {
+    public constructor(
+        rawsource: string = '',
+        text: string = '',
+        children: NodeInterface[] = [],
+        attributes: Attributes = {}
+    ) {
+        if (Array.isArray(text) && text.length > 0) {
+            throw new InvalidArgumentsError("text should not be an array");
+        }
+
+        if (text) {
+            // If text has content, create a Text node and add it as first child
+            const textnode = new Text(text);
+            super(rawsource, [textnode, ...children], attributes);
+        } else {
+            // Otherwise just use the children as-is
+            super(rawsource, children, attributes);
+        }
+    }
+
+    // in TypeScript with positional parameters, you'll need to override the copy method in TextElement
+    public copy(): NodeInterface {
+        const ctor = this.constructor as new (
+            rawsource?: string,
+            text?: string,
+            children?: NodeInterface[],
+            attributes?: Attributes
+        ) => NodeInterface;
+
+        const obj = new ctor(this.rawsource, '', [], this.attributes);
+        obj.document = this.document;
+        obj.source = this.source;
+        obj.line = this.line;
+        return obj;
+    }
+
+}
+
+/**
+ * An element which directly contains preformatted text.
+ */
+class FixedTextElement extends TextElement {
+    constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.attributes["xml:space"] = "preserve";
+    }
+}
+
+/**
+ * An element which only contains text, no children.
+ */
+class PureTextElement extends TextElement {
+}
+
+// =================================
+//  Concrete Document Tree Elements
+// =================================
+//
+// See https://docutils.sourceforge.io/docs/ref/doctree.html#element-reference
+
+// Decorative Elements
+// ===================
+
+
 class header extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
@@ -1613,6 +1870,39 @@ class footer extends Element {
     public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, children, attributes);
         this.classTypes = [Decorative];
+    }
+}
+
+// Structural Subelements
+// ======================
+
+/**
+ * Title of `document`, `section`, `topic` and generic `admonition`.
+ */
+class title extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Titular, PreBibliographic, SubStructural];
+    }
+}
+
+/**
+ * Sub-title of `document`, `section` and `sidebar`.
+ */
+class subtitle extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Titular, PreBibliographic, SubStructural];
+    }
+}
+
+/**
+ * Container for "invisible" bibliographic data, or meta-data.
+ */
+class meta extends Element {
+    public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, children, attributes);
+        this.classTypes = [PreBibliographic, SubStructural];
     }
 }
 
@@ -1708,78 +1998,6 @@ class Text extends Node {
     }
 }
 
-class TextElement extends Element implements TextElementInterface {
-    public constructor(
-        rawsource: string = '',
-        text: string = '',
-        children: NodeInterface[] = [],
-        attributes: Attributes = {}
-    ) {
-        if (Array.isArray(text) && text.length > 0) {
-            throw new InvalidArgumentsError("text should not be an array");
-        }
-
-        if (text) {
-            // If text has content, create a Text node and add it as first child
-            const textnode = new Text(text);
-            super(rawsource, [textnode, ...children], attributes);
-        } else {
-            // Otherwise just use the children as-is
-            super(rawsource, children, attributes);
-        }
-    }
-
-    // in TypeScript with positional parameters, you'll need to override the copy method in TextElement
-    public copy(): NodeInterface {
-        const ctor = this.constructor as new (
-            rawsource?: string,
-            text?: string,
-            children?: NodeInterface[],
-            attributes?: Attributes
-        ) => NodeInterface;
-
-        const obj = new ctor(this.rawsource, '', [], this.attributes);
-        obj.document = this.document;
-        obj.source = this.source;
-        obj.line = this.line;
-        return obj;
-    }
-
-}
-
-/*
-class TextElement(Element):
-    """
-    An element which directly contains text.
-
-    Its children are all `Text` or `Inline` subclass nodes.  You can
-    check whether an element's context is inline simply by checking whether
-    its immediate parent is a `TextElement` instance (including subclasses).
-    This is handy for nodes like `image` that can appear both inline and as
-    standalone body elements.
-
-    If passing children to `__init__()`, make sure to set `text` to
-    ``''`` or some other suitable value.
-    """
-    content_model: Final = (((Text, Inline), '*'),)
-    # (#PCDATA | %inline.elements;)*
-
-    child_text_separator: Final = ''
-    """Separator for child nodes, used by `astext()` method."""
-
-    def __init__(self,
-                 rawsource: str = '',
-                 text: str = '',
-                 *children,
-                 **attributes: Any,
-                 ) -> None:
-        if text:
-            textnode = Text(text)
-            Element.__init__(self, rawsource, textnode, *children,
-                             **attributes)
-        else:
-            Element.__init__(self, rawsource, *children, **attributes)
-*/
 
 
 export interface TransformerInterface {
@@ -2210,42 +2428,15 @@ class document extends Element implements Document {
             this.decoration = new decoration();
             const index = this.firstChildNotMatchingClass(Titular);
             if (index === undefined) {
-                this.children.push(this.decoration);
+                this.append(this.decoration);
             } else {
-                this.children.splice(index, 0, this.decoration as NodeInterface);
+                this.insert(index, this.decoration)
             }
         }
         return this.decoration;
     }
 }
 
-class FixedTextElement extends TextElement {
-
-    constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.attributes["xml:space"] = "preserve";
-    }
-
-}
-
-// ================
-//  Title Elements
-// ================
-class title extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Titular, PreBibliographic];
-    }
-}
-
-class subtitle extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Titular, PreBibliographic];
-    }
-}
 
 class rubric extends TextElement {
 
@@ -3160,7 +3351,7 @@ export {
     error, field, field_body, field_list, field_name, figure, footer,
     footnote, footnote_reference, generated, header, hint, image,
     important, inline, label, legend, line, line_block, list_item,
-    literal, literal_block, math, math_block, note, option,
+    literal, literal_block, math, math_block, meta, note, option,
     option_argument, option_group, option_list, option_list_item,
     option_string, organization, paragraph, pending, problematic, raw,
     reference, revision, row, rubric, section, sidebar, status, strong,

@@ -148,12 +148,17 @@ export interface NodeInterface extends SourceLocation {
     insert(index: number, item: NodeInterface): void;
     pop(i?: number): NodeInterface;
     remove(item: NodeInterface): void;
+    index(item: NodeInterface, start?: number, stop?: number): number
+    previousSibling(): NodeInterface | undefined;
     removeChild(index: number): void;
     clear(): void;
     replace(old: NodeInterface, newItem: NodeInterface | NodeInterface[]): void;
     replaceSelf(newItem: NodeInterface | NodeInterface[]): void;
+    replaceAt(index: number, newItem: NodeInterface | NodeInterface[]): void;
 
     traverse(args: TraverseArgs): NodeInterface[];
+
+    validate(recursive?: boolean): void;
 
     astext(): string;
 
