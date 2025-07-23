@@ -911,6 +911,9 @@ class Body extends RSTState implements BodyState {
         } else {
             enumlist.enumtype = sequence;
         }
+
+
+        // TODO : USE ATTRIBUTES FOR THOSE PROPS! (see 'start suffix prefix enumtype' in nodes.ts !)
         enumlist.prefix = this.enum!.formatinfo![format].prefix;
         enumlist.suffix = this.enum!.formatinfo![format].suffix;
         if (ordinal !== 1) {

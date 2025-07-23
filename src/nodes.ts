@@ -1770,7 +1770,7 @@ class Referential extends Resolvable {
  */
 class Targetable extends Resolvable {
     referenced = 0;
-    indirect_reference_name?: string;
+    indirectReferenceName?: string;
     /*
         Holds the whitespace_normalized_name (contains mixed case) of a target.
         Required for MoinMoin/reST compatibility.
@@ -1906,10 +1906,23 @@ class meta extends Element {
     }
 }
 
+/**
+ * Container for displayed document meta-data.
+ */
+class docinfo extends Element {
+    public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, children, attributes);
+        this.classTypes = [PreBibliographic, SubStructural];
+    }
+}
+
+/**
+ * Container for `header` and `footer`.
+ */
 class decoration extends Element {
     public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, children, attributes);
-        this.classTypes = [Decorative];
+        this.classTypes = [PreBibliographic, SubStructural];
     }
 
     public getHeader(): NodeInterface {
@@ -1927,91 +1940,70 @@ class decoration extends Element {
     }
 }
 
-class Text extends Node {
-    public pformat(indent = '    ', level = 0): string {
+/**
+ * Transitions are breaks between untitled text parts.
+ *
+ * https://docutils.sourceforge.io/docs/ref/doctree.html#transition
+ */
+class transition extends Element {
 
-        const indentStr = indent.repeat(level);
-        const lines = this.astext().split('\n').map(line => `${indentStr}${line}`);
-
-        if (lines.length === 0) {
-            return '';
-        }
-
-        return `${lines.join('\n')}\n`;
-
-    }
-
-    public copy(): NodeInterface {
-
-        const ctor = this.constructor as new (
-            data: string,
-            rawsource?: string,
-        ) => NodeInterface;
-
-        const obj = new ctor(this.data, this.rawsource);
-        return obj;
-    }
-
-    public deepcopy(): NodeInterface {
-        return this.copy();
-    }
-
-    public walk(visitor: Visitor): boolean {
-        throw new Error("Method not implemented.");
-    }
-
-    private data: string;
-
-    public constructor(data: string, rawsource = "") {
-        super();
-        if (typeof data === "undefined") {
-            throw new Error("data should not be undefined");
-        }
-
-        this.rawsource = rawsource;
-        this.data = data;
-        this.children = [];
-    }
-
-    public _domNode(domroot: globalThis.Document): any {
-        return domroot.createTextNode(this.data);
-    }
-
-    public astext(): string {
-        return unescape(this.data);
-    }
-
-    public toString(): string {
-        return this.astext();
-    }
-
-    public toSource(): string {
-        return this.toString();
-    }
-
-    public add(iNodes: NodeInterface[] | NodeInterface): void {
-        throw new UnimplementedError("");
-    }
-
-    public emptytag(): string {
-        return "";
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [SubStructural];
     }
 }
 
+// Structural Elements
+// ===================
 
-
-export interface TransformerInterface {
-    addPending(pending: NodeInterface, priority: number): void;
+/**
+ * Topics are non-recursive, mini-sections.
+ *
+ * https://docutils.sourceforge.io/docs/ref/doctree.html#topic
+ */
+class topic extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Structural];
+    }
 }
 
 
 /**
- * Document class. Do not call the constructor, rather call
- * {@link newDocument} to obtain a new document instance
+ * Sidebars__ are like parallel documents providing related material.
  *
- * Implements {@link Document}
- * @extends Element
- * @implements Document
+ * A sidebar is typically offset by a border and "floats" to the side
+ * of the page
+ *
+ * https://docutils.sourceforge.io/docs/ref/doctree.html#sidebar
+ */
+class sidebar extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Structural];
+    }
+}
+
+/**
+ * Document section__. The main unit of hierarchy.
+ *
+ * https://docutils.sourceforge.io/docs/ref/doctree.html#section
+ */
+class section extends Element {
+    public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Structural];
+    }
+}
+
+// Root Element
+// ============
+
+/**
+ * The document root element.
+ *
+ * Do not instantiate this class directly; use
+ * `docutils.utils.new_document()` instead.
  */
 class document extends Element implements Document {
     public settings: Settings;
@@ -2080,7 +2072,7 @@ class document extends Element implements Document {
         attributes?: Attributes,
     ) {
         super(rawsource, children, attributes);
-        this.classTypes = [Root, Structural];
+        this.classTypes = [Root];
         this.logger = logger;
         this.tagname = "document";
         this.settings = settings;
@@ -2413,15 +2405,6 @@ class document extends Element implements Document {
         obj.line = this.line;
         return obj;
     }
-    /*
-    def copy(self) -> Self:
-        obj = self.__class__(self.settings, self.reporter,
-                             **self.attributes)
-        obj.source = self.source
-        obj.line = self.line
-        return obj
-
-    */
 
     public getDecoration(): decoration {
         if (!this.decoration) {
@@ -2437,36 +2420,11 @@ class document extends Element implements Document {
     }
 }
 
-
-class rubric extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Titular];
-    }
-}
-
-// ========================
-//  Bibliographic Elements
-// ========================
-
-class docinfo extends Element {
-    public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Bibliographic];
-    }
-}
-
+// Bibliographic Elements
+// ======================
 class author extends TextElement {
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
-        this.classTypes = [Bibliographic];
-    }
-}
-
-class authors extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
         this.classTypes = [Bibliographic];
     }
 }
@@ -2528,71 +2486,37 @@ class copyright extends TextElement {
     }
 }
 
-class section extends Element {
-
-    public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Structural];
-    }
-}
-
 /**
- *  Topics are terminal, "leaf" mini-sections, like block quotes with titles,
- *  or textual figures.  A topic is just like a section, except that it has no
- *  subsections, and it doesn't have to conform to section placement rules.
- *
- *  Topics are allowed wherever body elements (list, table, etc.) are allowed,
- *  but only at the top level of a section or document.  Topics cannot nest
- *  inside topics, sidebars, or body elements; you can't have a topic inside a
- *  table, list, block quote, etc.
+ * Container for author information for documents with multiple authors.
  */
-class topic extends Element {
+class authors extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
-        this.classTypes = [Structural];
+        this.classTypes = [Bibliographic];
     }
 }
 
-/*
- *  Sidebars are like miniature, parallel documents that occur inside other
- *  documents, providing related or reference material.  A sidebar is
- *  typically offset by a border and "floats" to the side of the page; the
- *  document's main text may flow around it.  Sidebars can also be likened to
- *  super-footnotes; their content is outside of the flow of the document's
- *  main text.
- *
- *  Sidebars are allowed wherever body elements (list, table, etc.) are
- *  allowed, but only at the top level of a section or document.  Sidebars
- *  cannot nest inside sidebars, topics, or body elements; you can't have a
- *  sidebar inside a table, list, block quote, etc.
- */
-
-class sidebar extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Structural];
-    }
-}
-
-class transition extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Structural];
-    }
-} // Structural
-
-// ===============
-//  Body Elements
-// ===============
+// Body Elements
+// =============
+//
+// General
+// -------
+//
+// Miscellaneous Body Elements and related Body Subelements (Part)
 
 class paragraph extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [General];
     }
-} // General
+}
+
+class rubric extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [General, Titular];
+    }
+}
 
 class compound extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
@@ -2601,11 +2525,44 @@ class compound extends Element {
     }
 }
 
-
 class container extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [General];
+    }
+}
+
+class attribution extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+class block_quote extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [General];
+    }
+}
+
+class reference extends TextElement {
+    public resolved: boolean = false;
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [General, Inline, Referential];
+    }
+}
+
+// Lists
+// -----
+//
+// Lists (Sequential) and related Body Subelements (Part)
+
+class list_item extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
     }
 }
 
@@ -2616,15 +2573,13 @@ class bullet_list extends Element {
     }
 }
 
+
 class enumerated_list extends Element {
+    // TODO : USE ATTRIBUTES FOR THOSE PROPS! (see body.ts !)
     public start?: number;
-
     public suffix?: string;
-
     public prefix?: string;
-
     public enumtype: string = '';
-
 
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
@@ -2632,13 +2587,112 @@ class enumerated_list extends Element {
     }
 }
 
-class list_item extends Element {
 
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Text extends Node {
+    public pformat(indent = '    ', level = 0): string {
+
+        const indentStr = indent.repeat(level);
+        const lines = this.astext().split('\n').map(line => `${indentStr}${line}`);
+
+        if (lines.length === 0) {
+            return '';
+        }
+
+        return `${lines.join('\n')}\n`;
+
+    }
+
+    public copy(): NodeInterface {
+
+        const ctor = this.constructor as new (
+            data: string,
+            rawsource?: string,
+        ) => NodeInterface;
+
+        const obj = new ctor(this.data, this.rawsource);
+        return obj;
+    }
+
+    public deepcopy(): NodeInterface {
+        return this.copy();
+    }
+
+    public walk(visitor: Visitor): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    private data: string;
+
+    public constructor(data: string, rawsource = "") {
+        super();
+        if (typeof data === "undefined") {
+            throw new Error("data should not be undefined");
+        }
+
+        this.rawsource = rawsource;
+        this.data = data;
+        this.children = [];
+    }
+
+    public _domNode(domroot: globalThis.Document): any {
+        return domroot.createTextNode(this.data);
+    }
+
+    public astext(): string {
+        return unescape(this.data);
+    }
+
+    public toString(): string {
+        return this.astext();
+    }
+
+    public toSource(): string {
+        return this.toString();
+    }
+
+    public add(iNodes: NodeInterface[] | NodeInterface): void {
+        throw new UnimplementedError("");
+    }
+
+    public emptytag(): string {
+        return "";
     }
 }
+
+
+
+export interface TransformerInterface {
+    addPending(pending: NodeInterface, priority: number): void;
+}
+
+
+
+
+
+
 
 class definition_list extends Element {
 
@@ -2816,21 +2870,7 @@ class line extends TextElement implements HasIndent {
     }
 } // Part
 
-class block_quote extends Element {
 
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General];
-    }
-}
-
-class attribution extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-}
 
 class attention extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
@@ -3222,14 +3262,7 @@ class literal extends TextElement {
         this.classTypes = [Inline];
     }
 } // Inline
-class reference extends TextElement {
-    public indirectReferenceName: string | undefined;
 
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [General, Inline, Referential];
-    }
-} // General, Inline, Referential
 class footnote_reference extends TextElement {
 
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
