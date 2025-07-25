@@ -1844,12 +1844,6 @@ class FixedTextElement extends TextElement {
     }
 }
 
-/**
- * An element which only contains text, no children.
- */
-class PureTextElement extends TextElement {
-}
-
 // =================================
 //  Concrete Document Tree Elements
 // =================================
@@ -2587,13 +2581,215 @@ class enumerated_list extends Element {
     }
 }
 
+class term extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
 
+class classifier extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
 
+/**
+ * Definition of a `term` in a `definition_list`.
+ */
+class definition extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
 
+class definition_list_item extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
 
+/**
+ * List of terms and their definitions.
+ *
+ * Can be used for glossaries or dictionaries, to describe or
+ * classify things, for dialogues, or to itemize subtopics.
+ */
+class definition_list extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Sequential];
+    }
+}
 
+class field_name extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
 
+class field_body extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
 
+class field extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part, Bibliographic];
+    }
+}
+
+/**
+ * List of label & data pairs.
+ *
+ * Typically rendered as a two-column list.
+ * Also used for extension syntax or special processing.
+ */
+class field_list extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Sequential];
+    }
+}
+
+/**
+ * A literal command-line option. Typically monospaced.
+ */
+class option_string extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * Placeholder text for option arguments.
+ */
+class option_argument extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+
+    // fixme test this
+    public astext(): string {
+        const r = super.astext();
+        return (this.attributes.delimiter || " ") + r;
+    }
+}
+
+/**
+ * Option element in an `option_list_item`.
+ *
+ * Groups an option string with zero or more option argument placeholders.
+ */
+class option extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+        this.childTextSeparator = ""; // fixme test this
+    }
+}
+
+/**
+ * Groups together one or more `option` elements, all synonyms.
+ */
+class option_group extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+        this.childTextSeparator = ", ";
+    }
+}
+
+/**
+ * Describtion of a command-line option.
+ */
+class description extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * Container for a pair of `option_group` and `description` elements.
+ */
+class option_list_item extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+        this.childTextSeparator = "  ";
+    }
+}
+
+/**
+ * Two-column list of command-line options and descriptions.
+ */
+class option_list extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Sequential];
+    }
+}
+
+// Pre-formatted text blocks
+// -------------------------
+
+class literal_block extends FixedTextElement {
+    public constructor(...args: any[]) {
+        super(...args);
+        this.classTypes = [General];
+    }
+}
+
+class doctest_block extends FixedTextElement {
+    public constructor(...args: any[]) {
+        super(...args);
+        this.classTypes = [General];
+    }
+}
+/**
+ * Mathematical notation (display formula).
+ */
+class math_block extends FixedTextElement {
+    public constructor(...args: any[]) {
+        super(...args);
+        this.classTypes = [General];
+    }
+}
+
+/**
+ * Single line of text in a `line_block`.
+ */
+class line extends TextElement implements HasIndent {
+    public indent: number = 0;
+    public _init(): void {
+        super._init();
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * Sequence of lines and nested line blocks.
+ */
+class line_block extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [General];
+    }
+}
+
+// Admonitions
+// -----------
+// distinctive and self-contained notices
 
 
 
@@ -2694,182 +2890,6 @@ export interface TransformerInterface {
 
 
 
-class definition_list extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Sequential];
-    }
-}
-
-class definition_list_item extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class term extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class classifier extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class definition extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-/*
-class classifier(Part, TextElement): pass
-*/
-
-class field_list extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Sequential];
-    }
-} // (Sequential, Element
-
-class field extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-} // (Part
-class field_name extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-} // (Part
-class field_body extends Element {
-
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-} // (Part
-
-class option extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-        this.childTextSeparator = ""; // fixme test this
-    }
-}
-
-class option_argument extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-
-    // fixme test this
-    public astext(): string {
-        const r = super.astext();
-        return (this.attributes.delimiter || " ") + r;
-    }
-}
-
-class option_group extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-        this.childTextSeparator = ", ";
-    }
-}
-
-class option_list extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Sequential];
-    }
-} // Sequential
-class option_list_item extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-        this.childTextSeparator = "  ";
-    }
-}
-
-class option_string extends TextElement {
-
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-} // (Part
-
-class description extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-} // (Part
-
-class literal_block extends FixedTextElement {
-
-    public constructor(...args: any[]) {
-        super(...args);
-        this.classTypes = [General];
-    }
-}
-
-class doctest_block extends FixedTextElement {
-
-    public constructor(...args: any[]) {
-        super(...args);
-        this.classTypes = [General];
-    }
-}
-
-class math_block extends FixedTextElement {
-
-    public constructor(...args: any[]) {
-        super(...args);
-        this.classTypes = [General];
-    }
-}
-
-class line_block extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General];
-    }
-}
-
-class line extends TextElement implements HasIndent {
-    public indent: number = 0;
-
-    public _init(): void {
-        super._init();
-
-        this.classTypes = [Part];
-    }
-} // Part
-
 
 
 class attention extends Element {
@@ -2881,7 +2901,6 @@ class attention extends Element {
 
 
 class caution extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2889,7 +2908,6 @@ class caution extends Element {
 }
 
 class danger extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2897,7 +2915,6 @@ class danger extends Element {
 }
 
 class error extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2905,7 +2922,6 @@ class error extends Element {
 }
 
 class important extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2913,7 +2929,6 @@ class important extends Element {
 }
 
 class note extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2921,7 +2936,6 @@ class note extends Element {
 }
 
 class tip extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2929,7 +2943,6 @@ class tip extends Element {
 }
 
 class hint extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Admonition];
@@ -2944,7 +2957,6 @@ class warning extends Element {
 }
 
 class admonition extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [General, BackLinkable, Labeled, Targetable];
@@ -2952,7 +2964,6 @@ class admonition extends Element {
 }
 
 class comment extends FixedTextElement {
-
     public constructor(...args: any[]) {
         super(...args);
         this.classTypes = [Special, Invisible, Inline, Targetable];
@@ -2960,7 +2971,6 @@ class comment extends FixedTextElement {
 }
 
 class substitution_definition extends TextElement {
-
     public constructor(...args: any[]) {
         super(...args);
         this.classTypes = [Special, Invisible];
@@ -2968,7 +2978,6 @@ class substitution_definition extends TextElement {
 }
 
 class target extends TextElement {
-
     public indirectReferenceName: string = "";
     public constructor(...args: any[]) {
         super(...args);
@@ -2984,7 +2993,6 @@ class footnote extends Element {
 }
 
 class citation extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [General, BackLinkable, Labeled, Targetable];
@@ -2992,7 +3000,6 @@ class citation extends Element {
 }
 
 class label extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Part];
@@ -3000,7 +3007,6 @@ class label extends TextElement {
 }
 
 class figure extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [General];
@@ -3008,16 +3014,13 @@ class figure extends Element {
 }
 
 class caption extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
-
         this.classTypes = [Part];
     }
 }
 
 class legend extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];
@@ -3025,7 +3028,6 @@ class legend extends Element {
 }
 
 class table extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [General];
@@ -3034,7 +3036,6 @@ class table extends Element {
 
 class tgroup extends Element {
     public stubs?: {}[];
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];
@@ -3042,7 +3043,6 @@ class tgroup extends Element {
 }
 
 class colspec extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];
@@ -3058,7 +3058,6 @@ class thead extends Element {
 }
 
 class tbody extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];
@@ -3067,7 +3066,6 @@ class tbody extends Element {
 
 class row extends Element {
     public column?: number;
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];
@@ -3075,7 +3073,6 @@ class row extends Element {
 }
 
 class entry extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];
@@ -3155,13 +3152,11 @@ class pending extends Element {
                     internals.push(...v.pformat().split('\n').map(line => `${' '.repeat(9)}${line}`));
                 }
             } else {
-                // internals.push(`${' '.repeat(7)}${key}: ${JSON.stringify(value)}`);
                 internals.push(`${' '.repeat(7)}${key}: ${value?.toString()}`);
             }
         }
         return super.pformat(indent, level)
-            + internals.map(line => `    ${indent.repeat(level)}${line}`).join('\n') + '\n';
-
+            + internals.map(line => `${indent.repeat(level)}    ${line}\n`).join('');
     }
 
     /*
@@ -3215,22 +3210,9 @@ class pending extends Element {
         return obj;
     }
 
-    /*
-    def copy(self) -> Self:
-        obj = self.__class__(self.transform, self.details, self.rawsource,
-                             **self.attributes)
-        obj._document = self._document
-        obj.source = self.source
-        obj.line = self.line
-        return obj
-
-    */
-
 }
 
-
 class raw extends FixedTextElement {
-
     public constructor(...args: any[]) {
         super(...args);
         this.classTypes = [Special, Inline, PreBibliographic];
@@ -3241,7 +3223,6 @@ class raw extends FixedTextElement {
 //  Inline Elements
 // =================
 class emphasis extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3249,7 +3230,6 @@ class emphasis extends TextElement {
 }
 
 class strong extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3264,28 +3244,24 @@ class literal extends TextElement {
 } // Inline
 
 class footnote_reference extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [General, Inline, Referential];
     }
 } // General, Inline, Referential
 class citation_reference extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [General, Inline, Referential];
     }
 } // General, Inline, Referential
 class substitution_reference extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
     }
 } // General, Inline, Referential
 class title_reference extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3293,7 +3269,6 @@ class title_reference extends TextElement {
 } // General, Inline, Referential
 
 class abbreviation extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3301,7 +3276,6 @@ class abbreviation extends TextElement {
 }
 
 class acronym extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3309,7 +3283,6 @@ class acronym extends TextElement {
 }
 
 class superscript extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3317,7 +3290,6 @@ class superscript extends TextElement {
 }
 
 class subscript extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3325,7 +3297,6 @@ class subscript extends TextElement {
 }
 
 class math extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3333,7 +3304,6 @@ class math extends TextElement {
 }
 
 class image extends Element {
-
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [General, Inline];
@@ -3344,9 +3314,7 @@ class image extends Element {
     }
 }
 
-
 class inline extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3354,7 +3322,6 @@ class inline extends TextElement {
 }
 
 class problematic extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3362,7 +3329,6 @@ class problematic extends TextElement {
 }
 
 class generated extends TextElement {
-
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
