@@ -16,7 +16,7 @@
  *
  */
 import Transformer from "./transformer.js";
-import { ApplicationError, InvalidArgumentsError, InvalidStateError, UnimplementedError } from "./exceptions.js";
+import { ApplicationError, InvalidArgumentsError, InvalidStateError, UnimplementedError, ValueError } from "./exceptions.js";
 import unescape from "./utils/unescape.js";
 import { checkDocumentArg, isIterable, pySplit } from "./utils.js";
 import {
@@ -47,6 +47,10 @@ import {
 import { Settings } from "./settings.js";
 import { fullyNormalizeName, whitespaceNormalizeName } from "./utils/nameUtils.js";
 import { nodeBasicAttributes } from './constants.js';
+
+export interface TransformerInterface {
+    addPending(pending: NodeInterface, priority: number): void;
+}
 
 const _nonIdChars = /[^a-z0-9]+/ig;
 const _nonIdAtEnds = /^[-0-9]+|-+$/;
@@ -125,57 +129,6 @@ function setupBacklinkable(o: NodeInterface): void {
     o.addBackref = (refid: string): void => { o.attributes.backrefs.push(refid) };
 }
 
-/**
- * Convert `string` into an identifier and return it.
- *
- * Docutils identifiers will conform to the regular expression
- * ``[a-z](-?[a-z0-9]+)*``.  For CSS compatibility, identifiers (the "class"
- * and "id" attributes) should have no underscores, colons, or periods.
- * Hyphens may be used.
- *
- * - The `HTML 4.01 spec`_ defines identifiers based on SGML tokens:
- *
- *       ID and NAME tokens must begin with a letter ([A-Za-z]) and may be
- *       followed by any number of letters, digits ([0-9]), hyphens ("-"),
- *       underscores ("_"), colons (":"), and periods (".").
- *
- * - However the `CSS1 spec`_ defines identifiers based on the "name" token,
- *   a tighter interpretation ("flex" tokenizer notation; "latin1" and
- *   "escape" 8-bit characters have been replaced with entities)::
- *
- *       unicode     \\[0-9a-f]{1,4}
- *       latin1      [&iexcl;-&yuml;]
- *       escape      {unicode}|\\[ -~&iexcl;-&yuml;]
- *       nmchar      [-a-z0-9]|{latin1}|{escape}
- *       name        {nmchar}+
- *
- * The CSS1 "nmchar" rule does not include underscores ("_"), colons (":"),
- * or periods ("."), therefore "class" and "id" attributes should not contain
- * these characters. They should be replaced with hyphens ("-"). Combined
- * with HTML's requirements (the first character must be a letter; no
- * "unicode", "latin1", or "escape" characters), this results in the
- * ``[a-z](-?[a-z0-9]+)*`` pattern.
- *
- * .. _HTML 4.01 spec: http://www.w3.org/TR/html401
- * .. _CSS1 spec: http://www.w3.org/TR/REC-CSS1
- */
-function makeId(strVal: string): string {
-    let id = strVal.toLowerCase();
-    // This is for unicode, I believe?
-    //if not isinstance(id, str):
-    //id = id.decode()
-    // id = translate(_nonIdTranslateDigraphs);
-    //id = id.translate(_nonIdTranslate);
-    // get rid of non-ascii characters.
-    // 'ascii' lowercase to prevent problems with turkish locale.
-    //id = unicodedata.normalize('NFKD', id).
-    //    encode('ascii', 'ignore').decode('ascii');
-    // shrink runs of whitespace and replace by hyphen
-    id = pySplit(id).join(' ').replace(_nonIdChars, '-');
-    id = id.replace(_nonIdAtEnds, '');
-    return id;
-}
-
 function _callDefaultVisit(node: NodeInterface): void | undefined | {} {
     // @ts-ignore
     return this.default_visit(node);
@@ -200,236 +153,6 @@ function _addNodeClassNames(names: string[], o: any): void {
     });
 }
 
-const nodeClassNames = ["Text", "abbreviation", "acronym", "address",
-    "admonition", "attention", "attribution", "author",
-    "authors", "block_quote", "bullet_list", "caption",
-    "caution", "citation", "citation_reference",
-    "classifier", "colspec", "comment", "compound",
-    "contact", "container", "copyright", "danger",
-    "date", "decoration", "definition", "definition_list",
-    "definition_list_item", "description", "docinfo",
-    "doctest_block", "document", "emphasis", "entry",
-    "enumerated_list", "error", "field", "field_body",
-    "field_list", "field_name", "figure", "footer",
-    "footnote", "footnote_reference", "generated",
-    "header", "hint", "image", "important", "inline",
-    "label", "legend", "line", "line_block", "list_item",
-    "literal", "literal_block", "math",
-    "math_block", "note", "option", "option_argument",
-    "option_group", "option_list", "option_list_item",
-    "option_string", "organization", "paragraph",
-    "pending", "problematic", "raw", "reference",
-    "revision", "row", "rubric", "section", "sidebar",
-    "status", "strong", "subscript",
-    "substitution_definition", "substitution_reference",
-    "subtitle", "superscript", "system_message", "table",
-    "target", "tbody", "term", "tgroup", "thead", "tip",
-    "title", "title_reference", "topic", "transition",
-    "version", "warning"];
-
-const SkipChildren = class {
-};
-const StopTraversal = class {
-};
-
-class SkipNode extends Error {
-}
-
-const SkipDeparture = class {
-};
-const SkipSiblings = class {
-};
-const NodeFound = class {
-};
-
-
-/**
- *  "Visitor" pattern [GoF95]_ abstract superclass implementation for
- *  document tree traversals.
- *
- *  Each node class has corresponding methods, doing nothing by
- *  default; override individual methods for specific and useful
- *  behaviour.  The `dispatch_visit()` method is called by
- *  `Node.walk()` upon entering a node.  `Node.walkabout()` also calls
- *  the `dispatch_departure()` method before exiting a node.
- *
- *  The dispatch methods call "``visit_`` + node class name" or
- *  "``depart_`` + node class name", resp.
- *
- *  This is a base class for visitors whose ``visit_...`` & ``depart_...``
- *  methods should be implemented for *all* node types encountered (such as
- *  for `docutils.writers.Writer` subclasses).  Unimplemented methods will
- *  raise exceptions.
- *
- *  For sparse traversals, where only certain node types are of interest,
- *  subclass `SparseNodeVisitor` instead.  When (mostly or entirely) uniform
- *  processing is desired, subclass `GenericNodeVisitor`.
- *
- *  .. [GoF95] Gamma, Helm, Johnson, Vlissides. *Design Patterns: Elements of
- *     Reusable Object-Oriented Software*. Addison-Wesley, Reading, MA, USA,
- *     1995.
- */
-class NodeVisitor {
-    public document: Document;
-
-    public optional: string[];
-    protected strictVisitor: boolean | undefined | null;
-
-    [name: string]: any;
-
-    /**
-   * Create a NodeVisitor.
-   * @param {nodes.document} document - document to visit
-   */
-    public constructor(document: Document) {
-        if (!checkDocumentArg(document)) {
-            throw new Error(`Invalid document arg: ${document}`);
-        }
-        this.document = document;
-        const core = document.settings;
-        this.strictVisitor = core.strictVisitor;
-        this.optional = [];
-    }
-
-    /**
-   * Call this."``visit_`` + node class name" with `node` as
-   * parameter.  If the ``visit_...`` method does not exist, call
-   * this.unknown_visit.
-   */
-    public dispatchVisit(node: NodeInterface): {} | undefined | void {
-        const nodeName = node.tagname;
-        const methodName = `visit_${nodeName}`;
-
-        let method = (this)[methodName];
-        if (!method) {
-            method = this.unknownVisit;
-        }
-        this.document.reporter.debug(`docutils.nodes.NodeVisitor.dispatch_visit calling for ${nodeName}`);
-        return method.bind(this)(node);
-    }
-
-    /*
-   * Call this."``depart_`` + node class name" with `node` as
-   * parameter.  If the ``depart_...`` method does not exist, call
-   * this.unknown_departure.
-   */
-    public dispatchDeparture(node: NodeInterface): {} | undefined | void {
-        const nodeName = node.tagname;
-        const method = (this)[`depart_${nodeName}`] || this.unknownDeparture;
-        this.document.reporter.debug(
-            `docutils.nodes.NodeVisitor.dispatch_departure calling for ${node}`
-        );
-        return method.bind(this)(node);
-    }
-
-    /**
-   * Called when entering unknown `Node` types.
-   *
-   * Raise an exception unless overridden.
-   */
-    public unknownVisit(node: NodeInterface): never | void {
-        if (this.strictVisitor || !(this.optional.includes(node.tagname))) {
-            throw new Error(`visiting unknown node type:${node.tagname}`);
-        }
-    }
-
-    /**
-   * Called before exiting unknown `Node` types.
-   *
-   * Raise exception unless overridden.
-   */
-    public unknownDeparture(node: NodeInterface): never | void {
-        if (this.strictVisitor || !(this.optional.includes(node.tagname))) {
-            throw new Error(`departing unknown node type: ${node.tagname}`);
-        }
-    }
-}
-
-/**
- * Base class for sparse traversals, where only certain node types are of
- * interest.  When ``visit_...`` & ``depart_...`` methods should be
- * implemented for *all* node types (such as for `docutils.writers.Writer`
- * subclasses), subclass `NodeVisitor` instead.
- */
-class SparseNodeVisitor extends NodeVisitor {
-}
-
-/**
- *  Generic "Visitor" abstract superclass, for simple traversals.
- *
- *  Unless overridden, each ``visit_...`` method calls `default_visit()`, and
- *  each ``depart_...`` method (when using `Node.walkabout()`) calls
- *  `default_departure()`. `default_visit()` (and `default_departure()`) must
- *  be overridden in subclasses.
- *
- *  Define fully generic visitors by overriding `default_visit()` (and
- *  `default_departure()`) only. Define semi-generic visitors by overriding
- *  individual ``visit_...()`` (and ``depart_...()``) methods also.
- *
- *  `NodeVisitor.unknown_visit()` (`NodeVisitor.unknown_departure()`) should
- *  be overridden for default behavior.
- */
-class GenericNodeVisitor extends NodeVisitor {
-    public static nodeClassNames = [];
-
-    public constructor(document: Document) {
-        super(document);
-        // document this/
-        _addNodeClassNames(nodeClassNames, this);
-    }
-
-    public default_visit(node: NodeInterface) {
-        throw new Error("not implemented");
-    }
-
-    public default_departure(node: NodeInterface) {
-        throw new Error("not implemented");
-    }
-}
-
-/**
- * Make a complete copy of a tree or branch, including element attributes.
- */
-class TreeCopyVisitor extends GenericNodeVisitor {
-
-    constructor(document: Document) {
-        super(document);
-        this.parentStack = [];
-        this.parent = []; // starts as list but is also used as node! (see default_visit)
-    }
-
-    public getTreeCopy(): NodeInterface {
-        if (this.parent.length === 0) {
-            throw new ApplicationError("No tree copy available, parent stack is empty.");
-        }
-        return this.parent[0];
-    }
-
-    public default_visit(node: NodeInterface): void {
-        /* Copy the current node, and make it the new acting parent. */
-        const newnode = node.copy();
-        if (Array.isArray(this.parent)) {
-            // If parent is an array, normal push
-            this.parent.push(newnode);
-        } else {
-            this.parent.append(newnode);
-        }
-        this.parentStack.push(this.parent);
-        this.parent = newnode;
-    }
-
-    public default_departure(node: NodeInterface): void {
-        /* Restore the previous acting parent. */
-        if (this.parentStack.length === 0) {
-            throw new ApplicationError("No parent stack available, cannot depart.");
-        }
-        this.parent = this.parentStack.pop() || [];
-    }
-
-}
-
-// fixme
-// GenericNodeVisitor.nodeClassNames = nodeClassNames;
 
 /**
  * Node class.
@@ -1086,6 +809,77 @@ abstract class Node implements NodeInterface {
 
     public getCustomAttr(attrName: string): undefined {
         return undefined;
+    }
+}
+
+class Text extends Node {
+    public pformat(indent = '    ', level = 0): string {
+
+        const indentStr = indent.repeat(level);
+        const lines = this.astext().split('\n').map(line => `${indentStr}${line}`);
+
+        if (lines.length === 0) {
+            return '';
+        }
+
+        return `${lines.join('\n')}\n`;
+
+    }
+
+    public copy(): NodeInterface {
+
+        const ctor = this.constructor as new (
+            data: string,
+            rawsource?: string,
+        ) => NodeInterface;
+
+        const obj = new ctor(this.data, this.rawsource);
+        return obj;
+    }
+
+    public deepcopy(): NodeInterface {
+        return this.copy();
+    }
+
+    public walk(visitor: Visitor): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    private data: string;
+
+    public constructor(data: string, rawsource = "") {
+        super();
+        if (typeof data === "undefined") {
+            throw new Error("data should not be undefined");
+        }
+
+        this.rawsource = rawsource;
+        this.data = data;
+        this.children = [];
+    }
+
+    public _domNode(domroot: globalThis.Document): any {
+        return domroot.createTextNode(this.data);
+    }
+
+    public astext(): string {
+        return unescape(this.data);
+    }
+
+    public toString(): string {
+        return this.astext();
+    }
+
+    public toSource(): string {
+        return this.toString();
+    }
+
+    public add(iNodes: NodeInterface[] | NodeInterface): void {
+        throw new UnimplementedError("");
+    }
+
+    public emptytag(): string {
+        return "";
     }
 }
 
@@ -2541,7 +2335,9 @@ class block_quote extends Element {
 }
 
 class reference extends TextElement {
-    public resolved: boolean = false;
+    // public resolved: boolean = false;
+    public indirectReferenceName?: string;
+
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [General, Inline, Referential];
@@ -2791,107 +2587,6 @@ class line_block extends Element {
 // -----------
 // distinctive and self-contained notices
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class Text extends Node {
-    public pformat(indent = '    ', level = 0): string {
-
-        const indentStr = indent.repeat(level);
-        const lines = this.astext().split('\n').map(line => `${indentStr}${line}`);
-
-        if (lines.length === 0) {
-            return '';
-        }
-
-        return `${lines.join('\n')}\n`;
-
-    }
-
-    public copy(): NodeInterface {
-
-        const ctor = this.constructor as new (
-            data: string,
-            rawsource?: string,
-        ) => NodeInterface;
-
-        const obj = new ctor(this.data, this.rawsource);
-        return obj;
-    }
-
-    public deepcopy(): NodeInterface {
-        return this.copy();
-    }
-
-    public walk(visitor: Visitor): boolean {
-        throw new Error("Method not implemented.");
-    }
-
-    private data: string;
-
-    public constructor(data: string, rawsource = "") {
-        super();
-        if (typeof data === "undefined") {
-            throw new Error("data should not be undefined");
-        }
-
-        this.rawsource = rawsource;
-        this.data = data;
-        this.children = [];
-    }
-
-    public _domNode(domroot: globalThis.Document): any {
-        return domroot.createTextNode(this.data);
-    }
-
-    public astext(): string {
-        return unescape(this.data);
-    }
-
-    public toString(): string {
-        return this.astext();
-    }
-
-    public toSource(): string {
-        return this.toString();
-    }
-
-    public add(iNodes: NodeInterface[] | NodeInterface): void {
-        throw new UnimplementedError("");
-    }
-
-    public emptytag(): string {
-        return "";
-    }
-}
-
-
-
-export interface TransformerInterface {
-    addPending(pending: NodeInterface, priority: number): void;
-}
-
-
-
-
-
-
-
-
-
 class attention extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
@@ -2959,10 +2654,171 @@ class warning extends Element {
 class admonition extends Element {
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
+        this.classTypes = [Admonition];
+    }
+}
+
+// Footnote and citation
+// ---------------------
+
+/**
+ * Visible identifier for footnotes and citations.
+ */
+class label extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * Labelled note providing additional context (footnote or endnote).
+ */
+class footnote extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
         this.classTypes = [General, BackLinkable, Labeled, Targetable];
     }
 }
 
+class citation extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [General, BackLinkable, Labeled, Targetable];
+    }
+}
+
+// Graphical elements
+// ------------------
+
+/**
+ * Reference to an image resource.
+ *
+ * May be body element or inline element.
+ */
+class image extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [General, Inline];
+    }
+
+    public astext(): string {
+        return Array.isArray(this.attributes.alt) ? this.attributes.alt.join(' ') : this.attributes.alt || "";
+    }
+}
+
+class caption extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * A wrapper for text accompanying a `figure` that is not the caption.
+ */
+class legend extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * A formal figure, generally an illustration, with a title.
+ */
+class figure extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [General];
+    }
+}
+
+// Tables
+// ------
+
+/**
+ * An entry in a `row` (a table cell).
+ */
+class entry extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+/**
+ * Row of table cells.
+ */
+class row extends Element {
+    public column?: number;
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+class colspec extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+
+    // TODO : propwidth
+    /*
+        def propwidth(self) -> int|float:
+        """Return numerical value of "colwidth__" attribute. Default 1.
+
+        Raise ValueError if "colwidth" is zero, negative, or a *fixed value*.
+
+        Provisional.
+
+        __ https://docutils.sourceforge.io/docs/ref/doctree.html#colwidth
+        """
+        # Move current implementation of validate_colwidth() here
+        # in Docutils 1.0
+        return validate_colwidth(self.get('colwidth', ''))
+
+    */
+}
+
+class thead extends Element {
+
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+class tbody extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+class tgroup extends Element {
+    public stubs?: {}[];
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [Part];
+    }
+}
+
+class table extends Element {
+    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
+        super(rawsource, children, attributes);
+        this.classTypes = [General];
+    }
+}
+
+// Special purpose elements
+// ------------------------
+// Body elements for internal use or special requests.
+
+/**
+ * Author notes, hidden from the output.
+ */
 class comment extends FixedTextElement {
     public constructor(...args: any[]) {
         super(...args);
@@ -2985,100 +2841,12 @@ class target extends TextElement {
     }
 }
 
-class footnote extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General, BackLinkable, Labeled, Targetable];
-    }
-}
-
-class citation extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General, BackLinkable, Labeled, Targetable];
-    }
-}
-
-class label extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class figure extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General];
-    }
-}
-
-class caption extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class legend extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class table extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General];
-    }
-}
-
-class tgroup extends Element {
-    public stubs?: {}[];
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class colspec extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class thead extends Element {
-
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class tbody extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class row extends Element {
-    public column?: number;
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
-class entry extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [Part];
-    }
-}
-
+/**
+ * System message element.
+ *
+ * Do not instantiate this class directly; use
+ * `document.reporter.info/warning/error/severe()` instead.
+ */
 class system_message extends Element implements Systemmessage {
     public constructor(message: string, children: NodeInterface[], attributes: Attributes) {
         super((attributes.rawsource || ""),
@@ -3219,54 +2987,8 @@ class raw extends FixedTextElement {
     }
 }
 
-// =================
-//  Inline Elements
-// =================
-class emphasis extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-}
-
-class strong extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-} // Inline
-
-class literal extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-} // Inline
-
-class footnote_reference extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [General, Inline, Referential];
-    }
-} // General, Inline, Referential
-class citation_reference extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [General, Inline, Referential];
-    }
-} // General, Inline, Referential
-class substitution_reference extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-} // General, Inline, Referential
-class title_reference extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-} // General, Inline, Referential
+// Inline Elements
+// ===============
 
 class abbreviation extends TextElement {
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
@@ -3282,46 +3004,7 @@ class acronym extends TextElement {
     }
 }
 
-class superscript extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-}
-
-class subscript extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-}
-
-class math extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-}
-
-class image extends Element {
-    public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
-        super(rawsource, children, attributes);
-        this.classTypes = [General, Inline];
-    }
-
-    public astext(): string {
-        return Array.isArray(this.attributes.alt) ? this.attributes.alt.join(' ') : this.attributes.alt || "";
-    }
-}
-
-class inline extends TextElement {
-    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
-        super(rawsource, text, children, attributes);
-        this.classTypes = [Inline];
-    }
-}
-
-class problematic extends TextElement {
+class emphasis extends TextElement {
     public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super(rawsource, text, children, attributes);
         this.classTypes = [Inline];
@@ -3335,8 +3018,424 @@ class generated extends TextElement {
     }
 }
 
+class inline extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class literal extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class strong extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+
+class subscript extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class superscript extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class title_reference extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class footnote_reference extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [General, Inline, Referential];
+    }
+}
+class citation_reference extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [General, Inline, Referential];
+    }
+}
+class substitution_reference extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class math extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+class problematic extends TextElement {
+    public constructor(rawsource?: string, text?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
+        super(rawsource, text, children, attributes);
+        this.classTypes = [Inline];
+    }
+}
+
+
 // ========================================
 //  Auxiliary Classes, Functions, and Data
+// ========================================
+
+const nodeClassNames = ["Text", "abbreviation", "acronym", "address",
+    "admonition", "attention", "attribution", "author",
+    "authors", "block_quote", "bullet_list", "caption",
+    "caution", "citation", "citation_reference",
+    "classifier", "colspec", "comment", "compound",
+    "contact", "container", "copyright", "danger",
+    "date", "decoration", "definition", "definition_list",
+    "definition_list_item", "description", "docinfo",
+    "doctest_block", "document", "emphasis", "entry",
+    "enumerated_list", "error", "field", "field_body",
+    "field_list", "field_name", "figure", "footer",
+    "footnote", "footnote_reference", "generated",
+    "header", "hint", "image", "important", "inline",
+    "label", "legend", "line", "line_block", "list_item",
+    "literal", "literal_block", "math",
+    "math_block", "note", "option", "option_argument",
+    "option_group", "option_list", "option_list_item",
+    "option_string", "organization", "paragraph",
+    "pending", "problematic", "raw", "reference",
+    "revision", "row", "rubric", "section", "sidebar",
+    "status", "strong", "subscript",
+    "substitution_definition", "substitution_reference",
+    "subtitle", "superscript", "system_message", "table",
+    "target", "tbody", "term", "tgroup", "thead", "tip",
+    "title", "title_reference", "topic", "transition",
+    "version", "warning"];
+
+/**
+ *  "Visitor" pattern [GoF95]_ abstract superclass implementation for
+ *  document tree traversals.
+ *
+ *  Each node class has corresponding methods, doing nothing by
+ *  default; override individual methods for specific and useful
+ *  behaviour.  The `dispatch_visit()` method is called by
+ *  `Node.walk()` upon entering a node.  `Node.walkabout()` also calls
+ *  the `dispatch_departure()` method before exiting a node.
+ *
+ *  The dispatch methods call "``visit_`` + node class name" or
+ *  "``depart_`` + node class name", resp.
+ *
+ *  This is a base class for visitors whose ``visit_...`` & ``depart_...``
+ *  methods should be implemented for *all* node types encountered (such as
+ *  for `docutils.writers.Writer` subclasses).  Unimplemented methods will
+ *  raise exceptions.
+ *
+ *  For sparse traversals, where only certain node types are of interest,
+ *  subclass `SparseNodeVisitor` instead.  When (mostly or entirely) uniform
+ *  processing is desired, subclass `GenericNodeVisitor`.
+ *
+ *  .. [GoF95] Gamma, Helm, Johnson, Vlissides. *Design Patterns: Elements of
+ *     Reusable Object-Oriented Software*. Addison-Wesley, Reading, MA, USA,
+ *     1995.
+ */
+class NodeVisitor {
+    public document: Document;
+
+    public optional: string[];
+    protected strictVisitor: boolean | undefined | null;
+
+    [name: string]: any;
+
+    /**
+   * Create a NodeVisitor.
+   * @param {nodes.document} document - document to visit
+   */
+    public constructor(document: Document) {
+        if (!checkDocumentArg(document)) {
+            throw new Error(`Invalid document arg: ${document}`);
+        }
+        this.document = document;
+        const core = document.settings;
+        this.strictVisitor = core.strictVisitor;
+        this.optional = [];
+    }
+
+    /**
+   * Call this."``visit_`` + node class name" with `node` as
+   * parameter.  If the ``visit_...`` method does not exist, call
+   * this.unknown_visit.
+   */
+    public dispatchVisit(node: NodeInterface): {} | undefined | void {
+        const nodeName = node.tagname;
+        const methodName = `visit_${nodeName}`;
+
+        let method = (this)[methodName];
+        if (!method) {
+            method = this.unknownVisit;
+        }
+        this.document.reporter.debug(`docutils.nodes.NodeVisitor.dispatch_visit calling for ${nodeName}`);
+        return method.bind(this)(node);
+    }
+
+    /*
+   * Call this."``depart_`` + node class name" with `node` as
+   * parameter.  If the ``depart_...`` method does not exist, call
+   * this.unknown_departure.
+   */
+    public dispatchDeparture(node: NodeInterface): {} | undefined | void {
+        const nodeName = node.tagname;
+        const method = (this)[`depart_${nodeName}`] || this.unknownDeparture;
+        this.document.reporter.debug(
+            `docutils.nodes.NodeVisitor.dispatch_departure calling for ${node}`
+        );
+        return method.bind(this)(node);
+    }
+
+    /**
+   * Called when entering unknown `Node` types.
+   *
+   * Raise an exception unless overridden.
+   */
+    public unknownVisit(node: NodeInterface): never | void {
+        if (this.strictVisitor || !(this.optional.includes(node.tagname))) {
+            throw new Error(`visiting unknown node type:${node.tagname}`);
+        }
+    }
+
+    /**
+   * Called before exiting unknown `Node` types.
+   *
+   * Raise exception unless overridden.
+   */
+    public unknownDeparture(node: NodeInterface): never | void {
+        if (this.strictVisitor || !(this.optional.includes(node.tagname))) {
+            throw new Error(`departing unknown node type: ${node.tagname}`);
+        }
+    }
+}
+
+/**
+ * Base class for sparse traversals, where only certain node types are of
+ * interest.  When ``visit_...`` & ``depart_...`` methods should be
+ * implemented for *all* node types (such as for `docutils.writers.Writer`
+ * subclasses), subclass `NodeVisitor` instead.
+ */
+class SparseNodeVisitor extends NodeVisitor {
+}
+
+/**
+ *  Generic "Visitor" abstract superclass, for simple traversals.
+ *
+ *  Unless overridden, each ``visit_...`` method calls `default_visit()`, and
+ *  each ``depart_...`` method (when using `Node.walkabout()`) calls
+ *  `default_departure()`. `default_visit()` (and `default_departure()`) must
+ *  be overridden in subclasses.
+ *
+ *  Define fully generic visitors by overriding `default_visit()` (and
+ *  `default_departure()`) only. Define semi-generic visitors by overriding
+ *  individual ``visit_...()`` (and ``depart_...()``) methods also.
+ *
+ *  `NodeVisitor.unknown_visit()` (`NodeVisitor.unknown_departure()`) should
+ *  be overridden for default behavior.
+ */
+class GenericNodeVisitor extends NodeVisitor {
+    public static nodeClassNames = [];
+
+    // TODO fixme/remove ?
+    // GenericNodeVisitor.nodeClassNames = nodeClassNames;
+
+    public constructor(document: Document) {
+        super(document);
+        // TODO document this !
+        _addNodeClassNames(nodeClassNames, this);
+    }
+
+    public default_visit(node: NodeInterface) {
+        throw new Error("not implemented");
+    }
+
+    public default_departure(node: NodeInterface) {
+        throw new Error("not implemented");
+    }
+}
+
+/**
+ * Make a complete copy of a tree or branch, including element attributes.
+ */
+class TreeCopyVisitor extends GenericNodeVisitor {
+
+    constructor(document: Document) {
+        super(document);
+        this.parentStack = [];
+        this.parent = []; // starts as list but is also used as node! (see default_visit)
+    }
+
+    public getTreeCopy(): NodeInterface {
+        if (this.parent.length === 0) {
+            throw new ApplicationError("No tree copy available, parent stack is empty.");
+        }
+        return this.parent[0];
+    }
+
+    public default_visit(node: NodeInterface): void {
+        /* Copy the current node, and make it the new acting parent. */
+        const newnode = node.copy();
+        if (Array.isArray(this.parent)) {
+            // If parent is an array, normal push
+            this.parent.push(newnode);
+        } else {
+            this.parent.append(newnode);
+        }
+        this.parentStack.push(this.parent);
+        this.parent = newnode;
+    }
+
+    public default_departure(node: NodeInterface): void {
+        /* Restore the previous acting parent. */
+        if (this.parentStack.length === 0) {
+            throw new ApplicationError("No parent stack available, cannot depart.");
+        }
+        this.parent = this.parentStack.pop() || [];
+    }
+
+}
+
+
+// Custom Exceptions
+// =================
+
+/**
+ * Invalid Docutils Document Tree Element.
+ */
+class ValidationError extends ValueError {
+    public problematic_element: Element | undefined;
+    constructor(msg: string, problematic_element?: Element) {
+        super(msg);
+        this.problematic_element = problematic_element;
+    }
+}
+
+/**
+ * Base class for `NodeVisitor`-related tree pruning exceptions.
+ *
+ * Raise subclasses from within ``visit_...`` or ``depart_...`` methods
+ * called from `Node.walk()` and `Node.walkabout()` tree traversals to prune
+ * the tree traversed.
+ */
+class TreePruningException extends Error {
+}
+
+/**
+ * Do not visit any children of the current node.  The current node's
+ * siblings and ``depart_...`` method are not affected.
+ */
+class SkipChildren extends TreePruningException {
+};
+
+/**
+ * Do not visit any more siblings (to the right) of the current node.  The
+ * current node's children and its ``depart_...`` method are not affected.
+ */
+class SkipSiblings extends TreePruningException {
+};
+
+/**
+ * Stop the traversal altogether.  The current node's ``depart_...`` method
+ * is not affected.  The parent nodes ``depart_...`` methods are also called
+ * as usual.  No other nodes are visited.  This is an alternative to
+ * NodeFound that does not cause exception handling to trickle up to the
+ * caller.
+ */
+class StopTraversal extends TreePruningException {
+};
+
+/**
+ * Do not visit the current node's children, and do not call the current
+ * node's ``depart_...`` method.
+ */
+class SkipNode extends TreePruningException {
+}
+
+/**
+ * Do not call the current node's ``depart_...`` method.  The current node's
+ * children and siblings are not affected.
+ */
+class SkipDeparture extends TreePruningException {
+};
+
+
+/**
+ * Raise to indicate that the target of a search has been found.  This
+ * exception must be caught by the client; it is not caught by the traversal
+ * code.
+ */
+class NodeFound extends TreePruningException {
+};
+
+/**
+ * Convert `string` into an identifier and return it.
+ *
+ * Docutils identifiers will conform to the regular expression
+ * ``[a-z](-?[a-z0-9]+)*``.  For CSS compatibility, identifiers (the "class"
+ * and "id" attributes) should have no underscores, colons, or periods.
+ * Hyphens may be used.
+ *
+ * - The `HTML 4.01 spec`_ defines identifiers based on SGML tokens:
+ *
+ *       ID and NAME tokens must begin with a letter ([A-Za-z]) and may be
+ *       followed by any number of letters, digits ([0-9]), hyphens ("-"),
+ *       underscores ("_"), colons (":"), and periods (".").
+ *
+ * - However the `CSS1 spec`_ defines identifiers based on the "name" token,
+ *   a tighter interpretation ("flex" tokenizer notation; "latin1" and
+ *   "escape" 8-bit characters have been replaced with entities)::
+ *
+ *       unicode     \\[0-9a-f]{1,4}
+ *       latin1      [&iexcl;-&yuml;]
+ *       escape      {unicode}|\\[ -~&iexcl;-&yuml;]
+ *       nmchar      [-a-z0-9]|{latin1}|{escape}
+ *       name        {nmchar}+
+ *
+ * The CSS1 "nmchar" rule does not include underscores ("_"), colons (":"),
+ * or periods ("."), therefore "class" and "id" attributes should not contain
+ * these characters. They should be replaced with hyphens ("-"). Combined
+ * with HTML's requirements (the first character must be a letter; no
+ * "unicode", "latin1", or "escape" characters), this results in the
+ * ``[a-z](-?[a-z0-9]+)*`` pattern.
+ *
+ * .. _HTML 4.01 spec: http://www.w3.org/TR/html401
+ * .. _CSS1 spec: http://www.w3.org/TR/REC-CSS1
+ */
+function makeId(strVal: string): string {
+    let id = strVal.toLowerCase();
+    // This is for unicode, I believe?
+    //if not isinstance(id, str):
+    //id = id.decode()
+    // id = translate(_nonIdTranslateDigraphs);
+    //id = id.translate(_nonIdTranslate);
+    // get rid of non-ascii characters.
+    // 'ascii' lowercase to prevent problems with turkish locale.
+    //id = unicodedata.normalize('NFKD', id).
+    //    encode('ascii', 'ignore').decode('ascii');
+    // shrink runs of whitespace and replace by hyphen
+    id = pySplit(id).join(' ').replace(_nonIdChars, '-');
+    id = id.replace(_nonIdAtEnds, '');
+    return id;
+}
 
 export {
     Node, whitespaceNormalizeName, NodeVisitor, GenericNodeVisitor, TreeCopyVisitor,
