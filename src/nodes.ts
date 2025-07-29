@@ -518,7 +518,6 @@ abstract class Node implements NodeInterface {
             }
 
             if ((condition.prototype instanceof Node) || condition === Node) {
-
                 return this._fastTraverse(condition);
             }
         }

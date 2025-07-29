@@ -4,9 +4,11 @@ This project is a translation of the docutils python library into TypeScript. It
 
 # Assigning values to nodes
 
-When assigning values to nodes, if the key is a number, we are replacing a child. If the key is a string, we are setting a property on the node.
+When assigning values to nodes with square brackets, if the key is a number, we are replacing a child. If the key is a string, we are setting a property on the node's 'attributes' member.
 
 The original python overrided the `__setitem__` method to handle both cases. In TypeScript, we use a method called `replaceAt` for replacing children and directly set properties on the `attributes` object for setting properties.
+
+If assigning values to nodes with a dot, then it needs to be a real property of the node, not a key in the attributes object. (See enumerated_list object from node.ts for an example of this that interacts with its properties "prefix", "suffix", "enumtype", etc, in rst/states/body.ts.)
 
 ## examples of assigning values
 
