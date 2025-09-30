@@ -1,9 +1,10 @@
 import Component from "./component.js";
 import { getLanguage } from "./languages/index.js";
-import { Document, WriterParts } from "./types.js";
+import { Document, TransformType, WriterParts } from "./types.js";
 import Output from "./io/output.js";
 import { InvalidStateError } from "./exceptions.js";
 import Reporter from "./reporter.js";
+import * as universal from "./transforms/universal.js";
 
 const __version__ = '';
 
@@ -13,12 +14,24 @@ const __version__ = '';
 export default abstract class Writer extends Component {
     public parts: WriterParts = {};
     public document?: Document;
-    private language?: {};
+    private language?: any;
+
+    public componentType: string = 'writer';
+    public configSection: string = 'writers';
+
+    public getTransforms(): TransformType[] {
+        return [...super.getTransforms(), universal.Messages, universal.FilterMessages]; // TODO : add universal.StripClassesAndElements
+        //         return super().getTransforms() + [universal.Messages,
+        //                                            universal.FilterMessages,
+        //                                            universal.StripClassesAndElements]
+    }
+
     /**
      * Final translated form of `document` (Unicode string for text, binary
      * string for other forms); set by `translate`.
      */
     public output?: string | Uint8Array;
+
     /**
      * `docutils.io` Output object; where to write the document.
      * Set by `write`.

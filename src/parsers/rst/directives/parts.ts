@@ -1,6 +1,6 @@
 import Directive from '../directive.js';
 import * as nodes from '../../../nodes.js';
-import { OptionSpec } from "../../../types.js";
+import { NodeInterface, OptionSpec, Systemmessage } from "../../../types.js";
 import * as directives from "../directiveConversions.js";
 import StringList from "../../../stringList.js";
 import { fullyNormalizeName } from "../../../utils/nameUtils.js";
@@ -25,7 +25,7 @@ export class Contents extends Directive {
         class: directives.classOption
     };
 
-    public run(): nodes.Node[] {
+    public run(): NodeInterface[] {
         // Check if we're in a valid context
         if (!(this.stateMachine?.matchTitles ||
             this.stateMachine?.node instanceof nodes.sidebar)) {
@@ -37,12 +37,14 @@ export class Contents extends Directive {
         const language = languages.getLanguage(document.settings.languageCode, document.reporter)!;
 
         let title: nodes.title | null = null;
-        const messages: nodes.Node[] = [];
+        let messages: Systemmessage[] = [];
+        let textNodes: NodeInterface[] = [];
 
         if (this.arguments && this.arguments.length > 0) {
             const titleText = this.arguments[0];
-            // Implementation of inline_text would be needed
-            const textNodes: nodes.Node[] = [new nodes.Text(titleText)];
+
+            [textNodes, messages] = this.state.inline_text(titleText, this.lineno);
+
             title = new nodes.title(titleText, '', textNodes);
         } else {
             if ('local' in this.options) {
@@ -52,18 +54,16 @@ export class Contents extends Directive {
             }
         }
 
-        const topic = new nodes.topic('', [], { classes: ['contents'] });
+        const topic = new nodes.topic('', undefined, { classes: ['contents'] });
 
         if (this.options.class) {
             topic.attributes.classes = (topic.attributes.classes || []).concat(this.options.class);
         }
 
         // Set source and line information
-        if (this.stateMachine) {
-            const [source, line] = this.stateMachine.getSourceAndLine(this.lineno);
-            topic.source = source;
-            topic.line = line! - 1;
-        }
+        const [source, line] = this.stateMachine.getSourceAndLine();
+        topic.source = source;
+        topic.line = line! - 1;
 
         if ('local' in this.options) {
             topic.attributes.classes.push('local');
@@ -81,12 +81,16 @@ export class Contents extends Directive {
         if (!document.hasName(name)) {
             topic.attributes.names = (topic.attributes.names || []).concat([name]);
         }
+
         document.noteImplicitTarget(topic);
 
         const pending = new nodes.pending(parts.Contents, undefined, this.blockText);
         pending.details = { ...this.options };
         document.notePending(pending);
         topic.append(pending);
+
+        console.log('Contents directive run completed');
+        console.log(`Generated TOC: ${topic.toString()}`);
 
         return [topic, ...messages];
     }

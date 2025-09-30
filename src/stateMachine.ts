@@ -63,7 +63,10 @@ class StateMachine implements StatemachineInterface {
         return this.states[stateName];
     }
 
-    private states: States = {};
+    /**
+     * Mapping of {state_name: State_object}.
+     */
+    public states: States = {};
 
     public inputLines: StringList = new StringList([]);
 
@@ -183,12 +186,13 @@ class StateMachine implements StatemachineInterface {
      * - `input_source`: name or path of source of `input_lines`.
      * - `initial_state`: name of initial state.
      */
-    public run(inputLines: StringList | string | string[],
+    public run(
+        inputLines: StringList | string | string[],
         inputOffset: number,
         runContext?: ContextKind,
         inputSource?: string,
-        initialState?: string, ...rest: any[]):
-        (string | {})[] {
+        initialState?: string, ...rest: any[]
+    ): (string | {})[] {
         this.logger.debug('run');
         // RUNTIMEINIT
         let lines: string | string[] | StringList = inputLines;

@@ -9,14 +9,14 @@ class StringList extends ViewList {
     public splice(index: number, num: number, ...elems: any[]): StringList {
         const result = super.splice(index, num, ...elems);
         return new StringList([...result], undefined,
-            undefined, this.parent as StringList, this.parentOffset);
+            undefined, this, index || 0);
     }
 
     public slice(start: number = 0, end: number = this.length): StringList {
         const viewList = super.slice(start, end);
         // Create a new StringList with the content from viewList
         return new StringList([...viewList], undefined,
-            undefined, this.parent as StringList, this.parentOffset);
+            undefined, this, start || 0);
     }
 
     public constructor(

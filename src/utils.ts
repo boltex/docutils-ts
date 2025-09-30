@@ -1,5 +1,5 @@
 import { Settings } from "./settings.js";
-import { Document, NodeInterface, OptionSpec } from "./types.js";
+import { Document, NodeInterface, OptionSpec, TextElementInterface } from "./types.js";
 import * as nodes from './nodes.js';
 /** Return indices of all combining chars in  Unicode string `text`.
  >>> from docutils.utils import find_combining_chars
@@ -171,7 +171,15 @@ export function stripCombiningChars(text: string): string {
 }
 
 export function pySplit(text: string, max?: number): string[] {
-    return text.trim().split(/\s+/, max);
+    if (text.length === 0) {
+        return [];
+    }
+    // Match Python: split on runs of whitespace, discard empties
+    const parts = text.split(/\s+/);
+    if (parts.length === 1 && parts[0] === "") {
+        return [];
+    }
+    return max !== undefined ? parts.slice(0, max) : parts;
 }
 
 export function checkDocumentArg(document: Document): boolean | never {
@@ -180,6 +188,34 @@ export function checkDocumentArg(document: Document): boolean | never {
     }
     return true;
 }
+
+export function cleanRcsKeywords(paragraph: nodes.paragraph, keywordSubstitutions: [RegExp, string][]): void {
+    if (paragraph.getNumChildren() === 1 && paragraph.getChild(0) instanceof nodes.Text) {
+        const textnode = paragraph.getChild(0) as TextElementInterface;
+        for (const [pattern, substitution] of keywordSubstitutions) {
+            const match = pattern.exec(textnode.toString());
+            if (match) {
+                paragraph.replaceAt(0, new nodes.Text(textnode.toString().replace(pattern, substitution)));
+                return;
+            }
+        }
+    }
+}
+
+/*
+def clean_rcs_keywords(
+    paragraph: nodes.paragraph,
+    keyword_substitutions: Sequence[tuple[re.Pattern[[str], str]]],
+) -> None:
+    if len(paragraph) == 1 and isinstance(paragraph[0], nodes.Text):
+        textnode = paragraph[0]
+        for pattern, substitution in keyword_substitutions:
+            match = pattern.search(textnode)
+            if match:
+                paragraph[0] = nodes.Text(pattern.sub(substitution, textnode))
+                return
+
+*/
 
 export function relativePath(source: string, target: string): string {
     /*

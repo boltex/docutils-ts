@@ -1,3 +1,5 @@
+import { SyntaxHighlightMode } from "./utils/codeAnalyzer.js";
+
 export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Specify the document title as metadata. */
     title?: string;
@@ -183,13 +185,15 @@ export interface DocutilsParsersRstParser {
     /** DocutilsParsersRstParser: Enable the "raw" directive.  Enabled by default. */
     rawEnabled?: number;
     /** DocutilsParsersRstParser: Token name set for parsing code with Pygments: one of "long", "short", or "none (no parsing)". Default is "long". */
-    syntaxHighlight?: string;
+    syntaxHighlight?: SyntaxHighlightMode;
     /** DocutilsParsersRstParser: Change straight quotation marks to typographic form: one of "yes", "no", "alt[ernative]" (default "no"). */
     smartQuotes?: boolean;
     /** DocutilsParsersRstParser: Characters to use as "smart quotes" for <language>.  */
     smartquotesLocales?: string;
     /** DocutilsParsersRstParser: Inline markup recognized anywhere, regardless of surrounding characters. Backslash-escapes must be used to avoid unwanted markup recognition. Useful for East Asian languages. Experimental. */
     characterLevelInlineMarkup?: boolean;
+    /** Added in docutils-ts */
+    lineLengthLimit?: number;
 }
 
 export interface DocutilsWritersDocutilsXmlWriter {
@@ -328,7 +332,7 @@ export interface DocutilsWritersOdfOdtReader {
     /** DocutilsWritersOdfOdtReader: Disable the bibliographic field list transform (enabled by default). */
     docinfoXform?: boolean;
     /** DocutilsWritersOdfOdtReader: Deactivate the promotion of lone subsection titles. */
-    sectsubtitleXform?: string;
+    sectsubtitleXform?: boolean;
 }
 
 export interface DocutilsWritersHtml4Css1Writer {

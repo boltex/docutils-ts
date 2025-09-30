@@ -1,3 +1,8 @@
+import * as nodes from '../../../nodes.js';
+import Directive from '../directive.js';
+import * as references from '../../../transforms/references.js';
+import * as directives from "../directiveConversions.js";
+
 // Original python code
 /*
 """
@@ -26,3 +31,19 @@ class TargetNotes(Directive):
         return [pending]
 
 */
+
+// class TargetNotes extends Directive {
+
+//     public static optionSpec = {
+//         'class': directives.classOption
+//     };
+
+//     public run(): nodes.Node[] {
+//         const pending = new nodes.pending(references.TargetNotes);
+//         this.addName(pending);
+//         pending.details.update(this.options);
+//         this.stateMachine!.document!.notePending(pending);
+//         return [pending];
+//     }
+
+// }

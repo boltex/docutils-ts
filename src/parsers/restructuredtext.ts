@@ -2,7 +2,7 @@ import BaseParser from '../parser.js';
 import * as statemachine from '../stateMachine.js';
 import RSTStateMachine from './rst/rstStateMachine.js';
 import StateFactory from './rst/stateFactory.js';
-import { Document, ParserArgs, SettingsSpecType } from "../types.js";
+import { Document, ParserArgs, SettingsSpecType, TransformType } from "../types.js";
 import { InlinerInterface } from "./rst/types.js";
 import { validateBoolean, validateTernary } from '../frontend.js';
 
@@ -17,9 +17,9 @@ const settingsSpec: SettingsSpecType[] = [
                     "--pep-references"
                 ],
                 {
-                    "action": "validating",
-                    "delegatedAction": "storeTrue",
-                    "validator": validateBoolean,
+                    action: "validating",
+                    delegatedAction: "storeTrue",
+                    validator: validateBoolean,
                     nargs: 0
                 }
             ],
@@ -29,9 +29,9 @@ const settingsSpec: SettingsSpecType[] = [
                     "--pep-base-url"
                 ],
                 {
-                    "metavar": "<URL>",
-                    "default": "http://www.python.org/dev/peps/",
-                    "validator": "validate_url_trailing_slash"
+                    metavar: "<URL>",
+                    default: "http://www.python.org/dev/peps/",
+                    validator: "validate_url_trailing_slash"
                 }
             ],
             [
@@ -40,8 +40,8 @@ const settingsSpec: SettingsSpecType[] = [
                     "--pep-file-url-template"
                 ],
                 {
-                    "metavar": "<URL>",
-                    "default": "pep-%04d"
+                    metavar: "<URL>",
+                    default: "pep-%04d"
                 }
             ],
             [
@@ -50,8 +50,8 @@ const settingsSpec: SettingsSpecType[] = [
                     "--rfc-references"
                 ],
                 {
-                    "action": "store_true",
-                    "validator": validateBoolean
+                    action: "store_true",
+                    validator: validateBoolean
                 }
             ],
             [
@@ -60,9 +60,9 @@ const settingsSpec: SettingsSpecType[] = [
                     "--rfc-base-url"
                 ],
                 {
-                    "metavar": "<URL>",
-                    "default": "http://tools.ietf.org/html/",
-                    "validator": "validate_url_trailing_slash"
+                    metavar: "<URL>",
+                    default: "http://tools.ietf.org/html/",
+                    validator: "validate_url_trailing_slash"
                 }
             ],
             [
@@ -71,10 +71,10 @@ const settingsSpec: SettingsSpecType[] = [
                     "--tab-width"
                 ],
                 {
-                    "metavar": "<width>",
-                    "type": "int",
-                    "default": 8,
-                    "validator": "validate_nonnegative_int"
+                    metavar: "<width>",
+                    type: "int",
+                    default: 8,
+                    validator: "validate_nonnegative_int"
                 }
             ],
             [
@@ -83,8 +83,8 @@ const settingsSpec: SettingsSpecType[] = [
                     "--trim-footnote-reference-space"
                 ],
                 {
-                    "action": "store_true",
-                    "validator": validateBoolean
+                    action: "store_true",
+                    validator: validateBoolean
                 }
             ],
             [
@@ -93,8 +93,8 @@ const settingsSpec: SettingsSpecType[] = [
                     "--leave-footnote-reference-space"
                 ],
                 {
-                    "action": "store_false",
-                    "dest": "trim_footnote_reference_space"
+                    action: "store_false",
+                    dest: "trim_footnote_reference_space"
                 }
             ],
             [
@@ -103,10 +103,10 @@ const settingsSpec: SettingsSpecType[] = [
                     "--no-file-insertion"
                 ],
                 {
-                    "action": "store_false",
-                    "default": 1,
-                    "dest": "file_insertion_enabled",
-                    "validator": validateBoolean
+                    action: "store_false",
+                    default: 1,
+                    dest: "file_insertion_enabled",
+                    validator: validateBoolean
                 }
             ],
             [
@@ -115,7 +115,7 @@ const settingsSpec: SettingsSpecType[] = [
                     "--file-insertion-enabled"
                 ],
                 {
-                    "action": "store_true"
+                    action: "store_true"
                 }
             ],
             [
@@ -124,10 +124,10 @@ const settingsSpec: SettingsSpecType[] = [
                     "--no-raw"
                 ],
                 {
-                    "action": "store_false",
-                    "default": 1,
-                    "dest": "raw_enabled",
-                    "validator": validateBoolean
+                    action: "store_false",
+                    default: 1,
+                    dest: "raw_enabled",
+                    validator: validateBoolean
                 }
             ],
             [
@@ -136,7 +136,7 @@ const settingsSpec: SettingsSpecType[] = [
                     "--raw-enabled"
                 ],
                 {
-                    "action": "store_true"
+                    action: "store_true"
                 }
             ],
             [
@@ -145,13 +145,13 @@ const settingsSpec: SettingsSpecType[] = [
                     "--syntax-highlight"
                 ],
                 {
-                    "choices": [
+                    choices: [
                         "long",
                         "short",
                         "none"
                     ],
-                    "default": "long",
-                    "metavar": "<format>"
+                    default: "long",
+                    metavar: "<format>"
                 }
             ],
             [
@@ -160,10 +160,10 @@ const settingsSpec: SettingsSpecType[] = [
                     "--smart-quotes"
                 ],
                 {
-                    "default": false,
-                    "metavar": "<yes/no/alt>",
+                    default: false,
+                    metavar: "<yes/no/alt>",
                     delegatedAction: "store",
-                    "validator": validateTernary,
+                    validator: validateTernary,
                 }
             ],
             [
@@ -172,9 +172,9 @@ const settingsSpec: SettingsSpecType[] = [
                     "--smartquotes-locales"
                 ],
                 {
-                    "metavar": "<language:quotes[,language:quotes,...]>",
-                    "action": "append",
-                    "validator": "validate_smartquotes_locales"
+                    metavar: "<language:quotes[,language:quotes,...]>",
+                    action: "append",
+                    validator: "validate_smartquotes_locales"
                 }
             ],
             [
@@ -183,8 +183,8 @@ const settingsSpec: SettingsSpecType[] = [
                     "--word-level-inline-markup"
                 ],
                 {
-                    "action": "store_false",
-                    "dest": "character_level_inline_markup"
+                    action: "store_false",
+                    dest: "character_level_inline_markup"
                 }
             ],
             [
@@ -193,9 +193,9 @@ const settingsSpec: SettingsSpecType[] = [
                     "--character-level-inline-markup"
                 ],
                 {
-                    "action": "store_true",
-                    "default": false,
-                    "dest": "character_level_inline_markup"
+                    action: "store_true",
+                    default: false,
+                    dest: "character_level_inline_markup"
                 }
             ]
         ]
@@ -221,6 +221,12 @@ class Parser extends BaseParser {
         if (args.inliner !== undefined) {
             this.inliner = args.inliner;
         }
+    }
+
+    //     def get_transforms(self):
+    // return super().get_transforms() + [universal.SmartQuotes]
+    public getTransforms(): TransformType[] {
+        return [...super.getTransforms(), /* TODO : add universal.SmartQuotes */];
     }
 
     public parse(inputstring: string, document: Document): void {
@@ -253,9 +259,6 @@ class Parser extends BaseParser {
         this.stateMachine.run(inputLines, 0, undefined,
             undefined, undefined, document, true, this.inliner);
         this.finishParse();
-    }
-
-    public finishParse(): void {
     }
 
 }

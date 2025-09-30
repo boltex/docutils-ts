@@ -6,10 +6,11 @@ import * as utils from '../utils.js';
 import { basename } from '../utils/paths.js';
 import { UnimplementedError } from '../exceptions.js';
 import { Settings } from "../settings.js";
-import { Document, Attributes, NodeInterface, SettingsSpecType, GenericSettings, CoreLanguage, ElementInterface } from "../types.js";
+import { Document, Attributes, NodeInterface, SettingsSpecType, GenericSettings, CoreLanguage, ElementInterface, TransformType } from "../types.js";
 import { row, tgroup } from "../nodes.js";
 import { getLanguage } from "../languages/index.js"
 import { logger as baseLogger } from '../logger.js';
+import * as writer_aux from '../transforms/writer_aux.js';
 
 const logger = baseLogger.child({ 'class': 'HtmlBase' });
 
@@ -2092,7 +2093,6 @@ class HTMLTranslator extends nodes.NodeVisitor {
 
 /**
  * Class for writing HTML
- *  
  */
 class HTMLBaseWriter extends BaseWriter {
     private visitorAttributes: string[] = ['headPrefix', 'head', 'stylesheet', 'bodyPrefix', 'bodyPreDocinfo', 'docinfo', 'body',
@@ -2342,6 +2342,14 @@ class HTMLBaseWriter extends BaseWriter {
             ]
         ]
     ];
+
+    /*
+    def get_transforms(self) -> list[type[Transform]]:
+        return super().get_transforms() + [writer_aux.Admonitions]
+    */
+    public getTransforms(): TransformType[] {
+        return [...super.getTransforms(), writer_aux.Admonitions];
+    }
 
 
     public translate(): void {

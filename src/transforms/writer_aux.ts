@@ -1,3 +1,48 @@
+import Transform from '../transform.js';
+import * as languages from "../languages/index.js";
+import { nodes } from '../index.js';
+
+/**
+ * Transform specific admonitions, like this:
+ *
+ *     <note>
+ *         <paragraph>
+ *              Note contents ...
+ *
+ * into generic admonitions, like this::
+ *
+ *     <admonition classes="note">
+ *         <title>
+ *             Note
+ *         <paragraph>
+ *             Note contents ...
+ *
+ * The admonition title is localized.
+ */
+export class Admonitions extends Transform {
+
+    public apply(): void {
+        const language = languages.getLanguage(this.document.settings.languageCode, this.document.reporter)!;
+
+        for (const node of this.document.traverse({ condition: nodes.Admonition })) {
+            const nodeName = (node.constructor as any).name;
+            // Set class, so that we know what node this admonition came from.
+            (node.attributes.classes as string[]).push(nodeName);
+            if (!(node instanceof nodes.admonition)) {
+                // Specific admonition.  Transform into a generic admonition.
+                const admonition = new nodes.admonition(node.rawsource, node.children, { ...node.attributes });
+                const title = new nodes.title('', language.labels[nodeName]);
+                admonition.insert(0, title);
+                node.replaceSelf(admonition);
+            }
+
+        }
+    }
+
+}
+
+Admonitions.defaultPriority = 920;
+
 // Original python:
 /*
 """

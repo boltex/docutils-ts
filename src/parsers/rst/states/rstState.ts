@@ -226,41 +226,64 @@ abstract class RSTState extends StateWS {
         }
     }
 
+    /**
+     * Check for a valid subsection header.  Update section data in `memo`.
+     *
+     * When a new section is reached that isn't a subsection of the current
+     * section, set `self.parent` to the new section's parent section
+     * (or the document if the new section is a top-level section).
+     */
     public checkSubsection(args: { source: string; style: any | any[]; lineno: number }): boolean {
         const { source, style, lineno } = args;
 
-        const memo = this.memo!;
-        const titleStyles: any[] = memo.titleStyles;
-        //        console.log(titleStyles);
-        const mylevel = memo.sectionLevel;
-        let level = 0;
-        level = titleStyles.findIndex(
-            tStyle => (style.length === 1 ? tStyle.length === 1 && tStyle[0] === style[0] : style.length === 2 && tStyle.length === 2 && tStyle[0] === style[0] && tStyle[1] === style[1])
-        ) + 1;
+        if (!this.memo || !this.parent) {
+            throw new Error('Missing memo or parent');
+        }
+
+        const titleStyles = this.memo.titleStyles;
+        const parentSections = this.parent.sectionHierarchy();
+        const mylevel = parentSections.length; // Current section level based on hierarchy
+
+        let level: number;
+
+        try {
+            // Check for existing title style
+            level = titleStyles.findIndex(tStyle =>
+                JSON.stringify(tStyle) === JSON.stringify(style)
+            ) + 1;
+        } catch {
+            level = 0;
+        }
 
         if (level === 0) {
-            if (titleStyles.length === memo.sectionLevel) { // new subsection
-                titleStyles.push(style);
-                return true;
-            }
-            this.parent!.add(this.title_inconsistent(source, lineno));
-            return false;
-        }
-        if (level <= mylevel) { //            // sibling or supersection
-            memo.sectionLevel = level; // bubble up to parent section
-            if (style.length === 2) {
-                memo.sectionBubbleUpKludge = true;
-            }
-            // back up 2 lines for underline title, 3 for overline title
-            this.rstStateMachine.previousLine(style.length + 1);
-            throw new EOFError(); // let parent section re-evaluate
+            // New title style
+            titleStyles.push(style);
+            level = titleStyles.length;
         }
 
-        if (level === mylevel + 1) { // immediate subsection
-            return true;
+        // The new level must not be deeper than an immediate child of the current level
+        if (level > mylevel + 1) {
+            const styles = titleStyles.map(s => Array.isArray(s) ? s.join('/') : s).join(' ');
+            this.parent.add(this.reporter!.severe(
+                `Inconsistent title style: skip from level ${mylevel} to ${level}.`,
+                [
+                    new nodes.literal_block('', source),
+                    new nodes.paragraph('', `Established title styles: ${styles}`)
+                ],
+                { line: lineno }
+            ));
+            return false;
         }
-        this.parent!.add(this.title_inconsistent(source, lineno));
-        return false;
+
+        // Update parent state
+        this.memo.sectionLevel = level;
+
+        if (level <= mylevel) {
+            // New section is sibling or higher up in the section hierarchy
+            this.parent = parentSections[level - 1].parent;
+        }
+
+        return true;
     }
 
     public title_inconsistent(sourcetext: string, lineno: number): NodeInterface {
@@ -271,35 +294,30 @@ abstract class RSTState extends StateWS {
     }
 
 
-    public newSubsection(args: { title: string; lineno: number; messages: Systemmessage[] }): void {
+    public newSubsection(args: { title: string; lineno: number; messages: any[] }): void {
         const { title, lineno, messages } = args;
-        const memo = this.memo!;
-        const myLevel = memo.sectionLevel;
-        memo.sectionLevel += 1;
+
         const sectionNode = new nodes.section();
         this.parent!.add(sectionNode);
+
         const [textNodes, titleMessages] = this.inline_text(title, lineno);
         const titleNode = new nodes.title(title, '', textNodes);
         const name = fullyNormalizeName(titleNode.astext());
+
         sectionNode.attributes.names.push(name);
         sectionNode.add(titleNode);
         sectionNode.add(messages);
         sectionNode.add(titleMessages);
+
         this.document!.noteImplicitTarget(sectionNode, sectionNode);
-        const offset = this.rstStateMachine.lineOffset + 1;
-        const absoffset = this.rstStateMachine.absLineOffset() + 1;
-        const newabsoffset = this.nestedParse(this.rstStateMachine.inputLines.slice(offset),
-            absoffset,
-            sectionNode as NodeInterface,
-            true,
 
-        );
-        this.gotoLine(newabsoffset!);
-        if (memo.sectionLevel <= myLevel) {
-            throw new EOFError();
+        // Update state - this is crucial for proper nesting
+        this.rstStateMachine.node = sectionNode;
+
+        // Update .parent attribute in all states
+        for (const state of Object.values(this.rstStateMachine.states)) {
+            state.parent = sectionNode;
         }
-
-        memo.sectionLevel = myLevel;
     }
 
     public unindentWarning(nodeName: string): NodeInterface {
@@ -336,11 +354,247 @@ abstract class RSTState extends StateWS {
         return [[p, ...messages], literalNext];
     }
 
-    public inline_text(text: string, lineno: number): any[][] {
-        this.logger.silly('in transition method inline_text', { value: text });
-        const r = this.inliner!.parse(text, { lineno, memo: this.memo, parent: this.parent! });
-        return r;
+    /**
+     * Return 2 lists: nodes (text and inline elements), and system_messages.
+     */
+    public inline_text(text: string, lineno: number): [NodeInterface[], Systemmessage[]] {
+        const [nodes, messages] = this.inliner!.parse(text, { lineno, memo: this.memo, parent: this.parent! });
+        return [nodes, messages];
     }
 }
 
 export default RSTState;
+
+
+// Original Python 
+/*
+
+class RSTState(StateWS):
+
+    """
+    reStructuredText State superclass.
+
+    Contains methods used by all State subclasses.
+    """
+
+    nested_sm = NestedStateMachine
+    nested_sm_cache = []
+
+    def __init__(self, state_machine, debug=False) -> None:
+        self.nested_sm_kwargs = {'state_classes': state_classes,
+                                 'initial_state': 'Body'}
+        StateWS.__init__(self, state_machine, debug)
+
+    def runtime_init(self) -> None:
+        StateWS.runtime_init(self)
+        memo = self.state_machine.memo
+        self.memo = memo
+        self.reporter = memo.reporter
+        self.inliner = memo.inliner
+        self.document = memo.document
+        self.parent = self.state_machine.node
+        # enable the reporter to determine source and source-line
+        if not hasattr(self.reporter, 'get_source_and_line'):
+            self.reporter.get_source_and_line = self.state_machine.get_source_and_line  # noqa:E501
+
+    def goto_line(self, abs_line_offset) -> None:
+        """
+        Jump to input line `abs_line_offset`, ignoring jumps past the end.
+        """
+        try:
+            self.state_machine.goto_line(abs_line_offset)
+        except EOFError:
+            pass
+
+    def no_match(self, context, transitions):
+        """
+        Override `StateWS.no_match` to generate a system message.
+
+        This code should never be run.
+        """
+        self.reporter.severe(
+            'Internal error: no transition pattern match.  State: "%s"; '
+            'transitions: %s; context: %s; current line: %r.'
+            % (self.__class__.__name__, transitions, context,
+               self.state_machine.line))
+        return context, None, []
+
+    def bof(self, context):
+        """Called at beginning of file."""
+        return [], []
+
+    def nested_parse(self, block, input_offset, node, match_titles=False,
+                     state_machine_class=None, state_machine_kwargs=None):
+        """
+        Create a new StateMachine rooted at `node` and run it over the input
+        `block`.
+        """
+        use_default = 0
+        if state_machine_class is None:
+            state_machine_class = self.nested_sm
+            use_default += 1
+        if state_machine_kwargs is None:
+            state_machine_kwargs = self.nested_sm_kwargs
+            use_default += 1
+        block_length = len(block)
+
+        state_machine = None
+        if use_default == 2:
+            try:
+                state_machine = self.nested_sm_cache.pop()
+            except IndexError:
+                pass
+        if not state_machine:
+            state_machine = state_machine_class(debug=self.debug,
+                                                **state_machine_kwargs)
+        state_machine.run(block, input_offset, memo=self.memo,
+                          node=node, match_titles=match_titles)
+        if use_default == 2:
+            self.nested_sm_cache.append(state_machine)
+        else:
+            state_machine.unlink()
+        new_offset = state_machine.abs_line_offset()
+        # No `block.parent` implies disconnected -- lines aren't in sync:
+        if block.parent and (len(block) - block_length) != 0:
+            # Adjustment for block if modified in nested parse:
+            self.state_machine.next_line(len(block) - block_length)
+        return new_offset
+
+    def nested_list_parse(self, block, input_offset, node, initial_state,
+                          blank_finish,
+                          blank_finish_state=None,
+                          extra_settings={},
+                          match_titles=False,
+                          state_machine_class=None,
+                          state_machine_kwargs=None):
+        """
+        Create a new StateMachine rooted at `node` and run it over the input
+        `block`. Also keep track of optional intermediate blank lines and the
+        required final one.
+        """
+        if state_machine_class is None:
+            state_machine_class = self.nested_sm
+        if state_machine_kwargs is None:
+            state_machine_kwargs = self.nested_sm_kwargs.copy()
+        state_machine_kwargs['initial_state'] = initial_state
+        state_machine = state_machine_class(debug=self.debug,
+                                            **state_machine_kwargs)
+        if blank_finish_state is None:
+            blank_finish_state = initial_state
+        state_machine.states[blank_finish_state].blank_finish = blank_finish
+        for key, value in extra_settings.items():
+            setattr(state_machine.states[initial_state], key, value)
+        state_machine.run(block, input_offset, memo=self.memo,
+                          node=node, match_titles=match_titles)
+        blank_finish = state_machine.states[blank_finish_state].blank_finish
+        state_machine.unlink()
+        return state_machine.abs_line_offset(), blank_finish
+
+    def section(self, title, source, style, lineno, messages) -> None:
+        """Check for a valid subsection and create one if it checks out."""
+        if self.check_subsection(source, style, lineno):
+            self.new_subsection(title, lineno, messages)
+
+    def check_subsection(self, source, style, lineno) -> bool:
+        """
+        Check for a valid subsection header.  Update section data in `memo`.
+
+        When a new section is reached that isn't a subsection of the current
+        section, set `self.parent` to the new section's parent section
+        (or the document if the new section is a top-level section).
+        """
+        title_styles = self.memo.title_styles
+        parent_sections = self.parent.section_hierarchy()
+        # current section level: (0 document, 1 section, 2 subsection, ...)
+        mylevel = len(parent_sections)
+        # Determine the level of the new section:
+        try:  # check for existing title style
+            level = title_styles.index(style) + 1
+        except ValueError:  # new title style
+            title_styles.append(style)
+            level = len(title_styles)
+        # The new level must not be deeper than an immediate child
+        # of the current level:
+        if level > mylevel + 1:
+            styles = " ".join("/".join(s for s in style)
+                              for style in title_styles)
+            self.parent += self.reporter.severe(
+                'Inconsistent title style:'
+                f' skip from level {mylevel} to {level}.',
+                nodes.literal_block('', source),
+                nodes.paragraph('', f'Established title styles: {styles}'),
+                line=lineno)
+            return False
+        # Update parent state:
+        self.memo.section_level = level
+        if level <= mylevel:
+            # new section is sibling or higher up in the section hierarchy
+            self.parent = parent_sections[level-1].parent
+        return True
+
+    def title_inconsistent(self, sourcetext, lineno):
+        # Ignored. Will be removed in Docutils 2.0.
+        error = self.reporter.severe(
+            'Title level inconsistent:', nodes.literal_block('', sourcetext),
+            line=lineno)
+        return error
+
+    def new_subsection(self, title, lineno, messages):
+        """Append new subsection to document tree."""
+        section_node = nodes.section()
+        self.parent += section_node
+        textnodes, title_messages = self.inline_text(title, lineno)
+        titlenode = nodes.title(title, '', *textnodes)
+        name = normalize_name(titlenode.astext())
+        section_node['names'].append(name)
+        section_node += titlenode
+        section_node += messages
+        section_node += title_messages
+        self.document.note_implicit_target(section_node, section_node)
+        # Update state:
+        self.state_machine.node = section_node
+        # Also update the ".parent" attribute in all states.
+        # This is a bit violent, but the state classes copy their .parent from
+        # state_machine.node on creation, so we need to update them. We could
+        # also remove RSTState.parent entirely and replace references to it
+        # with statemachine.node, but that might break code downstream of
+        # docutils.
+        for s in self.state_machine.states.values():
+            s.parent = section_node
+
+    def paragraph(self, lines, lineno):
+        """
+        Return a list (paragraph & messages) & a boolean: literal_block next?
+        """
+        data = '\n'.join(lines).rstrip()
+        if re.search(r'(?<!\\)(\\\\)*::$', data):
+            if len(data) == 2:
+                return [], 1
+            elif data[-3] in ' \n':
+                text = data[:-3].rstrip()
+            else:
+                text = data[:-1]
+            literalnext = 1
+        else:
+            text = data
+            literalnext = 0
+        textnodes, messages = self.inline_text(text, lineno)
+        p = nodes.paragraph(data, '', *textnodes)
+        p.source, p.line = self.state_machine.get_source_and_line(lineno)
+        return [p] + messages, literalnext
+
+    def inline_text(self, text, lineno):
+        """
+        Return 2 lists: nodes (text and inline elements), and system_messages.
+        """
+        nodes, messages = self.inliner.parse(text, lineno,
+                                             self.memo, self.parent)
+        return nodes, messages
+
+    def unindent_warning(self, node_name):
+        # the actual problem is one line below the current line
+        lineno = self.state_machine.abs_line_number() + 1
+        return self.reporter.warning('%s ends without a blank line; '
+                                     'unexpected unindent.' % node_name,
+                                     line=lineno)
+*/

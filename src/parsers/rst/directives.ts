@@ -1,6 +1,9 @@
 import * as _fallbackLanguageModule from "./languages/en.js";
 import * as images from "./directives/images.js";
 import * as parts from "./directives/parts.js";
+import * as misc from "./directives/misc.js";
+import * as body from "./directives/body.js";
+import * as references from "./directives/references.js";
 import * as admonitions from "./directives/admonitions.js";
 import { ApplicationError } from "../../exceptions.js";
 import { Document, NodeInterface } from "../../types.js";
@@ -8,8 +11,12 @@ import { DirectiveConstructor, RSTLanguage } from "./types.js";
 
 const dirMap: any = {
     admonitions,
+    body,
     images,
-    parts
+    misc,
+    parts,
+    references,
+    // TODO: tables,
 };
 
 const directiveRegistry = {

@@ -14,6 +14,7 @@ import {
     NodeInterface,
     ReporterInterface,
     LoggerType,
+    Systemmessage
 } from "../../types.js";
 import { Settings } from "../../settings.js";
 import { InlinerInterface, RegexpMatchParam } from "./types.js";
@@ -630,7 +631,7 @@ class Inliner implements InlinerInterface {
          */
     }
 
-    public parse(text: string, args: { lineno: number; memo: any; parent: ElementInterface }): any[] {
+    public parse(text: string, args: { lineno: number; memo: any; parent: ElementInterface }): [NodeInterface[], Systemmessage[]] {
         this.logger.silly('parse');
         const { lineno, memo, parent } = args;
         this.reporter = memo.reporter;
@@ -645,7 +646,6 @@ class Inliner implements InlinerInterface {
         while (remaining) {
             this.logger.debug(`checking pattern ${this.patterns.initial[0]}`);
             const match = this.patterns.initial[0].exec(remaining);
-            //          console.log(match);
             if (match) {
                 this.logger.silly('matched', { value: match });
                 const rr: Record<string, string> = {};
@@ -662,9 +662,7 @@ class Inliner implements InlinerInterface {
                 }
                 let before;
                 let inlines;
-                let
-                    sysmessages;
-                //              console.log(`name is ${mname}`);
+                let sysmessages;
 
                 [before, inlines, remaining, sysmessages] = method(
                     { result: match, match, groups: rr }, lineno
@@ -690,7 +688,6 @@ class Inliner implements InlinerInterface {
             this.logger.silly('have remaining', { value: remaining });
             processed.push(...this.implicit_inline(remaining, lineno));
         }
-        //      console.log(processed);
         return [processed, messages];
     }
 

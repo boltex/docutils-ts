@@ -10,7 +10,8 @@ import type {
     StatemachineInterface,
     StateMachineConstructorArgs,
     StateMachineFactoryFunction,
-    StateMachineRunArgs
+    StateMachineRunArgs,
+    Systemmessage
 } from "../../types.js";
 import type StringList from "../../stringList.js";
 import type { Settings } from "../../settings.js";
@@ -139,7 +140,7 @@ export interface RSTLanguage {
 export interface InlinerInterface {
     initCustomizations(settings: Settings): void;
 
-    parse(text: string, args: { lineno: number; memo: any; parent: NodeInterface }): any[][];
+    parse(text: string, args: { lineno: number; memo: any; parent: NodeInterface }): [NodeInterface[], Systemmessage[]];
 
     adjustUri(uri: string): string;
 }

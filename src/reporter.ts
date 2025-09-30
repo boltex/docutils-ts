@@ -156,6 +156,10 @@ class Reporter implements ReporterInterface {
         this.observers.push(observer);
     }
 
+    public detachObserver(observer: ReporterObserverCallback): void {
+        this.observers.splice(this.observers.indexOf(observer), 1);
+    }
+
     public debug(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface | undefined {
         if (this.debugFlag) {
             return this.systemMessage(this.debugLevel, message, children, kwargs);

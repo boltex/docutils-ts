@@ -21,6 +21,7 @@ interface HandleDocumentCallback {
 
 export default class Reader extends Component {
     public componentType: string = 'reader';
+    public configSection: string = 'readers';
     public document?: Document;
     protected parseFn?: ParseFunction;
     private settings?: Settings;
@@ -31,8 +32,8 @@ export default class Reader extends Component {
     private debugFn?: DebugFunction;
     public getTransforms(): TransformType[] {
 
-        return [...super.getTransforms(), universal.Decorations as any]; // TODO : fixme !
-        //               universal.ExportInternals, universal.StripComments ];
+        return [...super.getTransforms(), universal.Decorations]; // TODO : add universal.ExposeInternals, universal.StripComments !
+        //               universal.ExposeInternals, universal.StripComments ];
 
     }
 

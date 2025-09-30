@@ -34,6 +34,39 @@ node['property'] = newValue
 node.attributes[key] = newValue;
 ```
 
+## Adding node(s) to nodes
+
+When adding nodes to nodes with the `+=` operator, we are extending the children of the node. The original python overrided the `__iadd__` method to handle this. In TypeScript, we use a method called `extend` for this purpose.
+
+```python
+# Adding a child
+node += newValue
+```
+
+```typescript
+// Adding a child
+node.extend([newValue]);
+```
+
+For convenience, the `append` method can also take a single node as an argument and will wrap it in an array internally.
+
+```typescript
+// Adding a child
+node.append(newValue);
+```
+
+Also an 'add' method exists that can take either a single node or an array of nodes. Here is its implementation:
+
+```typescript
+public add(item: NodeInterface[] | NodeInterface): void {
+    if (Array.isArray(item)) {
+        this.extend(...item);
+    } else {
+        this.append(item);
+    }
+}
+```
+
 # Converting from Python to Typescript
 
 ## Useful tricks and common pitfalls

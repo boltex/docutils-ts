@@ -143,8 +143,12 @@ function validateEncodingAndErrorHandler(): void {
         */
 }
 
-export function validateBoolean(parser: ArgumentParser, namespace: Namespace, values: any[],
-    optionString: (string | null)): boolean {
+export function validateBoolean(
+    parser: ArgumentParser,
+    namespace: Namespace,
+    values: any[],
+    optionString: (string | null)
+): boolean {
     if (typeof values[0] === 'boolean' || values[0] === undefined) {
         return values[0];
     }
@@ -161,8 +165,12 @@ Check/normalize three-value settings:
     False: '0', 'off', 'no','false', ''
     any other value: returned as-is.
 */
-export function validateTernary(parser: ArgumentParser, namespace: Namespace, values: any[],
-    optionString: (string | null)): boolean | any {
+export function validateTernary(
+    parser: ArgumentParser,
+    namespace: Namespace,
+    values: any[],
+    optionString: (string | null)
+): boolean | any {
     if (typeof values[0] === 'boolean' || values[0] === undefined) {
         return values[0];
     }
@@ -173,7 +181,20 @@ export function validateTernary(parser: ArgumentParser, namespace: Namespace, va
     return values[0];
 }
 
-function validateNonnegativeInt(): void { //
+export function validateNonnegativeInt(
+    parser: ArgumentParser,
+    namespace: Namespace,
+    values: any[],
+    optionString: (string | null)
+): number {
+    const value = Number(values[0]);
+    if (isNaN(value)) {
+        throw new Error(`Invalid value for ${optionString}: ${values[0]}`);
+    }
+    if (value < 0) {
+        throw new Error(`Negative value for ${optionString}; must be positive or zero`);
+    }
+    return value;
     /*
         value = int(value)
         if value < 0:
@@ -182,7 +203,7 @@ function validateNonnegativeInt(): void { //
     */
 }
 
-function validateThreshold(): void {/*
+export function validateThreshold(): void {/*
     try:
         return int(value)
     except ValueError:
@@ -440,8 +461,8 @@ export class OptionParser extends ArgumentParser {
                         "-g"
                     ],
                     {
-                        "action": "store_true",
-                        "validator": validateBoolean
+                        action: "store_true",
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -450,9 +471,9 @@ export class OptionParser extends ArgumentParser {
                         "--no-generator"
                     ],
                     {
-                        "action": "store_false",
+                        action: "store_false",
                         // "default": false, // have to specify default false here because it inversely targets the "generator" setting ( UNLESS optionArgs['default'] IS USED IN optparse.pyemulation below)
-                        "dest": "generator"
+                        dest: "generator"
                     }
                 ],
                 [
@@ -462,9 +483,9 @@ export class OptionParser extends ArgumentParser {
                         "-d"
                     ],
                     {
-                        "action": "store_const",
-                        "const": dateDatestampFormat,
-                        "dest": "datestamp"
+                        action: "store_const",
+                        const: dateDatestampFormat,
+                        dest: "datestamp"
                     }
                 ],
                 [
@@ -474,9 +495,9 @@ export class OptionParser extends ArgumentParser {
                         "-t"
                     ],
                     {
-                        "action": "store_const",
-                        "const": timeAndDateDatestampFormat,
-                        "dest": "datestamp"
+                        action: "store_const",
+                        const: timeAndDateDatestampFormat,
+                        dest: "datestamp"
                     }
                 ],
                 [
@@ -485,9 +506,9 @@ export class OptionParser extends ArgumentParser {
                         "--no-datestamp"
                     ],
                     {
-                        "action": "store_const",
-                        "const": null,
-                        "dest": "datestamp"
+                        action: "store_const",
+                        const: null,
+                        dest: "datestamp"
                     }
                 ],
                 [
@@ -497,8 +518,8 @@ export class OptionParser extends ArgumentParser {
                         "-s"
                     ],
                     {
-                        "action": "store_true",
-                        "validator": validateBoolean
+                        action: "store_true",
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -507,7 +528,7 @@ export class OptionParser extends ArgumentParser {
                         "--source-url"
                     ],
                     {
-                        "metavar": "<URL>"
+                        metavar: "<URL>"
                     }
                 ],
                 [
@@ -516,9 +537,9 @@ export class OptionParser extends ArgumentParser {
                         "--no-source-link"
                     ],
                     {
-                        "action": "callback",
-                        "callback": storeMultiple,
-                        "callbackArgs": [
+                        action: "callback",
+                        callback: storeMultiple,
+                        callbackArgs: [
                             "source_link",
                             "source_url"
                         ]
@@ -530,10 +551,10 @@ export class OptionParser extends ArgumentParser {
                         "--toc-entry-backlinks"
                     ],
                     {
-                        "dest": "toc_backlinks",
-                        "action": "store_const",
-                        "const": "entry",
-                        "default": "entry"
+                        dest: "toc_backlinks",
+                        action: "store_const",
+                        const: "entry",
+                        default: "entry"
                     }
                 ],
                 [
@@ -542,9 +563,9 @@ export class OptionParser extends ArgumentParser {
                         "--toc-top-backlinks"
                     ],
                     {
-                        "dest": "toc_backlinks",
-                        "action": "store_const",
-                        "const": "top"
+                        dest: "toc_backlinks",
+                        action: "store_const",
+                        const: "top"
                     }
                 ],
                 [
@@ -553,8 +574,8 @@ export class OptionParser extends ArgumentParser {
                         "--no-toc-backlinks"
                     ],
                     {
-                        "dest": "toc_backlinks",
-                        "action": "store_false"
+                        dest: "toc_backlinks",
+                        action: "store_false"
                     }
                 ],
                 [
@@ -563,9 +584,9 @@ export class OptionParser extends ArgumentParser {
                         "--footnote-backlinks"
                     ],
                     {
-                        "action": "store_true",
-                        "default": 1,
-                        "validator": validateBoolean
+                        action: "store_true",
+                        default: 1,
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -574,8 +595,8 @@ export class OptionParser extends ArgumentParser {
                         "--no-footnote-backlinks"
                     ],
                     {
-                        "dest": "footnote_backlinks",
-                        "action": "store_false"
+                        dest: "footnote_backlinks",
+                        action: "store_false"
                     }
                 ],
                 [
@@ -584,10 +605,10 @@ export class OptionParser extends ArgumentParser {
                         "--section-numbering"
                     ],
                     {
-                        "action": "store_true",
-                        "dest": "sectnum_xform",
-                        "default": 1,
-                        "validator": validateBoolean
+                        action: "store_true",
+                        dest: "sectnum_xform",
+                        default: 1,
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -596,9 +617,9 @@ export class OptionParser extends ArgumentParser {
                         "--no-section-numbering"
                     ],
                     {
-                        "action": "store_false",
+                        action: "store_false",
                         // "default": true, // have to specify default true here because it inversely targets the "sectnum_xform" setting
-                        "dest": "sectnum_xform"
+                        dest: "sectnum_xform"
                     }
                 ],
                 [
@@ -607,8 +628,8 @@ export class OptionParser extends ArgumentParser {
                         "--strip-comments"
                     ],
                     {
-                        "action": "store_true",
-                        "validator": validateBoolean
+                        action: "store_true",
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -617,8 +638,8 @@ export class OptionParser extends ArgumentParser {
                         "--leave-comments"
                     ],
                     {
-                        "action": "store_false",
-                        "dest": "strip_comments"
+                        action: "store_false",
+                        dest: "strip_comments"
                     }
                 ],
                 [
@@ -627,10 +648,10 @@ export class OptionParser extends ArgumentParser {
                         "--strip-elements-with-class"
                     ],
                     {
-                        "action": "append",
-                        "dest": "strip_elements_with_classes",
-                        "metavar": "<class>",
-                        "validator": "validate_strip_class"
+                        action: "append",
+                        dest: "strip_elements_with_classes",
+                        metavar: "<class>",
+                        validator: "validate_strip_class"
                     }
                 ],
                 [
@@ -639,10 +660,10 @@ export class OptionParser extends ArgumentParser {
                         "--strip-class"
                     ],
                     {
-                        "action": "append",
-                        "dest": "strip_classes",
-                        "metavar": "<class>",
-                        "validator": "validate_strip_class"
+                        action: "append",
+                        dest: "strip_classes",
+                        metavar: "<class>",
+                        validator: "validate_strip_class"
                     }
                 ],
                 [
@@ -652,7 +673,7 @@ export class OptionParser extends ArgumentParser {
                         "-r"
                     ],
                     {
-                        "choices": [
+                        choices: [
                             "info",
                             "1",
                             "warning",
@@ -664,10 +685,10 @@ export class OptionParser extends ArgumentParser {
                             "none",
                             "5"
                         ],
-                        "default": 2,
-                        "dest": "report_level",
-                        "metavar": "<level>",
-                        "validator": "validate_threshold"
+                        default: 2,
+                        dest: "report_level",
+                        metavar: "<level>",
+                        validator: "validate_threshold"
                     }
                 ],
                 [
@@ -677,9 +698,9 @@ export class OptionParser extends ArgumentParser {
                         "-v"
                     ],
                     {
-                        "action": "store_const",
-                        "const": 1,
-                        "dest": "report_level"
+                        action: "store_const",
+                        const: 1,
+                        dest: "report_level"
                     }
                 ],
                 [
@@ -689,9 +710,9 @@ export class OptionParser extends ArgumentParser {
                         "-q"
                     ],
                     {
-                        "action": "store_const",
-                        "const": 5,
-                        "dest": "report_level"
+                        action: "store_const",
+                        const: 5,
+                        dest: "report_level"
                     }
                 ],
                 [
@@ -700,7 +721,7 @@ export class OptionParser extends ArgumentParser {
                         "--halt"
                     ],
                     {
-                        "choices": [
+                        choices: [
                             "info",
                             "1",
                             "warning",
@@ -712,10 +733,10 @@ export class OptionParser extends ArgumentParser {
                             "none",
                             "5"
                         ],
-                        "dest": "halt_level",
-                        "default": 4,
-                        "metavar": "<level>",
-                        "validator": "validate_threshold"
+                        dest: "halt_level",
+                        default: 4,
+                        metavar: "<level>",
+                        validator: "validate_threshold"
                     }
                 ],
                 [
@@ -724,9 +745,9 @@ export class OptionParser extends ArgumentParser {
                         "--strict"
                     ],
                     {
-                        "action": "store_const",
-                        "const": 1,
-                        "dest": "halt_level"
+                        action: "store_const",
+                        const: 1,
+                        dest: "halt_level"
                     }
                 ],
                 [
@@ -735,7 +756,7 @@ export class OptionParser extends ArgumentParser {
                         "--exit-status"
                     ],
                     {
-                        "choices": [
+                        choices: [
                             "info",
                             "1",
                             "warning",
@@ -747,10 +768,10 @@ export class OptionParser extends ArgumentParser {
                             "none",
                             "5"
                         ],
-                        "dest": "exit_status_level",
-                        "default": 5,
-                        "metavar": "<level>",
-                        "validator": "validate_threshold"
+                        dest: "exit_status_level",
+                        default: 5,
+                        metavar: "<level>",
+                        validator: "validate_threshold"
                     }
                 ],
                 [
@@ -759,8 +780,8 @@ export class OptionParser extends ArgumentParser {
                         "--debug"
                     ],
                     {
-                        "action": "store_true",
-                        "validator": validateBoolean
+                        action: "store_true",
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -769,8 +790,8 @@ export class OptionParser extends ArgumentParser {
                         "--no-debug"
                     ],
                     {
-                        "action": "store_false",
-                        "dest": "debug"
+                        action: "store_false",
+                        dest: "debug"
                     }
                 ],
                 [
@@ -779,8 +800,8 @@ export class OptionParser extends ArgumentParser {
                         "--warnings"
                     ],
                     {
-                        "dest": "warning_stream",
-                        "metavar": "<file>"
+                        dest: "warning_stream",
+                        metavar: "<file>"
                     }
                 ],
                 [
@@ -789,9 +810,9 @@ export class OptionParser extends ArgumentParser {
                         "--traceback"
                     ],
                     {
-                        "action": "store_true",
-                        "default": null,
-                        "validator": validateBoolean
+                        action: "store_true",
+                        default: null,
+                        validator: validateBoolean
                     }
                 ],
                 [
@@ -800,8 +821,8 @@ export class OptionParser extends ArgumentParser {
                         "--no-traceback"
                     ],
                     {
-                        "dest": "traceback",
-                        "action": "store_false"
+                        dest: "traceback",
+                        action: "store_false"
                     }
                 ],
                 [
@@ -811,8 +832,8 @@ export class OptionParser extends ArgumentParser {
                         "-i"
                     ],
                     {
-                        "metavar": "<name[:handler]>",
-                        "validator": "validate_encoding_and_error_handler"
+                        metavar: "<name[:handler]>",
+                        validator: "validate_encoding_and_error_handler"
                     }
                 ],
                 [
@@ -821,8 +842,8 @@ export class OptionParser extends ArgumentParser {
                         "--input-encoding-error-handler"
                     ],
                     {
-                        "default": "strict",
-                        "validator": "validate_encoding_error_handler"
+                        default: "strict",
+                        validator: "validate_encoding_error_handler"
                     }
                 ],
                 [
@@ -832,9 +853,9 @@ export class OptionParser extends ArgumentParser {
                         "-o"
                     ],
                     {
-                        "metavar": "<name[:handler]>",
-                        "default": "utf-8",
-                        "validator": "validate_encoding_and_error_handler"
+                        metavar: "<name[:handler]>",
+                        default: "utf-8",
+                        validator: "validate_encoding_and_error_handler"
                     }
                 ],
                 [
@@ -843,8 +864,8 @@ export class OptionParser extends ArgumentParser {
                         "--output-encoding-error-handler"
                     ],
                     {
-                        "default": "strict",
-                        "validator": "validate_encoding_error_handler"
+                        default: "strict",
+                        validator: "validate_encoding_error_handler"
                     }
                 ],
                 [
@@ -854,9 +875,9 @@ export class OptionParser extends ArgumentParser {
                         "-e"
                     ],
                     {
-                        "metavar": "<name[:handler]>",
-                        "default": "UTF-8",
-                        "validator": "validate_encoding_and_error_handler"
+                        metavar: "<name[:handler]>",
+                        default: "UTF-8",
+                        validator: "validate_encoding_and_error_handler"
                     }
                 ],
                 [
@@ -865,8 +886,8 @@ export class OptionParser extends ArgumentParser {
                         "--error-encoding-error-handler"
                     ],
                     {
-                        "default": "backslashreplace",
-                        "validator": "validate_encoding_error_handler"
+                        default: "backslashreplace",
+                        validator: "validate_encoding_error_handler"
                     }
                 ],
                 [
@@ -876,9 +897,9 @@ export class OptionParser extends ArgumentParser {
                         "-l"
                     ],
                     {
-                        "dest": "language_code",
-                        "default": "en",
-                        "metavar": "<name>"
+                        dest: "language_code",
+                        default: "en",
+                        metavar: "<name>"
                     }
                 ],
                 [
@@ -887,9 +908,9 @@ export class OptionParser extends ArgumentParser {
                         "--record-dependencies"
                     ],
                     {
-                        "metavar": "<file>",
-                        "validator": "validate_dependency_file",
-                        "default": null
+                        metavar: "<file>",
+                        validator: "validate_dependency_file",
+                        default: null
                     }
                 ],
                 /*
@@ -899,10 +920,10 @@ export class OptionParser extends ArgumentParser {
                         "--config"
                     ],
                     {
-                        "metavar": "<file>",
+                        metavar: "<file>",
                         "type": "string",
-                        "action": "callback",
-                        "callback": readConfigFile
+                        action: "callback",
+                        callback: readConfigFile
                     }
                 ],
                 */
@@ -913,7 +934,7 @@ export class OptionParser extends ArgumentParser {
                         "-V"
                     ],
                     {
-                        "action": "version"
+                        action: "version"
                     }
                 ],
                 [
@@ -923,7 +944,7 @@ export class OptionParser extends ArgumentParser {
                         "-h"
                     ],
                     {
-                        "action": "help"
+                        action: "help"
                     }
                 ],
                 [
@@ -932,7 +953,7 @@ export class OptionParser extends ArgumentParser {
                         "--id-prefix"
                     ],
                     {
-                        "default": ""
+                        default: ""
                     }
                 ],
                 [
@@ -941,7 +962,7 @@ export class OptionParser extends ArgumentParser {
                         "--auto-id-prefix"
                     ],
                     {
-                        "default": "id"
+                        default: "id"
                     }
                 ],
                 [
@@ -950,7 +971,7 @@ export class OptionParser extends ArgumentParser {
                         "--dump-settings"
                     ],
                     {
-                        "action": "store_true"
+                        action: "store_true"
                     }
                 ],
                 [
@@ -959,7 +980,7 @@ export class OptionParser extends ArgumentParser {
                         "--dump-internals"
                     ],
                     {
-                        "action": "store_true"
+                        action: "store_true"
                     }
                 ],
                 [
@@ -968,7 +989,7 @@ export class OptionParser extends ArgumentParser {
                         "--dump-transforms"
                     ],
                     {
-                        "action": "store_true"
+                        action: "store_true"
                     }
                 ],
                 [
@@ -977,7 +998,7 @@ export class OptionParser extends ArgumentParser {
                         "--dump-pseudo-xml"
                     ],
                     {
-                        "action": "store_true"
+                        action: "store_true"
                     }
                 ],
                 [
@@ -986,9 +1007,9 @@ export class OptionParser extends ArgumentParser {
                         "--expose-internal-attribute"
                     ],
                     {
-                        "action": "append",
-                        "dest": "expose_internals",
-                        "validator": "validate_colon_separated_string_list"
+                        action: "append",
+                        dest: "expose_internals",
+                        validator: "validate_colon_separated_string_list"
                     }
                 ],
                 [
@@ -997,7 +1018,7 @@ export class OptionParser extends ArgumentParser {
                         "--strict-visitor"
                     ],
                     {
-                        "action": "store_true"
+                        action: "store_true"
                     }
                 ]
             ]

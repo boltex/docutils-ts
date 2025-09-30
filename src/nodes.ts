@@ -226,11 +226,11 @@ abstract class Node implements NodeInterface {
         return [...this._children];
     }
 
-    protected get children(): NodeInterface[] {
+    get children(): NodeInterface[] {
         return this._children;
     }
 
-    protected set children(value: NodeInterface[]) {
+    set children(value: NodeInterface[]) {
         this._children = value;
     }
 
@@ -268,7 +268,9 @@ abstract class Node implements NodeInterface {
 
     public get parent(): ElementInterface {
         if (this._parent === undefined) {
-            throw new ApplicationError('Attempt to access parent property of node without parent.');
+            // throw new ApplicationError('Attempt to access parent property of node without parent.');
+            // @ts-expect-error
+            return null;
         }
         return this._parent as ElementInterface;
     }
@@ -508,7 +510,7 @@ abstract class Node implements NodeInterface {
     }
 
     public traverse(args: TraverseArgs): NodeInterface[] {
-        const {
+        let {
             condition, includeSelf = true, descend = true, siblings = false, ascend = false
         } = args;
         const mySiblings = ascend ? true : siblings;
@@ -523,7 +525,7 @@ abstract class Node implements NodeInterface {
         }
         if (typeof condition !== "undefined" && (condition.prototype instanceof Node || condition === Node)) {
             const nodeClass = condition;
-            const myCondition = (node: Node, nodeClassArg: NodeClass): boolean => (
+            condition = (node: Node, nodeClassArg: NodeClass): boolean => (
                 (node instanceof nodeClassArg) || (node instanceof nodeClass)
             );
             throw new Error("unimplemented");
@@ -991,6 +993,7 @@ class Element extends Node implements ElementInterface {
    */
     public constructor(rawsource?: string, children: NodeInterface[] = [], attributes: Attributes = {}) {
         super();
+        this.rawsource = rawsource || "";
         this.nodeName = Symbol.for("Element");
         children.forEach((child): void => this.append(child));
         this.attributes = {};
@@ -1138,6 +1141,34 @@ class Element extends Node implements ElementInterface {
         }
     }
 
+    /**
+     * Return the element's section hierarchy.
+     *
+     *   Return a list of all <section> elements containing `self`
+     *   (including `self` if it is a <section>).
+     *
+     *   List item ``[i]`` is the parent <section> of level i+1
+     *   (1: section, 2: subsection, 3: subsubsection, ...).
+     *   The length of the list is the element's section level.
+     *
+     *   Provisional. May be changed or removed without warning.
+     */
+    public sectionHierarchy(): section[] {
+        /**
+       Return the element's section hierarchy.
+       */
+        const sections: section[] = [];
+        let node: NodeInterface | null = this;
+        while (node) {
+            if (node instanceof section) {
+                sections.push(node);
+            }
+            node = node.parent as NodeInterface | null;
+        }
+        sections.reverse();
+        return sections;
+    }
+
     public clear(): void {
         this.children.length = 0;
     }
@@ -1242,6 +1273,16 @@ class Element extends Node implements ElementInterface {
             if (typeof child.line === "undefined") {
                 child.line = this.document.currentLine;
             }
+        }
+    }
+
+    public toString(): string {
+        if (this.hasChildren()) {
+            return this.starttag() +
+                this.children.map(c => c.toString()).join('') +
+                this.endtag();
+        } else {
+            return this.emptytag();
         }
     }
 
@@ -2364,7 +2405,6 @@ class bullet_list extends Element {
 
 
 class enumerated_list extends Element {
-    // TODO : USE ATTRIBUTES FOR THOSE PROPS! (see body.ts !)
     public start?: number;
     public suffix?: string;
     public prefix?: string;

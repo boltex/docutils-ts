@@ -76,7 +76,7 @@ class RSTStateMachine extends StateMachineWS implements Rststatemachine {
         this.attachObserver(document.noteSource.bind(document));
         this.reporter = this.memo.reporter;
         this.node = document;
-        const results = super.run(inputLines, inputOffset);
+        const results = super.run(inputLines, inputOffset, undefined, document.attributes['source'] as string || '');
 
         /* istanbul ignore if */
         if (results.length !== 0) {

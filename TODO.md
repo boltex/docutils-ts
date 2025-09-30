@@ -18,8 +18,8 @@
 #### Body
 
 - [ ] `code` → `body.CodeBlock`
-- [ ] `sidebar` → `body.Sidebar`
-- [ ] `topic` → `body.Topic`
+- [x] `sidebar` → `body.Sidebar`
+- [x] `topic` → `body.Topic`
 - [ ] `line-block` → `body.LineBlock`
 - [ ] `parsed-literal` → `body.ParsedLiteral`
 - [ ] `math` → `body.MathBlock`
@@ -65,7 +65,7 @@
 - [ ] `class` → `misc.Class`
 - [ ] `role` → `misc.Role`
 - [ ] `default-role` → `misc.DefaultRole`
-- [ ] `title` → `misc.Title`
+- [x] `title` → `misc.Title`
 - [ ] `date` → `misc.Date`
 - [ ] `restructuredtext-test-directive` → `misc.TestDirective`
 
@@ -95,8 +95,8 @@
 
 #### parts
 
-- [ ] `parts.SectNum`
-- [ ] `parts.Contents`
+- [x] `parts.SectNum`
+- [x] `parts.Contents`
 
 #### peps
 
@@ -113,13 +113,13 @@
 
 #### universal
 
-- [ ] `universal.Decorations`
+- [x] `universal.Decorations`
 - [ ] `universal.ExposeInternals`
 - [ ] `universal.StripComments`
 - [ ] `universal.StripClassesAndElements`
-- [ ] `universal.FilterMessages`
-- [ ] `universal.Messages`
-- [ ] `universal.TestMessages`
+- [x] `universal.FilterMessages`
+- [x] `universal.Messages`
+- [x] `universal.TestMessages`
 - [ ] `universal.SmartQuotes`
 - [ ] `universal.Validate`
 
@@ -130,4 +130,4 @@
 
 #### components
 
-- [ ] `components.Filter`
+- [x] `components.Filter`

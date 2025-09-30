@@ -15,9 +15,6 @@ class Component extends TransformSpec {
     public toString(): string {
         return `Component<${this.constructor.name}>`;
     }
-    public getTransforms(): TransformType[] {
-        return [];
-    }
 }
 
 export default Component;

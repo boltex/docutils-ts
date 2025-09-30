@@ -1,7 +1,7 @@
 
 export type _Components = 'reader' | 'parser' | 'writer' | 'input' | 'output';
 
-import type { citation, decoration, Element, footnote, reference, substitution_definition } from "./nodes.js";
+import type { citation, decoration, Element, footnote, reference, section, substitution_definition } from "./nodes.js";
 
 import type { Logger } from "./logger.js";
 
@@ -138,6 +138,7 @@ export interface NodeInterface extends SourceLocation {
 
     tagname: string;
     classTypes: any[];
+    children: NodeInterface[];
     getChild(index: number): NodeInterface;
     hasChildren(): boolean;
     getNumChildren(): number;
@@ -219,6 +220,7 @@ export interface ElementInterface extends NodeInterface {
     firstChildNotMatchingClass(childClass: any | any[], start?: number, end?: number): number | undefined;
     attlist(): Attributes;
     nonDefaultAttributes(): Attributes;
+    sectionHierarchy(): section[];
 }
 
 export interface TextElementInterface extends ElementInterface {
@@ -270,6 +272,7 @@ export interface Document extends ElementInterface {
     hasName(name: string): boolean
     notePending(pending: NodeInterface, priority?: number): void
 
+    noteParseMessage(message: Systemmessage): void;
     noteTransformMessage(message: Systemmessage): void;
 
     noteImplicitTarget(target: NodeInterface, msgnode?: NodeInterface): void;
@@ -374,6 +377,7 @@ export interface ReporterInterface {
     systemMessage(level: number, message: string | Error, children: Element[], attributes: Attributes): NodeInterface;
 
     attachObserver(observer: {}): void;
+    detachObserver(observer: {}): void;
 
     debug(message: string | Error, children?: NodeInterface[], kwargs?: Attributes): NodeInterface | undefined;
 
@@ -429,7 +433,7 @@ export interface StatemachineInterface {
     detachObserver(observer: {}): void;
     error(): void;
     getSource(lineOffset: number): string | undefined;
-    getSourceAndLine(lineno: number): [string | undefined, number | undefined];
+    getSourceAndLine(lineno?: number): [string | undefined, number | undefined];
     getTextBlock(flushLeft: boolean): StringList;
     gotoLine(lineOffset: number): string | undefined;
     insertInput(inputLines: StringList, source?: string): void;
@@ -470,6 +474,8 @@ export interface StateInterface {
     unlink(): void;
 
     transitions: Transitions;
+
+    parent?: ElementInterface;
 }
 
 

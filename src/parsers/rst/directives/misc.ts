@@ -1,3 +1,7 @@
+import * as nodes from '../../../nodes.js';
+import Directive from '../directive.js';
+import * as directives from "../directiveConversions.js";
+
 // Original python code
 /*
 """Miscellaneous directives."""
@@ -566,7 +570,22 @@ class Title(Directive):
     def run(self):
         self.state_machine.document['title'] = self.arguments[0]
         return []
+*/
 
+export class Title extends Directive {
+
+    public static requiredArguments: number = 1;
+    public static optionalArguments: number = 0;
+    public static finalArgumentWhitespace: boolean = true;
+
+    public run(): any[] {
+        // this.stateMachine!.document['title'] = this.arguments[0];
+        (this.stateMachine!.document! as any)['title'] = this.arguments[0];
+        return [];
+    }
+}
+
+/*
 
 class MetaBody(states.SpecializedBody):
 
