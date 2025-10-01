@@ -85,7 +85,7 @@ export class Contents extends Directive {
         document.noteImplicitTarget(topic);
 
         const pending = new nodes.pending(parts.Contents, undefined, this.blockText);
-        pending.details = { ...this.options };
+        pending.details = { ...pending.details, ...this.options };
         document.notePending(pending);
         topic.append(pending);
 
@@ -172,15 +172,15 @@ class Contents(Directive):
 
 export class Sectnum extends Directive {
     public static optionSpec: OptionSpec = {
-        depth: directives.nonnegativeInt,
-        start: directives.nonnegativeInt,
+        depth: directives.int,
+        start: directives.int,
         prefix: directives.unchangedRequired,
         suffix: directives.unchangedRequired
     };
 
     public run(): nodes.Node[] {
         const pending = new nodes.pending(parts.SectNum);
-        pending.details = { ...this.options };
+        pending.details = { ...pending.details, ...this.options };
         this.state.document?.notePending(pending);
         return [pending];
     }

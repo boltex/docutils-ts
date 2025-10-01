@@ -62,6 +62,15 @@ function uri(argument: string) {
     return uri;
 }
 
+function int(argument: string): number {
+    /**
+     * Check for a nonnegative integer argument; raise `ValueError` if not.
+     * (Directive option conversion function.)
+     */
+    const value = parseInt(argument, 10);
+    return value;
+}
+
 function nonnegativeInt(argument: string): number {
     /**
      * Check for a nonnegative integer argument; raise `ValueError` if not.
@@ -304,6 +313,7 @@ export {
     unchanged,
     path,
     uri,
+    int,
     nonnegativeInt,
     percentage,
     lengthOrUnitless,

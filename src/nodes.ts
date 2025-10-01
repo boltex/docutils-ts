@@ -1346,42 +1346,67 @@ class Element extends Node implements ElementInterface {
         return true;
     }
 
-    /*
-     Return the index of the first child whose class does *not* match.
+    /* original python code */
+    // def first_child_not_matching_class(self, childclass, start=0,
+    //                                end=sys.maxsize):
+    // """
+    // Return the index of the first child whose class does *not* match.
 
-     Parameters:
+    // Parameters:
 
-     - `childclass`: A `Node` subclass to skip, or a tuple of `Node`
-     classes. If a tuple, none of the classes may match.
-     - `start`: Initial index to check.
-     - `end`: Initial index to *not* check.
-  */
+    // - `childclass`: A `Node` subclass to skip, or a tuple of `Node`
+    //   classes. If a tuple, none of the classes may match.
+    // - `start`: Initial index to check.
+    // - `end`: Initial index to *not* check.
+    // """
+    // if not isinstance(childclass, tuple):
+    //     childclass = (childclass,)
+    // for index in range(start, min(len(self), end)):
+    //     for c in childclass:
+    //         if isinstance(self.children[index], c):
+    //             break
+    //     else:
+    //         return index
+    // return None
+
+
+    /**
+     * Return the index of the first child whose class does *not* match.
+     *
+     * Parameters:
+     *
+     * - `childclass`: A `Node` subclass to skip, or a tuple of `Node`
+     * classes. If a tuple, none of the classes may match.
+     * - `start`: Initial index to check.
+     * - `end`: Initial index to *not* check.
+     */
     public firstChildNotMatchingClass(childClass: any | any[], start = 0, end = this.children.length): number | undefined {
         const myChildClass = Array.isArray(childClass) ? childClass : [childClass];
-        const r = this.children.slice(start,
-            Math.min(this.children.length, end))
-            .findIndex((child, index): boolean => {
-                if (myChildClass.findIndex((c): boolean => {
-                    // if (typeof child === 'undefined') {
-                    //     throw new Error(`child should not be undefined, index ${index}`);
-                    // }
-                    if (child instanceof c
-                        || (this.children[index].classTypes.filter(
-
-                            ((c2): boolean => c2.prototype instanceof c || c2 === c)
-                        ))
-                            .length) {
-                        return true;
-                    }
-                    return false;
-                }) === -1) {
-                    return true;
+        const stop = Math.min(this.children.length, end);
+        for (let i = start; i < stop; i++) {
+            const child = this.children[i];
+            let matches = false;
+            for (const c of myChildClass) {
+                // direct instanceof check
+                if (child instanceof c) {
+                    matches = true;
+                    break;
                 }
-                return false;
-            });
-
-        if (r !== -1) {
-            return r;
+                // prefer Node.hasClassType if available
+                if (typeof (child as any).hasClassType === "function" && (child as any).hasClassType(c)) {
+                    matches = true;
+                    break;
+                }
+                // fallback: inspect child.classTypes array
+                if (Array.isArray((child as any).classTypes) &&
+                    (child as any).classTypes.findIndex((c2: any) => c2.prototype instanceof c || c2 === c) !== -1) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) {
+                return i;
+            }
         }
         return undefined;
     }
@@ -2934,9 +2959,10 @@ class pending extends Element {
         attributes?: Attributes
     ) {
         super(rawsource, children, attributes);
-        /** The `docutils.transforms.Transform` class implementing the pending
-     operation. */
+        /** The `docutils.transforms.Transform` class implementing the pending operation. */
         this.transform = transform;
+
+        this.classTypes = [Special, Invisible, PreBibliographic];
 
         /** Detail data (dictionary) required by the pending operation. */
         this.details = details || {};
