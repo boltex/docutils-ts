@@ -76,9 +76,9 @@
 
 #### frontmatter
 
-- [ ] `frontmatter.DocTitle`
+- [x] `frontmatter.DocTitle`
 - [ ] `frontmatter.DocInfo`
-- [ ] `frontmatter.SectSubTitle`
+- [x] `frontmatter.SectSubTitle`
 
 #### references
 

@@ -11,6 +11,7 @@ import { row, tgroup } from "../nodes.js";
 import { getLanguage } from "../languages/index.js"
 import { logger as baseLogger } from '../logger.js';
 import * as writer_aux from '../transforms/writer_aux.js';
+import * as html4css1 from './html4css1.js';
 
 const logger = baseLogger.child({ 'class': 'HtmlBase' });
 

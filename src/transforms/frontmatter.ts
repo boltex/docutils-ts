@@ -447,7 +447,7 @@ export class DocInfo extends Transform {
 
     public extractAuthors(field: NodeInterface, name: string, docinfo: NodeInterface): void {
         try {
-
+            // Check class with isInstance and hasClassType methods!
 
         } catch (error) {
 
@@ -490,7 +490,7 @@ export class DocInfo extends Transform {
     */
 
     public authorsFromOneParagraph(field: NodeInterface): nodes.Text[][] { // TODO : type those parameters!
-
+        // Check class with isInstance and hasClassType methods!
         return [];
 
     }
@@ -518,7 +518,7 @@ export class DocInfo extends Transform {
     */
 
     public authorsFromBulletList(field: NodeInterface): nodes.Text[][] { // TODO : type those parameters!
-
+        // Check class with isInstance and hasClassType methods!
         return [];
 
     }
@@ -538,7 +538,7 @@ export class DocInfo extends Transform {
     */
 
     public authorsFromParagraphs(field: NodeInterface): nodes.Text[][] { // TODO : type those parameters!
-
+        // Check class with isInstance and hasClassType methods!
         return [];
 
     }
@@ -546,7 +546,7 @@ export class DocInfo extends Transform {
     /*
     def authors_from_paragraphs(self, field):
         for item in field[1]:
-            if not isinstance(item, (nodes.paragraph, nodes.comment)):
+            if not isinstance(item, (nodes.paragraph, nodes.comment)): 
                 raise TransformError
         authors = [item.children for item in field[1]
                    if not isinstance(item, nodes.comment)]
