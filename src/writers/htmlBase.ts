@@ -12,6 +12,7 @@ import { getLanguage } from "../languages/index.js"
 import { logger as baseLogger } from '../logger.js';
 import * as writer_aux from '../transforms/writer_aux.js';
 import * as html4css1 from './html4css1.js';
+import { fileSystem } from '../fileSystem.js';
 
 const logger = baseLogger.child({ 'class': 'HtmlBase' });
 
@@ -134,6 +135,34 @@ class HTMLTranslator extends nodes.NodeVisitor {
     private contentType: TemplateFunction = compile('<meta charset="<%=charset%>"/>\n');
     private generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%=version%>: http://docutils.sourceforge.net/" />\n');
 
+    private documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
+    // Template for the MathJax script in the header:
+    private mathjaxScript: TemplateFunction = compile('<script type="text/javascript" src="<%=mathjaxUrl%>"></script>\n');
+
+    private mathjaxUrl: string = 'file:/usr/share/javascript/mathjax/MathJax.js';
+    /*
+        URL of the MathJax javascript library.
+    
+        The MathJax library ought to be installed on the same
+        server as the rest of the deployed site files and specified
+        in the `math-output` setting appended to "mathjax".
+        See `Docutils Configuration`__.
+    
+        __ https://docutils.sourceforge.io/docs/user/config.html#math-output
+    
+        The fallback tries a local MathJax installation at
+        ``/usr/share/javascript/mathjax/MathJax.js``.
+    */
+
+    private stylesheetLink: TemplateFunction = compile('<link rel="stylesheet" type="text/css" href="<%=stylesheetUrl%>" />\n');
+    private embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n<%=stylesheetContent%>\n</style>\n');
+
+    private wordsAndSpaces: RegExp = /[^ \n]+| +|\n/;
+    private inWordWrapPoint: RegExp = /.+\W\W.+|[-?].+/;
+
+    private videoTypes: string[] = ['video/mp4', 'video/webm', 'video/ogg'];
+    /** MIME types supported by the HTML5 <video> element. */
+
     private body: string[];
     private settings: Settings;
     private language: CoreLanguage;
@@ -184,6 +213,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
     private compactLists?: number;
     private compactFieldLists?: number;
     private stylesheet: string[];
+    public styleSheetPromise!: Promise<string[]>; // Used to wait for async stylesheet init calls to finish
 
     /**
      * Character references for characters with a special meaning in HTML.
@@ -195,7 +225,6 @@ class HTMLTranslator extends nodes.NodeVisitor {
         62: '&gt;',
         64: '&#64;', // may thwart address harvesters
     };
-    private documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
 
     public constructor(document: Document) {
         super(document);
@@ -226,10 +255,20 @@ class HTMLTranslator extends nodes.NodeVisitor {
         }
         this.head = this.meta.slice();
         this.stylesheet = [];
-        /* fixme
-           this.stylesheet = utils.getStylesheetList(settings).
-           map(this.stylesheetCall.bind(this));
-        */
+
+        // NOTE: users should await this.styleSheetPromise to ensure this.stylesheets are ready
+        this.styleSheetPromise = (async (): Promise<string[]> => {
+            let stylesheets: string[] = [];
+            stylesheets = await utils.getStylesheetList(settings);
+            return Promise.all(stylesheets.map(
+                async (path) => this.stylesheetCall(path)
+            ));
+        })();
+
+        this.styleSheetPromise.then((sheets: string[]): void => {
+            this.stylesheet = sheets;
+        });
+
         this.bodyPrefix = ['</head>\n<body>\n'];
         this.bodyPreDocinfo = [];
         this.docinfo = [];
@@ -268,7 +307,6 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.authorInAuthors = false;
         this.mathHeader = [];
     }
-
 
     public astext(): string {
         return [this.headPrefix, this.head, this.stylesheet, this.bodyPrefix].map((a): string => a.join('')).join('');
@@ -316,9 +354,84 @@ class HTMLTranslator extends nodes.NodeVisitor {
         return encoded;
     }
 
-    public stylesheetCall(path: string): string {
-        return '';
+    /* Original Python code:
+    def stylesheet_call(self, path, adjust_path=None):
+        """Return code to reference or embed stylesheet file `path`"""
+        if adjust_path is None:
+            adjust_path = bool(self.settings.stylesheet_path)
+        if self.settings.embed_stylesheet:
+            try:
+                content = Path(path).read_text(encoding='utf-8')
+            except OSError as err:
+                msg = f'Cannot embed stylesheet: {err}'
+                self.document.reporter.error(msg)
+                return '<--- %s --->\n' % msg
+            else:
+                self.settings.record_dependencies.add(path)
+            return self.embedded_stylesheet % content
+        # else link to style file:
+        if adjust_path:
+            # rewrite path relative to output (cf. config.html#stylesheet-path)
+            path = utils.relative_path(self.settings.output_path, path)
+        return self.stylesheet_link % self.encode(path)
+
+    */
+
+    /**
+     * Return code to reference or embed stylesheet file `path`
+     * Note: Uses await fileSystem.readFile(myFilePath, { encoding: 'utf-8' }); to read file to mimic python's Path(path).read_text(encoding='utf-8')
+     */
+    public async stylesheetCall(path: string, adjustPath?: boolean): Promise<string> {
+        if (path === 'html4css1.css') {
+            // Special handling for html4css1.css, use  html4css1.HTML4CSS1
+            if (this.settings.embedStylesheet) {
+                // return html4css1.HTML4CSS1;
+                return this.embeddedStylesheet({ stylesheetContent: html4css1.HTML4CSS1 });
+            } else {
+                if (adjustPath && this.settings.outputPath) {
+                    // rewrite path relative to output (cf. config.html#stylesheet-path)
+                    path = utils.relativePath(this.settings.outputPath, path);
+                }
+                return this.stylesheetLink({ stylesheetUrl: this.encode(path) });
+            }
+        }
+        if (adjustPath === undefined) {
+            adjustPath = Boolean(this.settings.stylesheetPath);
+        }
+        if (this.settings.embedStylesheet) {
+            // embed stylesheet content
+            try {
+                const content = await fileSystem.readFile(path, { encoding: 'utf-8' });
+                // const content = await Promise.resolve('/* TODO: load ' + path + ' */'); // TODO: fixme!
+                this.settings.recordDependencies?.push(path);
+                return this.embeddedStylesheet({ stylesheetContent: content });
+            } catch (err) {
+                const msg = `Cannot embed stylesheet: ${err}`;
+                this.document.reporter.error(msg);
+                return `<--- ${msg} --->\n`;
+            }
+        }
+        // else link to style file:
+        if (adjustPath && this.settings.outputPath) {
+            // rewrite path relative to output (cf. config.html#stylesheet-path)
+            path = utils.relativePath(this.settings.outputPath, path);
+        }
+        return this.stylesheetLink({ stylesheetUrl: this.encode(path) });
     }
+
+    /**
+     * Return code to reference or embed stylesheet file `path`
+     * Note: Uses await fileSystem.readFile(myFilePath, { encoding: 'utf-8' }); to read file to mimic python's Path(path).read_text(encoding='utf-8')
+     */
+    // public async stylesheetCall(path: string, adjustPath?: boolean): Promise<string> {
+    //     if (adjustPath === undefined) {
+    //         adjustPath = Boolean(this.settings.stylesheetPath);
+    //     } catch (err) {
+    //         const msg = `Cannot embed stylesheet: ${err}`;
+    //         this.document.reporter.error(msg);
+    //         return `<--- ${msg} --->\n`;
+    //     }
+    // }
 
     /*
      * Construct and return a start tag given a node (id & class attributes
@@ -2353,8 +2466,11 @@ class HTMLBaseWriter extends BaseWriter {
     }
 
 
-    public translate(): void {
+    public async translate(): Promise<void> {
         this.visitor = new this.translatorClass(this.document!);
+        if (this.visitor.styleSheetPromise) {
+            await this.visitor.styleSheetPromise; // Make sure stylesheet is loaded
+        }
         const visitor = this.visitor;
         if (!visitor) {
             throw new Error();

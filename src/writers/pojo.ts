@@ -91,13 +91,16 @@ class POJOWriter extends BaseWriter {
     /**
      * Translate the document to plain old javascript object
      */
-    public translate(): void {
+    public async translate(): Promise<void> {
         const TranslatorClass = this.translatorClass;
         if (this.document === undefined) {
             throw new InvalidStateError('No document');
         }
         const visitor = new TranslatorClass(this.document);
         this.visitor = visitor;
+        if (this.visitor.styleSheetPromise) {
+            await this.visitor.styleSheetPromise; // Make sure stylesheet is loaded
+        }
         this.document.walkabout(visitor);
 
         this.output = JSON.stringify(visitor.root, null, 2);

@@ -89,9 +89,6 @@ export class Contents extends Directive {
         document.notePending(pending);
         topic.append(pending);
 
-        console.log('Contents directive run completed');
-        console.log(`Generated TOC: ${topic.toString()}`);
-
         return [topic, ...messages];
     }
 }

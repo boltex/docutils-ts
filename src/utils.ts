@@ -7,6 +7,7 @@ import * as nodes from './nodes.js';
  [3, 6, 9]
  */
 import CallSite = NodeJS.CallSite;
+import { fileSystem } from "./fileSystem.js";
 
 function findCombiningChars(text: string): number[] {
 
@@ -245,6 +246,118 @@ export function relativePath(source: string, target: string): string {
   */
 }
 
+/*
+  Original Python code:
+
+
+
+# Return 'stylesheet' or 'stylesheet_path' arguments as list.
+#
+# The original settings arguments are kept unchanged: you can test
+# with e.g. ``if settings.stylesheet_path: ...``.
+#
+# Differences to the depracated `get_stylesheet_reference()`:
+# * return value is a list
+# * no re-writing of the path (and therefore no optional argument)
+#   (if required, use ``utils.relative_path(source, target)``
+#   in the calling script)
+def get_stylesheet_list(settings: Values) -> list[str]:
+    """Retrieve list of stylesheet references from the settings object."""
+    assert not (settings.stylesheet and settings.stylesheet_path), (
+            'stylesheet and stylesheet_path are mutually exclusive.')
+    stylesheets = settings.stylesheet_path or settings.stylesheet or []
+    # programmatically set default may be string with comma separated list:
+    if not isinstance(stylesheets, list):
+        stylesheets = [path.strip() for path in stylesheets.split(',')]
+    if settings.stylesheet_path:
+        # expand relative paths if found in stylesheet-dirs:
+        stylesheets = [find_file_in_dirs(path, settings.stylesheet_dirs)
+                       for path in stylesheets]
+    return stylesheets
+*/
+export async function getStylesheetList(settings: Settings): Promise<string[]> {
+    if (settings.stylesheet && settings.stylesheetPath) {
+        throw new Error('stylesheet and stylesheet_path are mutually exclusive.');
+    }
+    let stylesheets: string | string[] = settings.stylesheetPath || settings.stylesheet || [];
+    // programmatically set default may be string with comma separated list:
+    if (!Array.isArray(stylesheets)) {
+        stylesheets = stylesheets.split(',').map(path => path.trim());
+    }
+    if (settings.stylesheetPath) {
+        // expand relative paths if found in stylesheet-dirs:
+        // stylesheets = stylesheets.map(path => findFileInDirs(path, settings.stylesheetDirs));
+
+        stylesheets = await Promise.all(
+            stylesheets.map(async (path) => {
+                if (path === 'html4css1.css') {
+                    return path; // special case, built-in stylesheet
+                }
+                const data = await findFileInDirs(path, settings.stylesheetDirs || []);
+                return data;
+            })
+        );
+    }
+    return stylesheets;
+}
+
+/* Original Python code: (NOTE: use await fileSystem.readFile(mySourcePath, { encoding: 'utf-8' }); to check if file exists: it will throw if not found)
+def find_file_in_dirs(path: StrPath, dirs: Iterable[StrPath]) -> str:
+    """
+    Search for `path` in the list of directories `dirs`.
+
+    Return the first expansion that matches an existing file.
+    """
+    path = Path(path)
+    if path.is_absolute():
+        return path.as_posix()
+    for d in dirs:
+        f = Path(d).expanduser() / path
+        if f.exists():
+            return f.as_posix()
+    return path.as_posix()
+*/
+export async function findFileInDirs(path: string, dirs: string[]): Promise<string> {
+    // if path is absolute, return it
+    if (path.startsWith('/') || path.match(/^[a-zA-Z]:\\/)) {
+        return path;
+    }
+
+    for (const dir of dirs) {
+        const filePath = pathJoin(dir, path);
+        try {
+            await fileSystem.readFile(filePath); // will throw if not found
+            // await Promise.resolve(); // TODO: fixme!
+            return filePath;
+        } catch {
+            continue;
+        }
+    }
+
+    return path;
+}
+
+export function pathJoin(...parts: string[]): string {
+    if (parts.length === 0) return "";
+    const normalize = (p: string) => p.replace(/\\/g, "/");
+    let joined = "";
+    for (const part of parts) {
+        if (!part) continue;
+        const np = normalize(part);
+        const isAbsolute = np.startsWith("/") || /^[a-zA-Z]:\//.test(np);
+        if (isAbsolute) {
+            // reset to absolute part (mimics Node's path.join behavior)
+            joined = np;
+        } else {
+            if (joined === "") joined = np;
+            else if (joined.endsWith("/")) joined += np;
+            else joined += "/" + np;
+        }
+    }
+    // collapse repeated slashes
+    joined = joined.replace(/\/+/g, "/");
+    return joined;
+}
 /**
  *  Return a list of normalized combinations for a `BCP 47` language tag.
  * 

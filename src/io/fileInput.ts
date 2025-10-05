@@ -1,5 +1,5 @@
 import Input from './input.js';
-import { fileSystem } from '../core.js'
+import { fileSystem } from '../fileSystem.js'
 import { InputConstructorArgs } from '../types.js';
 import { normalizeLineEndings } from '../utils/unescape.js';
 

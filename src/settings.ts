@@ -63,7 +63,7 @@ export interface DocutilsCoreOptionParser {
     /** DocutilsCoreOptionParser: Specify the language (as BCP 47 language tag).  Default: en. */
     languageCode?: string;
     /** DocutilsCoreOptionParser: Write output file dependencies to <file>. */
-    recordDependencies?: string | null;
+    recordDependencies?: string[] | null;
     /** DocutilsCoreOptionParser: Read configuration settings from <file>, if it exists. */
     config?: string;
     /** DocutilsCoreOptionParser: Show this program's version number and exit. */
@@ -140,7 +140,7 @@ export interface DocutilsFrontendOptionParser {
     /** DocutilsFrontendOptionParser: Specify the language (as BCP 47 language tag).  Default: en. */
     languageCode?: string;
     /** DocutilsFrontendOptionParser: Write output file dependencies to <file>. */
-    recordDependencies?: string | null;
+    recordDependencies?: string[] | null;
     /** DocutilsFrontendOptionParser: Read configuration settings from <file>, if it exists. */
     config?: string;
     /** DocutilsFrontendOptionParser: Show this program's version number and exit. */
@@ -508,6 +508,7 @@ export interface DocutilsReadersStandaloneReader {
 export type Settings = {
     _source?: string;
     _destination?: string;
+    outputPath?: string;
 } &
     DocutilsCoreOptionParser &
     DocutilsFrontendOptionParser &

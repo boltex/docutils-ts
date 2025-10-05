@@ -29,12 +29,13 @@ export default class pseudoxml extends BaseWriter {
         ]
     ];
 
-    public translate(): void {
+    public translate(): Promise<void> {
         if (this.document === undefined) {
             throw new InvalidStateError('No document');
 
         }
         this.output = this.document.pformat();
+        return Promise.resolve();
     }
 
     public supports(format: string): boolean {

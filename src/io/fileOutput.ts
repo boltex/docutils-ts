@@ -1,5 +1,5 @@
 import Output from './output.js';
-import { fileSystem } from '../core.js'
+import { fileSystem } from '../fileSystem.js'
 
 export default class FileOutput extends Output<any> {
 

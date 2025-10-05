@@ -25,13 +25,12 @@ import * as nodes from '../nodes.js';
 export class PropagateTargets extends Transform {
 
     public apply(): void {
-        console.log('PropagateTargets apply');
+        // console.log('PropagateTargets apply');
         this.logger.silly('apply PropagateTargets');
 
         this.document.traverse({ condition: nodes.target }).forEach((target): void => {
-            //             if(target.parent instanceof nodes.TextElement ||
-            // (target
-            console.log(`target is ${target}`);
+
+            // console.log(`target is ${target}`);
         });
     }
 }

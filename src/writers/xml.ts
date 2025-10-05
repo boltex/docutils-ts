@@ -173,7 +173,7 @@ export default class XMLWriter extends BaseWriter {
         ]
     ];
 
-    public translate(): void | never {
+    public async translate(): Promise<void> {
         if (this.document === undefined) {
             throw new InvalidStateError('No document');
         }
@@ -181,6 +181,9 @@ export default class XMLWriter extends BaseWriter {
 
         const visitor = new TranslatorClass(this.document);
         this.visitor = visitor;
+        if (this.visitor.styleSheetPromise) {
+            await this.visitor.styleSheetPromise; // Make sure stylesheet is loaded
+        }
         this.document.walkabout(visitor);
 
         this.output = visitor.output.join('');

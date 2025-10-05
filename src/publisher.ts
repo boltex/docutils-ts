@@ -318,8 +318,10 @@ export class Publisher {
       let destination = args.destination;
       if (destinationPath === undefined) {
         destinationPath = this.settings!._destination;
+        this.settings!.outputPath = destinationPath;
       } else {
         this.settings!._destination = destinationPath;
+        this.settings!.outputPath = destinationPath;
       }
       const DestinationClass = this.destinationClass!;
       const outputEncoding = this.settings!.outputEncoding;

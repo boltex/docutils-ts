@@ -44,7 +44,7 @@ export default abstract class Writer extends Component {
             this.language = getLanguage(document.settings.languageCode, document.reporter as Reporter);
         }
         this.destination = destination;
-        this.translate();
+        await this.translate();
         let fn;
         if (this.destination) {
             if (typeof this.destination === 'function') {
@@ -60,7 +60,7 @@ export default abstract class Writer extends Component {
         }
     }
 
-    public abstract translate(): void;
+    public abstract translate(): Promise<void>;
 
     public assembleParts(): void {
         if (this.document === undefined) {

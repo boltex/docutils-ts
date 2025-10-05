@@ -14,6 +14,7 @@ export { htmlTranslate } from './fn/htmlTranslate.js';
 export { RSTParser } from './parsers/restructuredtext.js';
 export { XMLWriter } from './writers/xml.js'
 export * as core from './core.js';
+export * as fileSystem from './fileSystem.js';
 export * as languages from './languages/index.js';
 
 export const __version__ = '0.15ts';

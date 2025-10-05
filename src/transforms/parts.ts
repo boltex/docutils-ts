@@ -96,7 +96,6 @@ export class Contents extends Transform {
     static defaultPriority = 720;
 
     public apply(): void {
-        console.log('***** Contents transform started');
         // let the writer (or output software) build the contents list?
         const tocByWriter = this.document.settings.useLatexToc || false;
         // TODO: handle "generate_oowriter_toc" setting of the "ODT" writer.
@@ -140,13 +139,9 @@ export class Contents extends Transform {
         const sections = node.getChildren().filter(child => child instanceof nodes.section);
         const entries: nodes.list_item[] = [];
         const depth = this.startNode?.details?.depth || Number.MAX_SAFE_INTEGER;
-        console.log(`+++++ Building contents for node: ${node.toString()} at level ${level}, depth ${depth}`);
 
         let auto = false; // auto-numbered sections
         for (const section of sections) {
-
-            console.log(`----- Processing section: ${section.toString()} at level ${level}, depth ${depth}`);
-            console.log(section.toString());
 
             const title = section.getChildren()[0];
             auto = title.attributes.auto; // May be set by SectNum.

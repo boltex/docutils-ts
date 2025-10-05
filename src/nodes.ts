@@ -317,22 +317,58 @@ abstract class Node implements NodeInterface {
         return undefined;
     }
 
-    public hasClassType(classType: any): boolean {
+    private static isConstructor(obj: any): obj is Function {
+        return typeof obj === "function" && obj.prototype && (typeof obj.prototype === "object" || typeof obj.prototype === "function");
+    }
 
-        return this.classTypes.findIndex((c): boolean => c.prototype instanceof classType
-            || c === classType) !== -1;
+    public hasClassType(classType: any): boolean {
+        if (!Node.isConstructor(classType)) {
+            return this.classTypes.findIndex((c): boolean => c === classType) !== -1;
+        }
+        return this.classTypes.findIndex((c): boolean => {
+            if (Node.isConstructor(c)) {
+                // safe instanceof usage because we checked classType is a constructor
+                try {
+                    return c.prototype instanceof classType || c === classType;
+                } catch {
+                    return c === classType;
+                }
+            }
+            return c === classType;
+        }) !== -1;
     }
 
     public isInline(): boolean {
-        return this.classTypes.findIndex((c: any): boolean => c.prototype instanceof Inline || c === Inline) !== -1;
+        if (!Node.isConstructor(Inline)) {
+            return this.classTypes.findIndex((c): boolean => c === Inline) !== -1;
+        }
+        return this.classTypes.findIndex((c: any): boolean => {
+            if (Node.isConstructor(c)) {
+                try {
+                    return c.prototype instanceof Inline || c === Inline;
+                } catch {
+                    return c === Inline;
+                }
+            }
+            return c === Inline;
+        }) !== -1;
     }
 
     public isAdmonition(): boolean {
-        return this.classTypes.findIndex(
-            (c): boolean => c.prototype instanceof Admonition || c === Admonition
-        ) !== -1;
+        if (!Node.isConstructor(Admonition)) {
+            return this.classTypes.findIndex((c): boolean => c === Admonition) !== -1;
+        }
+        return this.classTypes.findIndex((c): boolean => {
+            if (Node.isConstructor(c)) {
+                try {
+                    return c.prototype instanceof Admonition || c === Admonition;
+                } catch {
+                    return c === Admonition;
+                }
+            }
+            return c === Admonition;
+        }) !== -1;
     }
-
     public asDOM(dom: {}): {} {
         return {};
     }
@@ -523,12 +559,47 @@ abstract class Node implements NodeInterface {
                 return this._fastTraverse(condition);
             }
         }
-        if (typeof condition !== "undefined" && (condition.prototype instanceof Node || condition === Node)) {
+        //  if (typeof condition !== "undefined" && (condition.prototype instanceof Node || condition === Node)) {
+        if (typeof condition !== "undefined" && typeof condition === "function") {
             const nodeClass = condition;
-            condition = (node: Node, nodeClassArg: NodeClass): boolean => (
-                (node instanceof nodeClassArg) || (node instanceof nodeClass)
-            );
-            throw new Error("unimplemented");
+            condition = (node: any): boolean => {
+                // direct instance check (safe because nodeClass is a function)
+                try {
+                    if (node instanceof nodeClass) {
+                        return true;
+                    }
+                } catch {
+                    /* fallthrough if instanceof throws for some reason */
+                }
+                // node may implement hasClassType
+                if (node && typeof node.hasClassType === "function" && node.hasClassType(nodeClass)) {
+                    return true;
+                }
+                // guard access to prototype to avoid "non-object prototype 'undefined' in instanceof"
+                const proto = node && (node as any).prototype;
+                if (proto && typeof proto === "object" && nodeClass && nodeClass.prototype && typeof nodeClass.prototype === "object") {
+                    try {
+                        if (proto instanceof nodeClass) {
+                            return true;
+                        }
+                    } catch {
+                        // ignore and continue
+                    }
+                }
+                // also consider instance.constructor.prototype as a fallback
+                const ctorProto = node && (node as any).constructor && (node as any).constructor.prototype;
+                if (ctorProto && typeof ctorProto === "object" && nodeClass && nodeClass.prototype && typeof nodeClass.prototype === "object") {
+                    try {
+                        if (ctorProto instanceof nodeClass) {
+                            return true;
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+                return false;
+            };
+            // throw new Error("unimplemented");
         }
         /*
             if isinstance(condition, (types.ClassType, type)):

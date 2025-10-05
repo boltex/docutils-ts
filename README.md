@@ -129,10 +129,10 @@ When using file I/O in Node.js, you'll need to configure the file system:
 
 ```ts
 import fs from "fs";
-import { core } from "docutils-ts";
+import { fileSystem } from "docutils-ts";
 
 // Setup file system implementation
-core.fileSystem.setImplementation({
+fileSystem.setImplementation({
   writeFile: fs.promises.writeFile,
   readFile: fs.promises.readFile,
 });
@@ -147,10 +147,10 @@ For instance, the frontend utilities like _rst2html_ setup the file system that 
 In browsers, you might implement file I/O differently:
 
 ```ts
-import { core } from "docutils-ts";
+import { fileSystem } from "docutils-ts";
 
 // Example implementation using fetch
-core.fileSystem.setImplementation({
+fileSystem.setImplementation({
   readFile: async (path) => {
     const response = await fetch(path);
     return response.text();
