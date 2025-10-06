@@ -347,4 +347,5 @@ h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
   font-size: 100% }
 
 ul.auto-toc {
-  list-style-type: none }`;
+  list-style-type: none }
+`;

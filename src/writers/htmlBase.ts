@@ -131,13 +131,13 @@ class SimpleListChecker extends nodes.GenericNodeVisitor {
 class HTMLTranslator extends nodes.NodeVisitor {
     private doctype: string = '<!DOCTYPE html>\n';
     private doctypeMathML: string = this.doctype;
-    private headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%=lang%>" lang="<%=lang%>">\n<head>\n');
-    private contentType: TemplateFunction = compile('<meta charset="<%=charset%>"/>\n');
-    private generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%=version%>: http://docutils.sourceforge.net/" />\n');
+    private headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%-lang%>" lang="<%-lang%>">\n<head>\n');
+    private contentType: TemplateFunction = compile('<meta charset="<%-charset%>"/>\n');
+    private generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%-version%>: http://docutils.sourceforge.net/" />\n');
 
     private documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
     // Template for the MathJax script in the header:
-    private mathjaxScript: TemplateFunction = compile('<script type="text/javascript" src="<%=mathjaxUrl%>"></script>\n');
+    private mathjaxScript: TemplateFunction = compile('<script type="text/javascript" src="<%-mathjaxUrl%>"></script>\n');
 
     private mathjaxUrl: string = 'file:/usr/share/javascript/mathjax/MathJax.js';
     /*
@@ -154,8 +154,8 @@ class HTMLTranslator extends nodes.NodeVisitor {
         ``/usr/share/javascript/mathjax/MathJax.js``.
     */
 
-    private stylesheetLink: TemplateFunction = compile('<link rel="stylesheet" type="text/css" href="<%=stylesheetUrl%>" />\n');
-    private embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n<%=stylesheetContent%>\n</style>\n');
+    private stylesheetLink: TemplateFunction = compile('<link rel="stylesheet" type="text/css" href="<%-stylesheetUrl%>" />\n');
+    private embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n<%-stylesheetContent%>\n</style>\n');
 
     private wordsAndSpaces: RegExp = /[^ \n]+| +|\n/;
     private inWordWrapPoint: RegExp = /.+\W\W.+|[-?].+/;
@@ -258,9 +258,9 @@ class HTMLTranslator extends nodes.NodeVisitor {
 
         // NOTE: users should await this.styleSheetPromise to ensure this.stylesheets are ready
         this.styleSheetPromise = (async (): Promise<string[]> => {
-            let stylesheets: string[] = [];
-            stylesheets = await utils.getStylesheetList(settings);
-            return Promise.all(stylesheets.map(
+            let tempStylesheets: string[] = [];
+            tempStylesheets = await utils.getStylesheetList(settings);
+            return Promise.all(tempStylesheets.map(
                 async (path) => this.stylesheetCall(path)
             ));
         })();
@@ -476,30 +476,31 @@ class HTMLTranslator extends nodes.NodeVisitor {
         }
         //        assert 'id' not in atts
         ids.push(...(node.attributes.ids || []));
-        /*      if 'ids' in atts:
-                ids.extend(atts['ids'])
-                del atts['ids']
-                if ids:
-                atts['id'] = ids[0]
-                for id in ids[1:]:
-                // Add empty "span" elements for additional IDs.  Note
-                // that we cannot use empty "a" elements because there
-                // may be targets inside of references, but nested "a"
-                // elements aren't allowed in XHTML (even if they do
-                // not all have a "href" attribute).
-                if empty or isinstance(node,
-                (nodes.bullet_list, nodes.docinfo,
-                nodes.definition_list, nodes.enumerated_list,
-                nodes.field_list, nodes.option_list,
-                nodes.table)):
-                // Insert target right in front of element.
-                prefix.push('<span id="%s"></span>' % id)
-                else:
-                // Non-empty tag.  Place the auxiliary <span> tag
-                // *inside* the element, as the first child.
-                suffix += '<span id="%s"></span>' % id
 
+        /* Original Python code:
+        /*
+                if 'ids' in atts:
+                    ids.extend(atts['ids'])
+                    del atts['ids']
+                if ids:
+                    atts['id'] = ids[0]
+                    for id in ids[1:]:
+                        # Add empty "span" elements for additional IDs.  Note
+                        # that we cannot use empty "a" elements because there
+                        # may be targets inside of references, but nested "a"
+                        # elements aren't allowed in XHTML (even if they do
+                        # not all have a "href" attribute).
+                        if empty or isinstance(node, (nodes.Sequential,
+                                                    nodes.docinfo,
+                                                    nodes.table)):
+                            # Insert target right in front of element.
+                            prefix.append('<span id="%s"></span>' % id)
+                        else:
+                            # Non-empty tag.  Place the auxiliary <span> tag
+                            # *inside* the element, as the first child.
+                            suffix += '<span id="%s"></span>' % id
         */
+
         const attlist = { ...atts };
         // attlist.sort()
         const parts = [myTagname];
