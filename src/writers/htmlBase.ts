@@ -2483,6 +2483,7 @@ class HTMLBaseWriter extends BaseWriter {
             throw new Error();
         }
         this.document!.walkabout(visitor);
+
         const o: Record<string, any> = {};
         this.visitorAttributes.forEach((attr): void => {
 
@@ -2490,9 +2491,15 @@ class HTMLBaseWriter extends BaseWriter {
             if (!Object.prototype.hasOwnProperty.call(visitor, attr)) {
                 logger.warn(`unknown visitor attribute ${attr}`);
             }
-            o[attr] = visitor[attr] ? visitor[attr].join('') : undefined;
+            o[attr] = visitor[attr] ? visitor[attr].join('').trim() : undefined;
+            if (o[attr] && typeof o[attr] === 'string') {
+                o[attr] = o[attr].trim();
+            }
+
         });
         this.output = this.template!(o);
+        // this.output = this.applyTemplate(); // TODO fix?
+
     }
 
     public applyTemplate(): string {
@@ -2514,6 +2521,10 @@ class HTMLBaseWriter extends BaseWriter {
         console.warn(x);
         this.visitorAttributes.forEach((attr): void => {
             vars[attr] = ((this as any)[attr] || [].join('').trim());
+            // Trim if string
+            if (vars[attr] && typeof vars[attr] === 'string') {
+                vars[attr] = vars[attr].trim();
+            }
         });
         vars.encoding = settings.outputEncoding;
         vars.version = __version__;
