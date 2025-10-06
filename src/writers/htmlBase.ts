@@ -475,31 +475,37 @@ class HTMLTranslator extends nodes.NodeVisitor {
             atts.class = classes.join(' ');
         }
         //        assert 'id' not in atts
+        if ('id' in atts) {
+            throw new Error('assert id not in atts failed');
+        }
+
+        // ids = node.get('ids', [])
         ids.push(...(node.attributes.ids || []));
 
-        /* Original Python code:
-        /*
-                if 'ids' in atts:
-                    ids.extend(atts['ids'])
-                    del atts['ids']
-                if ids:
-                    atts['id'] = ids[0]
-                    for id in ids[1:]:
-                        # Add empty "span" elements for additional IDs.  Note
-                        # that we cannot use empty "a" elements because there
-                        # may be targets inside of references, but nested "a"
-                        # elements aren't allowed in XHTML (even if they do
-                        # not all have a "href" attribute).
-                        if empty or isinstance(node, (nodes.Sequential,
-                                                    nodes.docinfo,
-                                                    nodes.table)):
-                            # Insert target right in front of element.
-                            prefix.append('<span id="%s"></span>' % id)
-                        else:
-                            # Non-empty tag.  Place the auxiliary <span> tag
-                            # *inside* the element, as the first child.
-                            suffix += '<span id="%s"></span>' % id
-        */
+        if ('ids' in atts) {
+            ids.push(...(atts['ids'] || []));
+            delete atts['ids'];
+        }
+
+        if (ids.length) {
+            atts.id = ids[0];
+            for (let i = 1; i < ids.length; i++) {
+                const id = ids[i];
+                // Add empty "span" elements for additional IDs.  Note
+                // that we cannot use empty "a" elements because there
+                // may be targets inside of references, but nested "a"
+                // elements aren't allowed in XHTML (even if they do
+                // not all have a "href" attribute).
+                if (empty || (node instanceof nodes.Sequential) || (node instanceof nodes.docinfo) || (node instanceof nodes.table)) {
+                    // Insert target right in front of element.
+                    prefix.push(`<span id="${id}"></span>`);
+                } else {
+                    // Non-empty tag.  Place the auxiliary <span> tag
+                    // *inside* the element, as the first child.
+                    suffix += `<span id="${id}"></span>`;
+                }
+            }
+        }
 
         const attlist = { ...atts };
         // attlist.sort()
