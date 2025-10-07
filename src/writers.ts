@@ -4,19 +4,27 @@ import * as HtmlBase from './writers/htmlBase.js';
 import * as Pseudoxml from './writers/pseudoxml.js';
 import { WriterConstructor } from './types.js';
 
-export function getWriterClass(readerName: string): WriterConstructor {
-    if (readerName === 'xml') {
+export function getWriterClass(writerName: string): WriterConstructor {
+    if (writerName === 'xml') {
         return xml.default;
-    } if (readerName === 'pojo') {
+    } if (writerName === 'pojo') {
         return pojo.default;
-    } if (readerName === 'html') {
+    } if (writerName === 'html') {
         return HtmlBase.default;
-    } if (readerName === 'pseudoxml') {
+    } if (writerName === 'html4') {
+        return HtmlBase.default;
+    } if (writerName === 'xhtml10') {
+        return HtmlBase.default;
+    } if (writerName === 'pseudoxml') {
+        return Pseudoxml.default;
+    } if (writerName === 'pprint') {
+        return Pseudoxml.default;
+    } if (writerName === 'pformat') {
         return Pseudoxml.default;
     }
 
-    throw new Error(`./writers/${readerName}.js`);
-    // return require(`./writers/${readerName}.js`).default;
+    throw new Error(`./writers/${writerName}.js`);
+    // return require(`./writers/${writerName}.js`).default;
 }
 
 export default {
