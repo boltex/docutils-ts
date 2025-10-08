@@ -128,12 +128,13 @@ class SimpleListChecker extends nodes.GenericNodeVisitor {
 /**
  * HTMLTranslator class
  */
-class HTMLTranslator extends nodes.NodeVisitor {
-    private doctype: string = '<!DOCTYPE html>\n';
+export class HTMLTranslator extends nodes.NodeVisitor {
+    protected doctype: string = '<!DOCTYPE html>\n';
     private doctypeMathML: string = this.doctype;
     private headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%-lang%>" lang="<%-lang%>">\n<head>\n');
-    private contentType: TemplateFunction = compile('<meta charset="<%-charset%>"/>\n');
-    private generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%-version%>: http://docutils.sourceforge.net/" />\n');
+    // protected contentType: TemplateFunction = compile('<meta charset="<%-charset%>"/>\n');
+    protected contentType: TemplateFunction = compile('<meta http-equiv="Content-Type" content="text/html; charset=<%-charset%>" />\n');
+    private generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%-version%>: https://github.com/boltex/docutils-ts/" />\n');
 
     private documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
     // Template for the MathJax script in the header:
@@ -155,7 +156,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
     */
 
     private stylesheetLink: TemplateFunction = compile('<link rel="stylesheet" type="text/css" href="<%-stylesheetUrl%>" />\n');
-    private embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n<%-stylesheetContent%>\n</style>\n');
+    private embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n\n<%-stylesheetContent%>\n</style>\n');
 
     private wordsAndSpaces: RegExp = /[^ \n]+| +|\n/;
     private inWordWrapPoint: RegExp = /.+\W\W.+|[-?].+/;
@@ -253,7 +254,7 @@ class HTMLTranslator extends nodes.NodeVisitor {
         if (myConfig && myConfig.xmlDeclaration) {
             this.headPrefix.push(utils.xmlDeclaration(settings.outputEncoding));
         }
-        this.head = this.meta.slice();
+        this.head = [];
         this.stylesheet = [];
 
         // NOTE: users should await this.styleSheetPromise to ensure this.stylesheets are ready
@@ -296,6 +297,18 @@ class HTMLTranslator extends nodes.NodeVisitor {
         this.inFootnoteList = false;
         this.title = [];
         this.subtitle = [];
+
+
+        if (settings.outputEncoding && settings.outputEncoding.toLowerCase() !== 'unicode') {
+            this.meta.unshift(this.contentType({ charset: settings.outputEncoding }));
+        }
+
+        /* Original Python code:
+        if (settings.output_encoding
+            and settings.output_encoding.lower() != 'unicode'):
+            self.meta.insert(0, self.content_type % settings.output_encoding)
+        */
+
         this.header = [];
         this.footer = [];
         this.htmlHead = [/*this.contentType*/];
@@ -2215,14 +2228,14 @@ class HTMLTranslator extends nodes.NodeVisitor {
 /**
  * Class for writing HTML
  */
-class HTMLBaseWriter extends BaseWriter {
+export class HTMLBaseWriter extends BaseWriter {
     private visitorAttributes: string[] = ['headPrefix', 'head', 'stylesheet', 'bodyPrefix', 'bodyPreDocinfo', 'docinfo', 'body',
         'bodySuffix', 'title', ' subtitle', 'header', 'footer', 'meta', 'fragment', 'htmlProlog', 'htmlHead', 'htmlTitle', 'htmlSubtitle',
         'htmlBody'];
     /*    private defaultTemplateContent: any;*/
     private visitor?: HTMLTranslator;
     /*    private attr: any;*/
-    private translatorClass: typeof HTMLTranslator = HTMLTranslator;
+    protected translatorClass: typeof HTMLTranslator = HTMLTranslator;
     private template: TemplateFunction = template;
 
     public configSection = 'html base writer'  // overwrite in subclass
@@ -2540,4 +2553,4 @@ class HTMLBaseWriter extends BaseWriter {
     }
 }
 
-export default HTMLBaseWriter;
+// export default HTMLBaseWriter;

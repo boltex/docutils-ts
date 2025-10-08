@@ -1,4 +1,4 @@
-import Writer from '../writers/htmlBase.js';
+import Writer from '../writers/html4css1.js';
 import { Document } from "../types.js";
 
 async function htmlTranslate(document: Document): Promise<string> {

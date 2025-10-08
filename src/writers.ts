@@ -1,6 +1,6 @@
 import * as xml from './writers/xml.js';
 import * as pojo from './writers/pojo.js';
-import * as HtmlBase from './writers/htmlBase.js';
+import * as HtmlBase from './writers/html4css1.js';
 import * as Pseudoxml from './writers/pseudoxml.js';
 import { WriterConstructor } from './types.js';
 
