@@ -130,17 +130,17 @@ class SimpleListChecker extends nodes.GenericNodeVisitor {
  */
 export class HTMLTranslator extends nodes.NodeVisitor {
     protected doctype: string = '<!DOCTYPE html>\n';
-    private doctypeMathML: string = this.doctype;
-    private headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%-lang%>" lang="<%-lang%>">\n<head>\n');
+    protected doctypeMathML: string = this.doctype;
+    protected headPrefixTemplate: TemplateFunction = compile('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%-lang%>" lang="<%-lang%>">\n<head>\n');
     // protected contentType: TemplateFunction = compile('<meta charset="<%-charset%>"/>\n');
     protected contentType: TemplateFunction = compile('<meta http-equiv="Content-Type" content="text/html; charset=<%-charset%>" />\n');
-    private generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%-version%>: https://github.com/boltex/docutils-ts/" />\n');
+    protected generator: TemplateFunction = compile('<meta name="generator" content="Docutils <%-version%>: https://github.com/boltex/docutils-ts/" />\n');
 
-    private documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
+    protected documenttagArgs = { 'tagname': 'div', 'CLASS': 'document' };
     // Template for the MathJax script in the header:
-    private mathjaxScript: TemplateFunction = compile('<script type="text/javascript" src="<%-mathjaxUrl%>"></script>\n');
+    protected mathjaxScript: TemplateFunction = compile('<script type="text/javascript" src="<%-mathjaxUrl%>"></script>\n');
 
-    private mathjaxUrl: string = 'file:/usr/share/javascript/mathjax/MathJax.js';
+    protected mathjaxUrl: string = 'file:/usr/share/javascript/mathjax/MathJax.js';
     /*
         URL of the MathJax javascript library.
     
@@ -155,71 +155,71 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         ``/usr/share/javascript/mathjax/MathJax.js``.
     */
 
-    private stylesheetLink: TemplateFunction = compile('<link rel="stylesheet" type="text/css" href="<%-stylesheetUrl%>" />\n');
-    private embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n\n<%-stylesheetContent%>\n</style>\n');
+    protected stylesheetLink: TemplateFunction = compile('<link rel="stylesheet" type="text/css" href="<%-stylesheetUrl%>" />\n');
+    protected embeddedStylesheet: TemplateFunction = compile('<style type="text/css">\n\n<%-stylesheetContent%>\n</style>\n');
 
-    private wordsAndSpaces: RegExp = /[^ \n]+| +|\n/;
-    private inWordWrapPoint: RegExp = /.+\W\W.+|[-?].+/;
+    protected wordsAndSpaces: RegExp = /[^ \n]+| +|\n/;
+    protected inWordWrapPoint: RegExp = /.+\W\W.+|[-?].+/;
 
-    private videoTypes: string[] = ['video/mp4', 'video/webm', 'video/ogg'];
+    protected videoTypes: string[] = ['video/mp4', 'video/webm', 'video/ogg'];
     /** MIME types supported by the HTML5 <video> element. */
 
-    private body: string[];
-    private settings: Settings;
-    private language: CoreLanguage;
-    private meta: string[];
-    private headPrefix: string[];
-    private htmlProlog: string[];
-    private compactSimple?: boolean;
-    private context: any[] = [];
-    private compactParagraph?: boolean;
-    private bodyPreDocinfo: string[];
-    private inDocumentTitle: number;
-    private htmlTitle: string[];
-    private title: string[];
-    private sectionLevel: number;
-    private initialHeaderLevel: number = -1;
-    private topicClasses: string[];
-    private colspecs: NodeInterface[];
-    private inMailto: boolean;
-    private inFootnoteList: boolean;
-    private head: string[];
-    private docinfo: string[];
-    private attributionFormats: AttributionFormats = {
+    protected body: string[];
+    protected settings: Settings;
+    protected language: CoreLanguage;
+    protected meta: string[];
+    protected headPrefix: string[];
+    protected htmlProlog: string[];
+    protected compactSimple?: boolean;
+    protected context: any[] = [];
+    protected compactP?: boolean;
+    protected bodyPreDocinfo: string[];
+    protected inDocumentTitle: number;
+    protected htmlTitle: string[];
+    protected title: string[];
+    protected sectionLevel: number;
+    protected initialHeaderLevel: number = -1;
+    protected topicClasses: string[];
+    protected colspecs: NodeInterface[];
+    protected inMailto: boolean;
+    protected inFootnoteList: boolean;
+    protected head: string[];
+    protected docinfo: string[];
+    protected attributionFormats: AttributionFormats = {
         dash: ['\u2014', ''],
         parentheses: ['(', ')'],
         parens: ['(', ')'],
         none: ['', ''],
     };
-    private mathHeader: string[];
-    private authorInAuthors: boolean;
-    private htmlBody: string[];
-    private htmlSubtitle: string[];
-    private htmlHead: string[];
-    private footer: string[];
-    private subtitle: string[];
-    private header: string[];
-    private inSidebar: boolean;
-    private compactFieldList: boolean;
-    private inDocinfo: boolean;
-    private readonly langAttribute: string = 'lang';
-    private mathOutput: string = '';
-    private mathOutputOptions: string[] = [];
-    private fragment: string[];
-    private bodySuffix: string[];
-    private bodyPrefix: string[];
-    private tableStyle: string = '';
-    private attribution: string = '';
-    private cloakEmailAddresses: boolean = true;
-    private compactLists?: number;
-    private compactFieldLists?: number;
-    private stylesheet: string[];
+    protected mathHeader: string[];
+    protected authorInAuthors: boolean;
+    protected htmlBody: string[];
+    protected htmlSubtitle: string[];
+    protected htmlHead: string[];
+    protected footer: string[];
+    protected subtitle: string[];
+    protected header: string[];
+    protected inSidebar: boolean;
+    protected compactFieldList: boolean;
+    protected inDocinfo: boolean;
+    protected readonly langAttribute: string = 'lang';
+    protected mathOutput: string = '';
+    protected mathOutputOptions: string[] = [];
+    protected fragment: string[];
+    protected bodySuffix: string[];
+    protected bodyPrefix: string[];
+    protected tableStyle: string = '';
+    protected attribution: string = '';
+    protected cloakEmailAddresses: boolean = true;
+    protected compactLists?: number;
+    protected compactFieldLists?: number;
+    protected stylesheet: string[];
     public styleSheetPromise!: Promise<string[]>; // Used to wait for async stylesheet init calls to finish
 
     /**
      * Character references for characters with a special meaning in HTML.
      */
-    private specialCharacters: { [key: number]: string } = {
+    protected specialCharacters: { [key: number]: string } = {
         38: '&amp;',
         60: '&lt;',
         34: '&quot;',
@@ -289,7 +289,7 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         this.context = [];
         this.topicClasses = [];
         this.colspecs = [];
-        this.compactParagraph = true;
+        this.compactP = true;
         this.compactSimple = false;
         this.compactFieldList = false;
         this.inDocinfo = false;
@@ -787,7 +787,7 @@ export class HTMLTranslator extends nodes.NodeVisitor {
     public visit_colspec(node: NodeInterface): void {
         this.colspecs.push(node);
         // "stubs" list is an attribute of the tgroup element:
-        //node.parent!.stubs.push(node.attributes.stub); fixme
+        node.parent!.attributes['stubs'].push(node.attributes.stub); // fixme
     }
 
     public depart_colspec(node: NodeInterface): void {
@@ -2162,8 +2162,8 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         const atts: Attributes = {};
         const oldCompactSimple = this.compactSimple;
 
-        this.context.push([this.compactSimple, this.compactParagraph]);
-        this.compactParagraph = undefined;
+        this.context.push([this.compactSimple, this.compactP]);
+        this.compactP = undefined;
         this.compactSimple = this.isCompactable(node);
         if (this.compactSimple && !oldCompactSimple) {
             atts.class = 'simple';
@@ -2173,7 +2173,7 @@ export class HTMLTranslator extends nodes.NodeVisitor {
 
     public depart_bullet_list(node: NodeInterface): void {
 
-        [this.compactSimple, this.compactParagraph] = this.context.pop()!;
+        [this.compactSimple, this.compactP] = this.context.pop()!;
         this.body.push('</ul>\n');
     }
 
