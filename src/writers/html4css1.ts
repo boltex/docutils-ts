@@ -1,4 +1,4 @@
-import { Document, NodeInterface } from "../types.js";
+import { Document, ElementInterface, NodeInterface } from "../types.js";
 import { nodes } from "../index.js"
 import { compile, TemplateFunction } from 'ejs';
 import * as HTMLBaseWriter from "./_htmlBase.js";
@@ -520,6 +520,205 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
 
     public depart_option_list_item(node: NodeInterface): void {
         this.body.push('</tr>\n');
+    }
+
+    /* Original code:
+
+    # Omit <p> tags to produce visually compact lists (less vertical
+    # whitespace) as CSS styling requires CSS2.
+    def should_be_compact_paragraph(self, node) -> bool:
+        """
+        Determine if the <p> tags around paragraph ``node`` can be omitted.
+        """
+        if (isinstance(node.parent, nodes.document)
+            or isinstance(node.parent, nodes.compound)):
+            # Never compact paragraphs in document or compound.
+            return False
+        for key, value in node.attlist():
+            if (node.is_not_default(key)
+                and not (key == 'classes'
+                         and value in ([], ['first'],
+                                       ['last'], ['first', 'last']))):
+                # Attribute which needs to survive.
+                return False
+        first = isinstance(node.parent[0], nodes.label)  # skip label
+        for child in node.parent.children[first:]:
+            # only first paragraph can be compact
+            if isinstance(child, nodes.Invisible):
+                continue
+            if child is node:
+                break
+            return False
+        parent_length = len([n for n in node.parent if not isinstance(
+            n, (nodes.Invisible, nodes.label))])
+        if (self.compact_simple
+            or self.compact_field_list
+            or self.compact_p and parent_length == 1):
+            return True
+        return False
+
+    def visit_paragraph(self, node) -> None:
+        if self.should_be_compact_paragraph(node):
+            self.context.append('')
+        else:
+            self.body.append(self.starttag(node, 'p', ''))
+            self.context.append('</p>\n')
+
+    def depart_paragraph(self, node) -> None:
+        self.body.append(self.context.pop())
+        self.report_messages(node)
+
+    */
+
+    public shouldBeCompactParagraph(node: ElementInterface): boolean {
+        if (node.parent instanceof nodes.document
+            || node.parent instanceof nodes.compound) {
+            // Never compact paragraphs in document or compound.
+            return false;
+        }
+        for (const [key, value] of Object.entries(node.attlist())) {
+            if (node.isNotDefault(key)
+                && !(key === 'classes'
+                    && (Array.isArray(value) && (
+                        value.length === 0 ||
+                        (value.length === 1 && value[0] === 'first') ||
+                        (value.length === 1 && value[0] === 'last') ||
+                        (value.length === 2 && value.includes('first') && value.includes('last'))
+                    )))) {
+                // Attribute which needs to survive.
+                return false;
+            }
+        }
+        const first = node.parent!.children[0] instanceof nodes.label ? 1 : 0;  // skip label
+        for (const child of node.parent!.children.slice(first)) {
+            // only first paragraph can be compact
+            if (child instanceof nodes.Invisible) {
+                continue;
+            }
+            if (child === node) {
+                break;
+            }
+            return false;
+        }
+        const parent_length = node.parent!.children.filter(n => !(n instanceof nodes.Invisible || n instanceof nodes.label)).length;
+        if (this.compact_simple
+            || this.compact_field_list
+            || this.compact_p && parent_length === 1) {
+            return true;
+        }
+        return false;
+
+    }
+
+    public visit_paragraph(node: ElementInterface): void {
+        if (this.shouldBeCompactParagraph(node)) {
+            this.context.push('');
+        } else {
+            this.body.push(this.starttag(node, 'p', ''));
+            this.context.push('</p>\n');
+        }
+    }
+
+    public depart_paragraph(node: NodeInterface): void {
+        this.body.push(this.context.pop());
+        this.report_messages(node);
+    }
+
+    public visit_sidebar(node: NodeInterface): void {
+        this.body.push(
+            this.starttag(node, 'div', undefined, undefined, { 'CLASS': 'sidebar' }));
+        this.setFirstLast(node);
+        this.in_sidebar = true;
+    }
+
+    public depart_sidebar(node: NodeInterface): void {
+        this.body.push('</div>\n');
+        this.in_sidebar = false;
+    }
+
+    public visit_subscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push(this.starttag(node, 'span', '', undefined,
+                { 'CLASS': 'subscript' }));
+        } else {
+            this.body.push(this.starttag(node, 'sub', ''));
+        }
+
+    }
+
+    public depart_subscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push('</span>');
+        } else {
+            this.body.push('</sub>');
+        }
+    }
+
+    // Use <h*> for subtitles (deprecated in HTML 5)
+    public visit_subtitle(node: NodeInterface): void {
+        if (node.parent instanceof nodes.sidebar) {
+            this.body.push(this.starttag(node, 'p', '', undefined, { 'CLASS': 'sidebar-subtitle' }));
+            this.context.push('</p>\n');
+        } else if (node.parent instanceof nodes.document) {
+            this.body.push(this.starttag(node, 'h2', '', undefined, { 'CLASS': 'subtitle' }));
+            this.context.push('</h2>\n');
+            this.inDocumentTitle = this.body.length;
+        } else if (node.parent instanceof nodes.section) {
+            const tag = 'h' + (this.sectionLevel + this.initialHeaderLevel - 1);
+            this.body.push(
+                this.starttag(node, tag, '', undefined, { 'CLASS': 'section-subtitle' })
+                + this.starttag({ attributes: {} } as NodeInterface, 'span', '', undefined, { 'CLASS': 'section-subtitle' }));
+            this.context.push(`</span></${tag}>\n`);
+        }
+    }
+
+    public depart_subtitle(node: NodeInterface): void {
+        this.body.push(this.context.pop());
+        if (this.inDocumentTitle) {
+            this.subtitle = this.body.slice(this.inDocumentTitle, -1);
+            this.inDocumentTitle = 0;
+            this.bodyPreDocinfo.push(...this.body);
+            this.htmlSubtitle.push(...this.body);
+            this.body = [];
+
+        }
+    }
+
+    /* Original Code: 
+
+    # <sup> not allowed in <pre> in HTML 4
+    def visit_superscript(self, node) -> None:
+        if isinstance(node.parent, nodes.literal_block):
+            self.body.append(self.starttag(node, 'span', '',
+                                           CLASS='superscript'))
+        else:
+            self.body.append(self.starttag(node, 'sup', ''))
+
+    def depart_superscript(self, node) -> None:
+        if isinstance(node.parent, nodes.literal_block):
+            self.body.append('</span>')
+        else:
+            self.body.append('</sup>')
+
+    */
+
+    // <sup> not allowed in <pre> in HTML 4
+    public visit_superscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push(this.starttag(node, 'span', '', undefined,
+                { 'CLASS': 'superscript' }));
+        } else {
+            this.body.push(this.starttag(node, 'sup', ''));
+        }
+
+    }
+
+    public depart_superscript(node: NodeInterface): void {
+        if (node.parent instanceof nodes.literal_block) {
+            this.body.push('</span>');
+        } else {
+            this.body.push('</sup>');
+        }
     }
 
 
