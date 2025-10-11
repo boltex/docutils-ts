@@ -1373,69 +1373,69 @@ export class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     /*
-        def visit_image(self, node) -> None:
-            atts = {}
-            uri = node['uri']
-            ext = os.path.splitext(uri)[1].lower()
-            if ext in self.object_image_types:
-                atts['data'] = uri
-                atts['type'] = self.object_image_types[ext]
-            else:
-                atts['src'] = uri
-                atts['alt'] = node.get('alt', uri)
-            # image size
-            if 'width' in node:
-                atts['width'] = node['width']
-            if 'height' in node:
-                atts['height'] = node['height']
-            if 'scale' in node:
-                if (PIL and ('width' not in node or 'height' not in node)
-                    and self.settings.file_insertion_enabled):
-                    try:
-                        imagepath = self.uri2path(uri)
-                        with PIL.Image.open(imagepath) as img:
-                            img_size = img.size
-                    except (ValueError, OSError, UnicodeEncodeError) as e:
-                        self.document.reporter.warning(
-                            f'Problem reading image file: {e}')
-                    else:
-                        self.settings.record_dependencies.add(imagepath.as_posix())
-                        if 'width' not in atts:
-                            atts['width'] = '%dpx' % img_size[0]
-                        if 'height' not in atts:
-                            atts['height'] = '%dpx' % img_size[1]
-                for att_name in 'width', 'height':
-                    if att_name in atts:
-                        match = re.match(r'([0-9.]+)(\S*)$', atts[att_name])
-                        assert match
-                        atts[att_name] = '%s%s' % (
-                            float(match.group(1)) * (float(node['scale']) / 100),
-                            match.group(2))
-            style = []
+    def visit_image(self, node) -> None:
+        atts = {}
+        uri = node['uri']
+        ext = os.path.splitext(uri)[1].lower()
+        if ext in self.object_image_types:
+            atts['data'] = uri
+            atts['type'] = self.object_image_types[ext]
+        else:
+            atts['src'] = uri
+            atts['alt'] = node.get('alt', uri)
+        # image size
+        if 'width' in node:
+            atts['width'] = node['width']
+        if 'height' in node:
+            atts['height'] = node['height']
+        if 'scale' in node:
+            if (PIL and ('width' not in node or 'height' not in node)
+                and self.settings.file_insertion_enabled):
+                try:
+                    imagepath = self.uri2path(uri)
+                    with PIL.Image.open(imagepath) as img:
+                        img_size = img.size
+                except (ValueError, OSError, UnicodeEncodeError) as e:
+                    self.document.reporter.warning(
+                        f'Problem reading image file: {e}')
+                else:
+                    self.settings.record_dependencies.add(imagepath.as_posix())
+                    if 'width' not in atts:
+                        atts['width'] = '%dpx' % img_size[0]
+                    if 'height' not in atts:
+                        atts['height'] = '%dpx' % img_size[1]
             for att_name in 'width', 'height':
                 if att_name in atts:
-                    if re.match(r'^[0-9.]+$', atts[att_name]):
-                        # Interpret unitless values as pixels.
-                        atts[att_name] += 'px'
-                    style.append('%s: %s;' % (att_name, atts[att_name]))
-                    del atts[att_name]
-            if style:
-                atts['style'] = ' '.join(style)
-            # No newlines around inline images.
-            if (not isinstance(node.parent, nodes.TextElement)
-                or isinstance(node.parent, nodes.reference)
-                and not isinstance(node.parent.parent, nodes.TextElement)):
-                suffix = '\n'
-            else:
-                suffix = ''
-            if 'align' in node:
-                atts['class'] = 'align-%s' % node['align']
-            if ext in self.object_image_types:
-                # do NOT use an empty tag: incorrect rendering in browsers
-                self.body.append(self.starttag(node, 'object', '', **atts)
-                                + node.get('alt', uri) + '</object>' + suffix)
-            else:
-                self.body.append(self.emptytag(node, 'img', suffix, **atts))
+                    match = re.match(r'([0-9.]+)(\S*)$', atts[att_name])
+                    assert match
+                    atts[att_name] = '%s%s' % (
+                        float(match.group(1)) * (float(node['scale']) / 100),
+                        match.group(2))
+        style = []
+        for att_name in 'width', 'height':
+            if att_name in atts:
+                if re.match(r'^[0-9.]+$', atts[att_name]):
+                    # Interpret unitless values as pixels.
+                    atts[att_name] += 'px'
+                style.append('%s: %s;' % (att_name, atts[att_name]))
+                del atts[att_name]
+        if style:
+            atts['style'] = ' '.join(style)
+        # No newlines around inline images.
+        if (not isinstance(node.parent, nodes.TextElement)
+            or isinstance(node.parent, nodes.reference)
+            and not isinstance(node.parent.parent, nodes.TextElement)):
+            suffix = '\n'
+        else:
+            suffix = ''
+        if 'align' in node:
+            atts['class'] = 'align-%s' % node['align']
+        if ext in self.object_image_types:
+            # do NOT use an empty tag: incorrect rendering in browsers
+            self.body.append(self.starttag(node, 'object', '', **atts)
+                             + node.get('alt', uri) + '</object>' + suffix)
+        else:
+            self.body.append(self.emptytag(node, 'img', suffix, **atts))
 
     */
 

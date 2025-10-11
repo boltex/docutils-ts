@@ -2,6 +2,7 @@ import { Document, NodeInterface } from "../types.js";
 import { nodes } from "../index.js"
 import { compile, TemplateFunction } from 'ejs';
 import * as HTMLBaseWriter from "./_htmlBase.js";
+import text from "../parsers/rst/states/text.js";
 
 class Writer extends HTMLBaseWriter.HTMLBaseWriter {
     // 
@@ -337,50 +338,191 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
         this.body.push(this.context.pop()!);
     }
 
-    /* Original code:
+    public visit_footnote(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'table', undefined, undefined,
+            { 'CLASS': 'docutils footnote', frame: "void", rules: "none" }));
+        this.body.push('<colgroup><col class="label" /><col /></colgroup>\n' +
+            '<tbody valign="top">\n' +
+            '<tr>');
+        this.footnoteBackrefs(node);
+    }
 
-        # use table for footnote text
-    def visit_footnote(self, node) -> None:
-        self.body.append(self.starttag(node, 'table',
-                                       CLASS='docutils footnote',
-                                       frame="void", rules="none"))
-        self.body.append('<colgroup><col class="label" /><col /></colgroup>\n'
-                         '<tbody valign="top">\n'
-                         '<tr>')
-        self.footnote_backrefs(node)
+    public footnoteBackrefs(node: NodeInterface): void {
+        const backlinks: string[] = [];
+        const backrefs = node.attributes['backrefs'];
+        if (this.settings.footnoteBacklinks && backrefs && backrefs.length > 0) {
+            if (backrefs.length === 1) {
+                this.context.push('');
+                this.context.push('</a>');
+                this.context.push(`<a class="fn-backref" href="#${backrefs[0]}">`);
+            } else {
+                for (let i = 0; i < backrefs.length; i++) {
+                    backlinks.push(`<a class="fn-backref" href="#${backrefs[i]}">${i + 1}</a>`);
+                }
+                this.context.push(`<em>(${backlinks.join(', ')})</em> `);
+                this.context.push('');
+                this.context.push('');
+            }
+        } else {
+            this.context.push('');
+            this.context.push('');
+            this.context.push('');
+        }
+        // If the node does not only consist of a label.
+        if (node.children && node.children.length > 1) {
+            // If there are preceding backlinks, we do not set class
+            // 'first', because we need to retain the top-margin.
+            if (!backlinks.length) {
+                node.children[1].attributes['classes'].push('first');
+            }
+            node.children[node.children.length - 1].attributes['classes'].push('last');
+        }
+    }
 
-    def footnote_backrefs(self, node) -> None:
-        backlinks = []
-        backrefs = node['backrefs']
-        if self.settings.footnote_backlinks and backrefs:
-            if len(backrefs) == 1:
-                self.context.append('')
-                self.context.append('</a>')
-                self.context.append('<a class="fn-backref" href="#%s">'
-                                    % backrefs[0])
-            else:
-                for (i, backref) in enumerate(backrefs, 1):
-                    backlinks.append('<a class="fn-backref" href="#%s">%s</a>'
-                                     % (backref, i))
-                self.context.append('<em>(%s)</em> ' % ', '.join(backlinks))
-                self.context += ['', '']
-        else:
-            self.context.append('')
-            self.context += ['', '']
-        # If the node does not only consist of a label.
-        if len(node) > 1:
-            # If there are preceding backlinks, we do not set class
-            # 'first', because we need to retain the top-margin.
-            if not backlinks:
-                node[1]['classes'].append('first')
-            node[-1]['classes'].append('last')
+    public depart_footnote(node: NodeInterface): void {
+        this.body.push('</td></tr>\n' +
+            '</tbody>\n</table>\n');
+    }
 
-    def depart_footnote(self, node) -> None:
-        self.body.append('</td></tr>\n'
-                         '</tbody>\n</table>\n')
+    public visit_footnote_reference(node: NodeInterface): void {
+        let href = '#' + node.attributes['refid'];
+        let format = this.settings.footnoteReferences;
+        let suffix: string;
+        if (format === 'brackets') {
+            suffix = '[';
+            this.context.push(']');
+        } else {
+            if (format !== 'superscript') {
+                throw new Error("Expected footnote_references to be 'brackets' or 'superscript'");
+            }
+            suffix = '<sup>';
+            this.context.push('</sup>');
+        }
+        this.body.push(this.starttag(node, 'a', suffix, undefined,
+            { 'CLASS': 'footnote-reference', 'href': href }));
+    }
 
-    */
+    public depart_footnote_reference(node: NodeInterface): void {
+        this.body.push(this.context.pop() + '</a>');
+    }
+
+    public visit_generated(node: NodeInterface): void {
+        // pass
+    }
+
+    // use table for footnote text,
+    // context added in footnote_backrefs.
+    public visit_label(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'td', `${this.context.pop()}[`, undefined, { 'CLASS': 'label' }));
+    }
+
+    public depart_label(node: NodeInterface): void {
+        this.body.push(`]${this.context.pop()}</td><td>${this.context.pop()}`);
+    }
+
+    public visit_list_item(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'li', ''));
+        if (node.children && node.children.length > 0) {
+            node.children[0].attributes['classes'].push('first');
+        }
+    }
+
+    public depart_list_item(node: NodeInterface): void {
+        this.body.push('</li>\n');
+    }
+
+    public visit_literal(node: NodeInterface): void {
+        // special case: "code" role
+        const classes = node.attributes['classes'];
+        if (classes.includes('code')) {
+            // filter 'code' from class arguments
+            node.attributes['classes'] = classes.filter((cls: string) => cls !== 'code');
+            this.body.push(this.starttag(node, 'code', ''));
+            return;
+        }
+        this.body.push(
+            this.starttag(node, 'tt', '', undefined, { 'CLASS': 'docutils literal' }));
+        const text = node.astext();
+        for (const token of text.match(this.wordsAndSpaces) || []) {
+            if (token.trim()) {
+                // Protect text like "--an-option" and the regular expression
+                // ``[+]?(\d+(\.\d*)?|\.\d+)`` from bad line wrapping
+                if (this.inWordWrapPoint.test(token)) {
+                    this.body.push('<span class="pre">' + this.encode(token) + '</span>');
+                } else {
+                    this.body.push(this.encode(token));
+                }
+            } else if (token === '\n' || token === ' ') {
+                // Allow breaks at whitespace:
+                this.body.push(token);
+            } else {
+                // Protect runs of multiple spaces; the last space can wrap:
+                this.body.push('&nbsp;'.repeat(token.length - 1) + ' ');
+            }
+        }
+        this.body.push('</tt>');
+        // Content already processed:
+        throw new nodes.SkipNode();
+    }
+
+    public depart_literal(node: NodeInterface): void {
+        // skipped unless literal element is from "code" role:
+        this.body.push('</code>');
+    }
+
+    // add newline after wrapper tags, don't use <code> for code
+    public visit_literal_block(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'pre', undefined, undefined, { 'CLASS': 'literal-block' }));
+    }
+
+    public depart_literal_block(node: NodeInterface): void {
+        this.body.push('\n</pre>\n');
+    }
+
+
+    // use table for option list
+    public visit_option_group(node: NodeInterface): void {
+        const atts: { [key: string]: string | number } = {};
+        if (this.settings.optionLimit
+            && node.astext().length > this.settings.optionLimit) {
+            atts['colspan'] = 2;
+            this.context.push('</tr>\n<tr><td>&nbsp;</td>');
+        } else {
+            this.context.push('');
+        }
+        this.body.push(
+            this.starttag(node, 'td', undefined, undefined, { 'CLASS': 'option-group', ...atts }));
+        this.body.push('<kbd>');
+        this.context.push(0); // count number of options
+    }
+
+    public depart_option_group(node: NodeInterface): void {
+        this.context.pop();
+        this.body.push('</kbd></td>\n');
+        this.body.push(this.context.pop());
+    }
+
+    public visit_option_list(node: NodeInterface): void {
+        this.body.push(
+            this.starttag(node, 'table', undefined, undefined, { 'CLASS': 'docutils option-list', frame: "void", rules: "none" }));
+        this.body.push('<col class="option" />\n'
+            + '<col class="description" />\n'
+            + '<tbody valign="top">\n');
+    }
+
+    public depart_option_list(node: NodeInterface): void {
+        this.body.push('</tbody>\n</table>\n');
+    }
+
+    public visit_option_list_item(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'tr', ''));
+    }
+
+    public depart_option_list_item(node: NodeInterface): void {
+        this.body.push('</tr>\n');
+    }
+
+
+
 
 }
-
-export default Writer;
