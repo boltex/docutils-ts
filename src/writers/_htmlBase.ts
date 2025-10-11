@@ -52,11 +52,11 @@ const template = compile(defaultTemplate, {});
  */
 class SimpleListChecker extends nodes.GenericNodeVisitor {
     public default_visit(node: NodeInterface): void {
-        super.default_visit(node);
+        throw new nodes.NodeFound();
     }
 
     public default_departure(node: NodeInterface): void {
-        super.default_departure(node);
+        // pass
     }
 }
 // def default_visit(self, node):
@@ -319,6 +319,7 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         this.inMailto = false;
         this.authorInAuthors = false;
         this.mathHeader = [];
+        this.messages = []
     }
 
     public astext(): string {
@@ -560,6 +561,29 @@ export class HTMLTranslator extends nodes.NodeVisitor {
      */
     public emptytag(node: NodeInterface, tagname: string, suffix = '\n', attributes: Attributes = {}): string {
         return this.starttag(node, tagname, suffix, true, attributes);
+    }
+
+    /* Original Python code:
+
+        def report_messages(self, node) -> None:
+        if isinstance(node.parent, (nodes.system_message, nodes.entry)):
+            return
+        while self.messages:
+            message = self.messages.pop(0)
+            if self.settings.report_level <= message['level']:
+                message.walkabout(self)
+    */
+
+    public reportMessages(node: NodeInterface): void {
+        if (node.parent instanceof nodes.system_message || node.parent instanceof nodes.entry) {
+            return;
+        }
+        while (this.messages.length) {
+            const message = this.messages.shift();
+            if (this.settings.reportLevel! <= message.level) {
+                message.walkabout(this);
+            }
+        }
     }
 
     public setClassOnChild(node: NodeInterface, class_: string, index: number = 0): void {

@@ -621,7 +621,7 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
 
     public depart_paragraph(node: NodeInterface): void {
         this.body.push(this.context.pop());
-        this.report_messages(node);
+        this.reportMessages(node);
     }
 
     public visit_sidebar(node: NodeInterface): void {
@@ -725,3 +725,5 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
 
 
 }
+
+export default Writer;
