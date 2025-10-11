@@ -228,10 +228,10 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
         cannot be emulated in CSS1 (HTML 5 reincludes it).
         */
         const atts: { [key: string]: string | number } = {};
-        if ('start' in node) {
+        if ('start' in node.attributes) {
             atts['start'] = node.attributes.start;
         }
-        if ('enumtype' in node) {
+        if ('enumtype' in node.attributes) {
             atts['class'] = node.attributes.enumtype;
         }
         // @@@ To do: prefix, suffix. How? Change prefix/suffix to a
@@ -557,20 +557,14 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
             return True
         return False
 
-    def visit_paragraph(self, node) -> None:
-        if self.should_be_compact_paragraph(node):
-            self.context.append('')
-        else:
-            self.body.append(self.starttag(node, 'p', ''))
-            self.context.append('</p>\n')
-
-    def depart_paragraph(self, node) -> None:
-        self.body.append(self.context.pop())
-        self.report_messages(node)
-
     */
 
+    // Omit <p> tags to produce visually compact lists (less vertical
+    // whitespace) as CSS styling requires CSS2.
     public shouldBeCompactParagraph(node: ElementInterface): boolean {
+        /*
+            Determine if the <p> tags around paragraph ``node`` can be omitted.
+        */
         if (node.parent instanceof nodes.document
             || node.parent instanceof nodes.compound) {
             // Never compact paragraphs in document or compound.
@@ -601,9 +595,9 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
             return false;
         }
         const parent_length = node.parent!.children.filter(n => !(n instanceof nodes.Invisible || n instanceof nodes.label)).length;
-        if (this.compact_simple
-            || this.compact_field_list
-            || this.compact_p && parent_length === 1) {
+        if (this.compactSimple
+            || this.compactFieldList
+            || this.compactP && parent_length === 1) {
             return true;
         }
         return false;
@@ -628,12 +622,12 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
         this.body.push(
             this.starttag(node, 'div', undefined, undefined, { 'CLASS': 'sidebar' }));
         this.setFirstLast(node);
-        this.in_sidebar = true;
+        this.inSidebar = true;
     }
 
     public depart_sidebar(node: NodeInterface): void {
         this.body.push('</div>\n');
-        this.in_sidebar = false;
+        this.inSidebar = false;
     }
 
     public visit_subscript(node: NodeInterface): void {
@@ -684,46 +678,122 @@ class HTMLTranslator extends HTMLBaseWriter.HTMLTranslator {
         }
     }
 
-    /* Original Code: 
-
-    # <sup> not allowed in <pre> in HTML 4
-    def visit_superscript(self, node) -> None:
-        if isinstance(node.parent, nodes.literal_block):
-            self.body.append(self.starttag(node, 'span', '',
-                                           CLASS='superscript'))
-        else:
-            self.body.append(self.starttag(node, 'sup', ''))
-
-    def depart_superscript(self, node) -> None:
-        if isinstance(node.parent, nodes.literal_block):
-            self.body.append('</span>')
-        else:
-            self.body.append('</sup>')
-
-    */
-
-    // <sup> not allowed in <pre> in HTML 4
-    public visit_superscript(node: NodeInterface): void {
-        if (node.parent instanceof nodes.literal_block) {
-            this.body.push(this.starttag(node, 'span', '', undefined,
-                { 'CLASS': 'superscript' }));
-        } else {
-            this.body.push(this.starttag(node, 'sup', ''));
+    public visit_system_message(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'div', '\n', false, { CLASS: 'system-message' }));
+        this.body.push('<p class="system-message-title">');
+        let backrefText = '';
+        if (node.attributes.backrefs && node.attributes.backrefs.length) {
+            const backrefs = node.attributes.backrefs;
+            if (backrefs.length === 1) {
+                backrefText = `; <em><a href="//${backrefs[0]}">backlink</a></em>`;
+            } else {
+                const backlinks = backrefs.map((backref: string, i: number): string => `<a href="//${backref}">${i + 1}</a>`);
+                backrefText = `; <em>backlinks: ${backlinks.join(', ')}</em>`;
+            }
         }
-
+        let line;
+        if (node.attributes.line != null) {
+            line = `, line ${node.attributes.line}`;
+        } else {
+            line = '';
+        }
+        this.body.push(`System Message: ${node.attributes.type}/${node.attributes.level} (<tt class="docutils">${this.encode(node.attributes.source)}</tt>${line})${backrefText}</p>\n`);
     }
 
-    public depart_superscript(node: NodeInterface): void {
-        if (node.parent instanceof nodes.literal_block) {
-            this.body.push('</span>');
-        } else {
-            this.body.push('</sup>');
-        }
+    public depart_system_message(node: NodeInterface): void {
+        this.body.push('</div>\n');
     }
 
+    public visit_table(node: NodeInterface): void {
+        this.context.push(this.compactP);
+        this.compactP = true;
+        const atts: { [key: string]: string | number } = { border: 1 };
+        const classes = ['docutils', this.settings.tableStyle || ''];
+        if ('align' in node.attributes) {
+            classes.push('align-' + node.attributes.align);
+        }
+        if ('width' in node) {
+            const width = node.attributes.width;
+            if (width.length > 0 && '0123456789.'.includes(width[width.length - 1])) {  // unitless value
+                node.attributes.width += 'px';  // add default length unit
+            }
+            atts['style'] = `width: ${node.attributes.width}`;
+        }
+        this.body.push(
+            this.starttag(node, 'table', undefined, undefined, { CLASS: classes.join(' '), ...atts }));
+    }
 
+    public depart_table(node: NodeInterface): void {
+        this.compactP = this.context.pop() as boolean;
+        this.body.push('</table>\n');
+    }
 
+    // hard-coded vertical alignment
+    public visit_tbody(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'tbody', undefined, undefined, { valign: 'top' }));
+    }
+
+    public depart_tbody(node: NodeInterface): void {
+        this.body.push('</tbody>\n');
+    }
+
+    // no special handling of "details" in definition list
+    public visit_term(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'dt', '', undefined,
+            { 'CLASS': (node.parent ? node.parent.attributes.classes.join(' ') : ''), 'ID': (node.parent ? node.parent.attributes.ids.join(' ') : '') }));
+    }
+
+    public depart_term(node: NodeInterface): void {
+        // Nest (optional) classifier(s) in the <dt> element
+        if (node.nextNode(
+            {
+                condition: nodes.classifier,
+                descend: false,
+                siblings: true
+            }
+
+        )) {
+            return; // skip (depart_classifier() calls this function again)
+        }
+        this.body.push('</dt>\n');
+    }
+
+    // hard-coded vertical alignment
+    public visit_thead(node: NodeInterface): void {
+        this.body.push(this.starttag(node, 'thead', undefined, undefined, { valign: 'bottom' }));
+    }
+
+    public depart_thead(node: NodeInterface): void {
+        this.body.push('</thead>\n');
+    }
+
+    // auxiliary method, called by visit_title()
+    // "with-subtitle" class, no ARIA roles
+    public sectionTitleTags(node: NodeInterface): [string, string] {
+        const classes: string[] = [];
+        const h_level = this.sectionLevel + this.initialHeaderLevel - 1;
+        if (node.parent && node.parent.children.length >= 2 && node.parent.children[1] instanceof nodes.subtitle) {
+            classes.push('with-subtitle');
+        }
+        if (h_level > 6) {
+            classes.push('h' + h_level);
+        }
+        const tagname = 'h' + Math.min(h_level, 6);
+        let start_tag = this.starttag(node, tagname, '', undefined, classes.length ? { classes } : undefined);
+        let close_tag: string;
+        if (node.attributes['refid']) {
+            const atts: { [key: string]: string } = {};
+            atts['class'] = 'toc-backref';
+            atts['href'] = '#' + node.attributes['refid'];
+            start_tag += this.starttag({ attributes: {} } as NodeInterface, 'a', '', undefined, atts);
+            close_tag = '</a></' + tagname + '>\n';
+        } else {
+            close_tag = '</' + tagname + '>\n';
+        }
+        return [start_tag, close_tag];
+    }
 
 }
+
 
 export default Writer;

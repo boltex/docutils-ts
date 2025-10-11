@@ -20,6 +20,7 @@ class POJOTranslator extends GenericNodeVisitor {
     private output: {};
     private settings: Settings;
     private fixedText: number;
+    public styleSheetPromise?: Promise<void>;
     public root?: {};
 
     /**

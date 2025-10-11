@@ -3294,7 +3294,7 @@ class NodeVisitor {
     public optional: string[];
     protected strictVisitor: boolean | undefined | null;
 
-    [name: string]: any;
+    // [name: string]: any;
 
     /**
    * Create a NodeVisitor.
@@ -3319,7 +3319,7 @@ class NodeVisitor {
         const nodeName = node.tagname;
         const methodName = `visit_${nodeName}`;
 
-        let method = (this)[methodName];
+        let method = (<any>this)[methodName];
         if (!method) {
             method = this.unknownVisit;
         }
@@ -3334,7 +3334,7 @@ class NodeVisitor {
    */
     public dispatchDeparture(node: NodeInterface): {} | undefined | void {
         const nodeName = node.tagname;
-        const method = (this)[`depart_${nodeName}`] || this.unknownDeparture;
+        const method = (<any>this)[`depart_${nodeName}`] || this.unknownDeparture;
         this.document.reporter.debug(
             `docutils.nodes.NodeVisitor.dispatch_departure calling for ${node}`
         );
@@ -3414,6 +3414,9 @@ class GenericNodeVisitor extends NodeVisitor {
  */
 class TreeCopyVisitor extends GenericNodeVisitor {
 
+    public parentStack: (NodeInterface[] | NodeInterface)[];
+    public parent: NodeInterface[] | NodeInterface;
+
     constructor(document: Document) {
         super(document);
         this.parentStack = [];
@@ -3421,10 +3424,18 @@ class TreeCopyVisitor extends GenericNodeVisitor {
     }
 
     public getTreeCopy(): NodeInterface {
-        if (this.parent.length === 0) {
-            throw new ApplicationError("No tree copy available, parent stack is empty.");
+        if (Array.isArray(this.parent)) {
+            // If parent is an array
+            if (this.parent.length === 0) {
+                throw new ApplicationError("No tree copy available, parent stack is empty.");
+            }
+            return this.parent[0];
+        } else {
+            if (!this.parent.children || this.parent.children.length === 0) {
+                throw new ApplicationError("No tree copy available, parent stack is empty.");
+            }
+            return this.parent;
         }
-        return this.parent[0];
     }
 
     public default_visit(node: NodeInterface): void {

@@ -206,7 +206,11 @@ class ContentsFilter extends nodes.TreeCopyVisitor {
 
     public visit_image(node: nodes.image): void {
         if (node.attributes['alt']) {
-            this.parent.append(new nodes.Text(node.attributes['alt']));
+            if (Array.isArray(this.parent)) {
+                this.parent.push(new nodes.Text(node.attributes['alt']));
+            } else {
+                this.parent.append(new nodes.Text(node.attributes['alt']));
+            }
         }
         throw new nodes.SkipNode();
     }

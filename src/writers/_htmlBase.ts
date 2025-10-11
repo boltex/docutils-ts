@@ -192,6 +192,7 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         none: ['', ''],
     };
     protected mathHeader: string[];
+    protected messages: nodes.system_message[]; // List of system messages to be displayed
     protected authorInAuthors: boolean;
     protected htmlBody: string[];
     protected htmlSubtitle: string[];
@@ -580,7 +581,13 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         }
         while (this.messages.length) {
             const message = this.messages.shift();
-            if (this.settings.reportLevel! <= message.level) {
+            let level = 0;
+            if (message && 'level' in message) {
+                level = message['level'] as number;
+            } else if (message && message.attributes && 'level' in message.attributes) {
+                level = message.attributes['level'] as number;
+            }
+            if (message && this.settings.reportLevel! <= level) {
                 message.walkabout(this);
             }
         }
@@ -2119,54 +2126,69 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         throw new UnimplementedError(`visiting unimplemented node type: ${node.tagname}`);
     }
 
+    public sectionTitleTags(node: NodeInterface): [string, string] {
+        let atts: Attributes = {};
+        const h_level = this.sectionLevel + this.initialHeaderLevel - 1;
+        // Only 6 heading levels have dedicated HTML tags.
+        const tagname = `h${Math.min(h_level, 6)}`;
+        if (h_level > 6) {
+            atts['aria-level'] = h_level;
+        }
+
+        let start_tag = this.starttag(node, tagname, '', undefined, atts);
+        let close_tag = `</${tagname}>\n`;
+        if (node.attributes['refid']) {
+            atts = {};
+            atts['class'] = 'toc-backref';
+            atts['role'] = 'doc-backlink';  // HTML5 only
+            atts['href'] = `#${node.attributes['refid']}`;
+            start_tag += this.starttag(new nodes.reference(), 'a', '', undefined, atts);
+            close_tag = `</a>${close_tag}`;
+        }
+        return [start_tag, close_tag];
+    }
+
+
     public visit_title(node: NodeInterface): void {
         // Only 6 section levels are supported by HTML.
-        const checkId = 0; // TODO: is this a bool (false) or a counter?
         let closeTag = '</p>\n';
         if (node.parent instanceof nodes.topic) {
+            // TODO: use role="heading" or <h1>? (HTML5 only)
             this.body.push(
-                this.starttag(node, 'p', '', false, { CLASS: 'topic-title first' }),
+                this.starttag(node, 'p', '', undefined, { CLASS: 'topic-title' }),
             );
+            if (this.settings.tocBacklinks
+                && (node.parent.attributes.classes || []).indexOf('contents') !== -1) {
+                this.body.push('<a class="reference internal" href="#top">');
+                closeTag = '</a></p>\n';
+            }
         } else if (node.parent instanceof nodes.sidebar) {
+            // TODO: use role="heading" or <h1>? (HTML5 only)
             this.body.push(
-                this.starttag(node, 'p', '', false, { CLASS: 'sidebar-title' }),
+                this.starttag(node, 'p', '', undefined, { CLASS: 'sidebar-title' }),
             );
-        } else if (node.parent!.isAdmonition()) {
+        } else if (node.parent instanceof nodes.Admonition) {
             this.body.push(
-                this.starttag(node, 'p', '', false, { CLASS: 'admonition-title' }),
+                this.starttag(node, 'p', '', undefined, { CLASS: 'admonition-title' }),
             );
         } else if (node.parent instanceof nodes.table) {
-            this.body.push(
-                this.starttag(node, 'caption', ''),
-            );
+            this.body.push(this.starttag(node, 'caption', ''));
             closeTag = '</caption>\n';
         } else if (node.parent instanceof nodes.document) {
-            this.body.push(this.starttag(node, 'h1', '', false, { CLASS: 'title' }));
+            this.body.push(this.starttag(node, 'h1', '', undefined, { CLASS: 'title' }));
             closeTag = '</h1>\n';
-            this.inDocumentTitle = this.body.length;
+            this.inDocumentTitle = this.body.length + 1;
         } else {
             // assert isinstance(node.parent, nodes.section)
-            const headerLevel = this.sectionLevel + this.initialHeaderLevel - 1;
-            let atts: Attributes = {};
-            if (node.parent!.getNumChildren() >= 2
-                && node.parent!.getChild(1) instanceof nodes.subtitle) {
-                atts.CLASS = 'with-subtitle';
+            if (!(node.parent instanceof nodes.section)) {
+                throw new Error('Assertion failed: node parent is not a section');
             }
-            this.body.push(
-                this.starttag(node, `h${headerLevel}`, '', false, atts),
-            );
-            atts = {};
-            if (Object.prototype.hasOwnProperty.call(node, 'refid')) {
-                atts.class = 'toc-backref';
-                atts.href = `#${node.attributes.refid}`;
-            }
-            if (Object.keys(atts).length) {
-                this.body.push(this.starttag(node, 'a', '', false, atts));
-                closeTag = `</a></h${headerLevel}>\n`;
-            } else {
-                closeTag = `</h${headerLevel}>\n`;
-            }
+            // Get correct heading and evt. backlink tags
+            const [startTag, endTag] = this.sectionTitleTags(node);
+            this.body.push(startTag);
+            closeTag = endTag;
         }
+
         this.context.push(closeTag);
     }
 
@@ -2515,7 +2537,7 @@ export class HTMLBaseWriter extends BaseWriter {
         if (this.visitor.styleSheetPromise) {
             await this.visitor.styleSheetPromise; // Make sure stylesheet is loaded
         }
-        const visitor = this.visitor;
+        const visitor = this.visitor as any; // USE VISITOR AS ANY !
         if (!visitor) {
             throw new Error();
         }
