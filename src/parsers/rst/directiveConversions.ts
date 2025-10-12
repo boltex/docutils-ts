@@ -307,6 +307,45 @@ function choice(argument: string, values: string[]): string {
     }
 }
 
+/**
+ * Directive option conversion function.
+ *
+ * The argument can be any of `values` or `argument_type`.
+ */
+function valueOr(values: string[], other: any): (argument: string) => any {
+    return function autoOrOther(argument: string) {
+        if (values.includes(argument)) {
+            return argument;
+        } else {
+            return other(argument);
+        }
+    };
+}
+
+/* Original Python code for reference:
+
+def positive_int_list(argument: str) -> list[int]:
+    """
+    Converts a space- or comma-separated list of values into a Python list
+    of integers.
+    (Directive option conversion function.)
+
+    Raises ValueError for non-positive-integer values.
+    """
+    if ',' in argument:
+        entries = argument.split(',')
+    else:
+        entries = argument.split()
+    return [positive_int(entry) for entry in entries]
+
+*/
+
+// function positiveIntList(argument: string): number[] {
+//     const entries = argument.includes(',') ? argument.split(',') : argument.split(/\s+/);
+//     return entries.map(entry => positiveInt(entry));
+// }
+
+
 export {
     flag,
     unchangedRequired,
@@ -325,7 +364,8 @@ export {
     positiveInt,
     positiveIntList,
     encoding,
-    choice
+    choice,
+    valueOr
 };
 
 
