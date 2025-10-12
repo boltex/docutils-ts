@@ -19,7 +19,7 @@ const dirMap: any = {
     // TODO: tables,
 };
 
-const directiveRegistry = {
+const directiveRegistry: Record<string, [string, string]> = {
     attention: ['admonitions', 'Attention'],
     caution: ['admonitions', 'Caution'],
     code: ['body', 'CodeBlock'],
@@ -80,7 +80,7 @@ export function directive(directiveName: string, document: Document, languageMod
         return [_directives[normName], messages];
     }
 
-    let canonicalName;
+    let canonicalName: string;
     canonicalName = languageModule && languageModule.directives[normName];
 
     if (!canonicalName) {
@@ -102,7 +102,6 @@ export function directive(directiveName: string, document: Document, languageMod
         return [null, messages]; // Use null instead of undefined for consistency with Python's None
     }
 
-    // @ts-ignore
     const [modulename, classname] = directiveRegistry[canonicalName];
     const DirectiveClass: DirectiveConstructor = dirMap[modulename] ? dirMap[modulename][classname] : null;
 

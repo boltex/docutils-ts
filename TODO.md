@@ -20,15 +20,15 @@
 - [ ] `code` → `body.CodeBlock`
 - [x] `sidebar` → `body.Sidebar`
 - [x] `topic` → `body.Topic`
-- [ ] `line-block` → `body.LineBlock`
-- [ ] `parsed-literal` → `body.ParsedLiteral`
-- [ ] `math` → `body.MathBlock`
-- [ ] `rubric` → `body.Rubric`
-- [ ] `epigraph` → `body.Epigraph`
-- [ ] `highlights` → `body.Highlights`
-- [ ] `pull-quote` → `body.PullQuote`
-- [ ] `compound` → `body.Compound`
-- [ ] `container` → `body.Container`
+- [x] `line-block` → `body.LineBlock`
+- [x] `parsed-literal` → `body.ParsedLiteral`
+- [x] `math` → `body.MathBlock`
+- [x] `rubric` → `body.Rubric`
+- [x] `epigraph` → `body.Epigraph`
+- [x] `highlights` → `body.Highlights`
+- [x] `pull-quote` → `body.PullQuote`
+- [x] `compound` → `body.Compound`
+- [x] `container` → `body.Container`
 <!-- - [ ] `questions` → `body.question_list` (commented in source) -->
 
 #### Tables
