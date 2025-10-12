@@ -107,9 +107,9 @@
 
 #### misc
 
-- [ ] `misc.ClassAttribute`
-- [ ] `misc.Transitions`
-- [ ] `misc.CallBack`
+- [x] `misc.ClassAttribute`
+- [x] `misc.Transitions`
+- [x] `misc.CallBack`
 
 #### universal
 
