@@ -1,5 +1,5 @@
 import { DirectiveError, DirectiveInterface } from "./types.js";
-import { StatemachineInterface, LogLevel, OptionSpec, Options } from "../../types.js";
+import { StatemachineInterface, LogLevel, OptionSpec, Options, ReporterInterface, NodeInterface } from "../../types.js";
 import Body from "./states/body.js";
 import { fullyNormalizeName } from "../../utils/nameUtils.js";
 
@@ -116,6 +116,7 @@ class Directive implements DirectiveInterface {
     public blockText: string;
     public state: Body;
     public stateMachine: StatemachineInterface;
+    public reporter: ReporterInterface;
 
     public constructor(
         args: {
@@ -139,6 +140,7 @@ class Directive implements DirectiveInterface {
         this.blockText = args.blockText;
         this.state = args.state;
         this.stateMachine = args.stateMachine;
+        this.reporter = this.stateMachine.reporter;
     }
 
     public run(): any[] {

@@ -71,9 +71,9 @@ export class SystemMessage extends Error {
     }
   }
 }
-interface ErrorArgs {
+type ErrorArgs = {
   error?: Error | undefined;
-}
+} | any[];
 
 export class ApplicationError extends Error {
   public error: Error | undefined;
@@ -81,13 +81,17 @@ export class ApplicationError extends Error {
   public constructor(message: string, args: ErrorArgs = {}) {
     super(message);
     this.args = args;
-    if (args !== undefined) {
+    if (args !== undefined && 'error' in args) {
       this.error = args.error;
     }
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ApplicationError);
     }
   }
+}
+
+export class SystemMessagePropagation extends ApplicationError {
+  // pass
 }
 
 export class ValueError extends ApplicationError {

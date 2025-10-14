@@ -1,6 +1,38 @@
 import * as nodes from '../../../nodes.js';
 import Directive from '../directive.js';
 import * as directives from "../directiveConversions.js";
+import * as utils from '../../../utils.js';
+
+export function adaptPath(path: string, source = '', rootPrefix = ''): string {
+    // Adapt path to files to include or embed.
+    // `rootPrefix` is prepended to absolute paths (cf. root_prefix setting),
+    // `source` is the `current_source` of the including directive (which may
+    // be a file included by the main document).
+
+    const normalize = (p: string): string =>
+        p.replace(/\\/g, "/").replace(/\/+/g, "/");
+
+    let base: string;
+
+    if (rootPrefix && path.startsWith("/")) {
+        // Absolute path → attach root prefix
+        base = normalize(rootPrefix);
+        path = path.slice(1); // remove leading slash
+    } else {
+        // Relative path → base = directory of source
+        const idx = source.lastIndexOf("/");
+        base = idx !== -1 ? source.slice(0, idx) : "";
+    }
+
+    // Join base and path (in Python: base / path)
+    const joined = [base, path].filter(Boolean).join("/");
+
+    // Equivalent of utils.relative_path(None, base/path)
+    return utils.relativePath(undefined, normalize(joined));
+}
+
+
+
 
 // Original python code
 /*

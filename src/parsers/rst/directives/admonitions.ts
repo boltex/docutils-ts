@@ -1,3 +1,4 @@
+import { NodeInterface } from '../../../index.js';
 import * as nodes from '../../../nodes.js';
 import Directive from '../directive.js';
 import * as directives from "../directiveConversions.js";
@@ -13,7 +14,7 @@ abstract class BaseAdmonition extends Directive {
     public static hasContent: boolean = true;
     abstract nodeClass: new (rawsource: string, children?: any, attributes?: any) => nodes.Element; // Subclasses must set this to the appropriate admonition node class.
 
-    public run(): any[] {
+    public run(): NodeInterface[] {
         const options = normalizeOptions(this.options);
         this.assertHasContent();
         const text = this.content.join('\n');

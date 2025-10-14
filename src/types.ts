@@ -10,7 +10,7 @@ export { Settings };
 
 import type Transformer from "./transformer.js";
 import type StringList from "./stringList.js";
-import type { InlinerInterface } from "./parsers/rst/types.js";
+import type { InlinerInterface, Nestedstatemachine } from "./parsers/rst/types.js";
 import type Parser from "./parser.js";
 import type Output from "./io/output.js";
 import type RSTStateMachine from "./parsers/rst/rstStateMachine.js";
@@ -407,7 +407,14 @@ export interface StatemachineInterface {
     reporter: ReporterInterface;
     matchTitles?: boolean;
     node?: ElementInterface;
-    document?: Document
+    document?: Document;
+    nestedParse?(
+        inputLines: StringList,
+        inputOffset: number,
+        node: NodeInterface,
+        matchTitles: boolean,
+        factoryFunction?: StateMachineFactoryFunction<Nestedstatemachine>
+    ): number | undefined;
 
     createStateMachine(rstStateMachine: RSTStateMachine, initialState?: string, stateFactory?: Statefactory): StatemachineInterface;
     runtimeInit(): void;

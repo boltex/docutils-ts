@@ -218,16 +218,37 @@ def clean_rcs_keywords(
 
 */
 
-export function relativePath(source: string, target: string): string {
-    /*
-      Build and return a path to `target`, relative to `source` (both files).
 
-      If there is no common prefix, return the absolute path to `target`.
-  */
-    return `${source}/${target}`; // fixme broken url
-    /*    source_parts = os.path.abspath(source or type(target)('dummy_file')
-                                    ).split(os.sep)
-      target_parts = os.path.abspath(target).split(os.sep)
+
+/**
+ * Build and return a path to `target`, relative to `source` (both files).
+ *
+ * If there is no common prefix, return the absolute path to `target`.
+ */
+export function relativePath(source: string | undefined, target: string): string {
+
+    const sourceParts = source ? source.split(/[/\\]/) : ['dummy_file'];
+    const targetParts = target.split(/[/\\]/);
+    // Check first 2 parts because '/dir'.split('/') == ['', 'dir']:
+    if (sourceParts[0] !== targetParts[0] || sourceParts[1] !== targetParts[1]) {
+        // Nothing in common between paths.
+        // Return absolute path, using '/' for URLs:
+        return '/' + targetParts.join('/');
+    }
+    sourceParts.reverse();
+    targetParts.reverse();
+    while (sourceParts.length > 0 && targetParts.length > 0 && sourceParts[0] === targetParts[0]) {
+        // Remove path components in common:
+        sourceParts.shift();
+        targetParts.shift();
+    }
+    targetParts.reverse();
+    const parts = new Array(sourceParts.length - 1).fill('..').concat(targetParts);
+    return parts.join('/');
+
+    /* ORIGINAL PYTHON SOURCE:
+      source_parts = (source or 'dummy_file').split(os.sep)
+      target_parts =target.split(os.sep)
       # Check first 2 parts because '/dir'.split('/') == ['', 'dir']:
       if source_parts[:2] != target_parts[:2]:
           # Nothing in common between paths.
@@ -244,6 +265,7 @@ export function relativePath(source: string, target: string): string {
       parts = ['..'] * (len(source_parts) - 1) + target_parts
       return '/'.join(parts)
   */
+
 }
 
 /*
@@ -356,8 +378,13 @@ export function pathJoin(...parts: string[]): string {
     }
     // collapse repeated slashes
     joined = joined.replace(/\/+/g, "/");
+    // If the result is longer than 1 char and ends with a slash, remove it
+    if (joined.length > 1 && joined.endsWith("/")) {
+        joined = joined.slice(0, -1);
+    }
     return joined;
 }
+
 /**
  *  Return a list of normalized combinations for a `BCP 47` language tag.
  * 

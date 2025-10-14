@@ -237,7 +237,8 @@ class Body extends RSTState implements BodyState {
                 target: new RegExp(`^(_|(?!_)(\`?)(?![ \`])(.+?)${nonWhitespaceEscapeBefore})(?<!(?<!\\x00):)${nonWhitespaceEscapeBefore}[ ]?:([ ]+|$)`),
                 reference: new RegExp(`^((${simplename})_|\`(?![ ])(.+?)${nonWhitespaceEscapeBefore}\`_)$`), // ((?P<simple>%(simplename)s)_|`(?![ ])(?P<phrase>.+?)%(non_whitespace_escape_before)s`_)$'),
                 substitution: new RegExp(`((?![ ])(.+?)${nonWhitespaceEscapeBefore}\\|)([ ]+|$)`)
-            }, constructs: [
+            },
+            constructs: [
                 [this.footnote.bind(this), new RegExp(`\\.\\.[ ]+\\[([0-9]+|\\#|\\#${simplename}|\\*)\\]([ ]+|$)`)],
                 [this.citation.bind(this), new RegExp(`\\.\\.[ ]+\\[(${simplename})\\]([ ]+|$)`)],
                 [this.hyperlink_target.bind(this), new RegExp("\\.\\.[ ]+_(?![ ]|$)")],

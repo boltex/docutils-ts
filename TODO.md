@@ -1,5 +1,7 @@
 # TODO
 
+Remaining: 2967 lines
+
 ## Directives
 
 #### Admonitions
@@ -31,9 +33,9 @@
 - [x] `container` → `body.Container`
 <!-- - [ ] `questions` → `body.question_list` (commented in source) -->
 
-#### Tables
+#### Tables (524 lines)
 
-- [ ] `table` → `tables.RSTTable`
+- [x] `table` → `tables.RSTTable`
 - [ ] `csv-table` → `tables.CSVTable`
 - [ ] `list-table` → `tables.ListTable`
 
@@ -51,11 +53,11 @@
   <!-- - [ ] `footnotes` → `parts.footnotes` (commented in source) -->
   <!-- - [ ] `citations` → `parts.citations` (commented in source) -->
 
-#### References
+#### References (28 lines)
 
 - [ ] `target-notes` → `references.TargetNotes`
 
-#### Misc
+#### Misc (690 lines)
 
 - [ ] `meta` → `misc.Meta`
 - [ ] `raw` → `misc.Raw`
@@ -74,13 +76,13 @@
 
 ## Transforms
 
-#### frontmatter
+#### frontmatter (~200 lines)
 
 - [x] `frontmatter.DocTitle`
 - [ ] `frontmatter.DocInfo`
 - [x] `frontmatter.SectSubTitle`
 
-#### references
+#### references (990 lines)
 
 - [ ] `references.Substitutions`
 - [ ] `references.PropagateTargets`
@@ -98,7 +100,7 @@
 - [x] `parts.SectNum`
 - [x] `parts.Contents`
 
-#### peps
+#### peps (315 lines)
 
 - [ ] `peps.Headers`
 - [ ] `peps.Contents`
@@ -111,7 +113,7 @@
 - [x] `misc.Transitions`
 - [x] `misc.CallBack`
 
-#### universal
+#### universal (~200 lines)
 
 - [x] `universal.Decorations`
 - [ ] `universal.ExposeInternals`
@@ -123,7 +125,7 @@
 - [ ] `universal.SmartQuotes`
 - [ ] `universal.Validate`
 
-#### writer_aux
+#### writer_aux (~20 lines)
 
 - [ ] `writer_aux.Admonitions`
 - [ ] `writer_aux.Compound`
