@@ -179,7 +179,7 @@ class Body extends RSTState implements BodyState {
         };
 
         enum_.converters = {
-            arabic: parseInt,
+            arabic: parseInt, // TODO :maybe Use 'Number'?
             loweralpha: _LoweralphaToInt,
             upperalpha: _UpperalphaToInt,
             lowerroman: _LowerromanToInt,
@@ -1536,7 +1536,6 @@ class Body extends RSTState implements BodyState {
 
     public build_table(tabledata: TableData, tableline: number, stubColumns: number = 0, widths?: string): nodes.table {
         const [colwidths, headRows, bodyrows] = tabledata;
-        console.warn(headRows);
         const table = nodesFactory.table();
         if (widths === "auto") {
             table.attributes.classes.push("colwidths-auto");

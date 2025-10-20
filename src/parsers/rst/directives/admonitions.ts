@@ -16,6 +16,7 @@ abstract class BaseAdmonition extends Directive {
 
     public run(): NodeInterface[] {
         const options = normalizeOptions(this.options);
+        console.log('In Admonition, name of class is ', this.nodeClass.name);
         this.assertHasContent();
         const text = this.content.join('\n');
         const admonitionNode = new this.nodeClass(text, undefined, options);

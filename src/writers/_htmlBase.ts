@@ -1069,12 +1069,12 @@ export class HTMLTranslator extends nodes.NodeVisitor {
             atts.class.push('head');
         }
         const ggParent = node.parent!.parent!.parent!;
-        //        let stubs: any[] = ggParent.getCustomAttr('stubs');
+        let stubs: any[] = ggParent.attributes['stubs'];
 
-        /*        if(stubs[node.parent!.getCustomAttr('column')]) {
+        if (stubs[node.parent!.attributes['column']]) {
             // "stubs" list is an attribute of the tgroup element
             atts.class.push('stub');
-        }*/
+        }
         let tagname;
         if (atts.class.length) {
             tagname = 'th';
@@ -2068,9 +2068,15 @@ export class HTMLTranslator extends nodes.NodeVisitor {
     public depart_term(node: NodeInterface): void {
     }
 
+    /* Original Python:
+        def visit_tgroup(self, node) -> None:
+        self.colspecs = []
+        node.stubs = []
+    */
+
     public visit_tgroup(node: tgroup): void {
         this.colspecs = [];
-        node.stubs = [];
+        node.attributes.stubs = [];
     }
 
     public depart_tgroup(node: NodeInterface): void {

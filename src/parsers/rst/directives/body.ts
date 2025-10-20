@@ -24,6 +24,7 @@ abstract class BasePseudoSection extends Directive {
     /** Node class to be used (must be set in subclasses). */
 
     public run(): NodeInterface[] {
+        console.log('In BasePseudoSection, name of class is ', this.nodeClass.name);
         if (!this.stateMachine.matchTitles
             || !(this.stateMachine.node instanceof nodes.sidebar)) {
             throw this.error(`The "${this.name}" directive may not be used within topics or body elements.`);
@@ -98,6 +99,7 @@ export class LineBlock extends Directive {
 
     public run(): NodeInterface[] {
         this.assertHasContent();
+        console.log('In LineBlock directive');
         const block = new nodes.line_block('', undefined, { classes: this.options.class || [] });
         [block.source, block.line] = this.stateMachine.getSourceAndLine(this.lineno);
         this.addName(block);
@@ -129,6 +131,7 @@ export class ParsedLiteral extends Directive {
     public static hasContent: boolean = true;
 
     public run(): NodeInterface[] {
+        console.log('In ParsedLiteral directive');
         const options = normalizeOptions(this.options);
         this.assertHasContent();
         const text = this.content.join('\n');
@@ -160,6 +163,7 @@ export class CodeBlock extends Directive {
 
     public run(): NodeInterface[] {
         this.assertHasContent();
+        console.log('In CodeBlock directive');
         const options = normalizeOptions(this.options);
         const language = this.arguments[0] || '';
         const classes = ['code', language, ...options.classes];
@@ -323,6 +327,7 @@ export class MathBlock extends Directive {
     public run(): NodeInterface[] {
         const options = normalizeOptions(this.options);
         this.assertHasContent();
+        console.log('In MathBlock directive');
         // join lines, separate blocks
         const content = this.content.join('\n').split('\n\n');
         const _nodes: NodeInterface[] = [];
@@ -371,6 +376,7 @@ export class Rubric extends Directive {
 
     public run(): NodeInterface[] {
         const options = normalizeOptions(this.options);
+        console.log('In Rubric directive');
         const rubricText = this.arguments[0];
         const [textnodes, messages] = this.state.inline_text(rubricText, this.lineno);
         const rubric = new nodes.rubric(rubricText, '', textnodes, options);
@@ -387,6 +393,7 @@ class BlockQuote extends Directive {
 
     public run(): NodeInterface[] {
         this.assertHasContent();
+        console.log('In BlockQuote directive, classes: ', this.classes);
         const elements = this.state.block_quote(this.content, this.contentOffset);
         for (const element of elements) {
             if (element instanceof nodes.block_quote) {
@@ -419,6 +426,7 @@ export class Compound extends Directive {
 
     public run(): NodeInterface[] {
         this.assertHasContent();
+        console.log('In Compound directive');
         const text = this.content.join('\n');
         const node = new nodes.compound(text);
         node.attributes['classes'] = [...(node.attributes['classes'] ?? []), ...(this.options['class'] || [])];
@@ -440,6 +448,7 @@ export class Container extends Directive {
 
     public run(): NodeInterface[] {
         this.assertHasContent();
+        console.log('In Container directive');
         const text = this.content.join('\n');
         let classes: string[] = [];
         try {

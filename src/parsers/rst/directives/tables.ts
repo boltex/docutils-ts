@@ -132,6 +132,7 @@ export class Table extends Directive {
  */
 export class RSTTable extends Table {
     public run(): any[] {
+        console.log("Running RSTTable directive");
         if (!this.content) {
             const warning = this.reporter.warning('Content block expected '
                 + `for the "${this.name}" directive; none found.`,
@@ -231,6 +232,7 @@ export class CSVTable extends Table {
     }
 
     public run(): any[] {
+        console.log("Running CSVTable directive");
         let colWidths: number[] = [];
         let tableHead: RowData[];
         let tableBody: RowData[];

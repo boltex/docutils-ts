@@ -612,6 +612,7 @@ export class Title extends Directive {
 
     public run(): any[] {
         // this.stateMachine!.document['title'] = this.arguments[0];
+        console.log("in Title directive");
         (this.stateMachine!.document! as any)['title'] = this.arguments[0];
         return [];
     }

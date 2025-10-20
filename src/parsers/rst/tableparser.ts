@@ -377,21 +377,65 @@ class GridTableParser extends TableParser {
         return rowseps;
     }
 
+    /* Original Code
+         def structure_from_cells(self):
+        """
+        From the data collected by `scan_cell()`, convert to the final data
+        structure.
+        """
+        rowseps = sorted(self.rowseps.keys())   # list of row boundaries
+        rowindex = {}
+        for i in range(len(rowseps)):
+            rowindex[rowseps[i]] = i    # row boundary -> row number mapping
+        colseps = sorted(self.colseps.keys())   # list of column boundaries
+        colindex = {}
+        for i in range(len(colseps)):
+            colindex[colseps[i]] = i    # column boundary -> col number map
+        colspecs = [(colseps[i] - colseps[i - 1] - 1)
+                    for i in range(1, len(colseps))]  # list of column widths
+        # prepare an empty table with the correct number of rows & columns
+        onerow = [None for i in range(len(colseps) - 1)]
+        rows = [onerow[:] for i in range(len(rowseps) - 1)]
+        # keep track of # of cells remaining; should reduce to zero
+        remaining = (len(rowseps) - 1) * (len(colseps) - 1)
+        for top, left, bottom, right, block in self.cells:
+            rownum = rowindex[top]
+            colnum = colindex[left]
+            assert rows[rownum][colnum] is None, (
+                  'Cell (row %s, column %s) already used.'
+                  % (rownum + 1, colnum + 1))
+            morerows = rowindex[bottom] - rownum - 1
+            morecols = colindex[right] - colnum - 1
+            remaining -= (morerows + 1) * (morecols + 1)
+            # write the cell into the table
+            rows[rownum][colnum] = (morerows, morecols, top + 1, block)
+        assert remaining == 0, 'Unused cells remaining.'
+        if self.head_body_sep:          # separate head rows from body rows
+            numheadrows = rowindex[self.head_body_sep]
+            headrows = rows[:numheadrows]
+            bodyrows = rows[numheadrows:]
+        else:
+            headrows = []
+            bodyrows = rows
+        return colspecs, headrows, bodyrows
+     */
+
 
     /**
         From the data collected by `scan_cell()`, convert to the final data
         structure.
         */
     public structure_from_cells(): TableData {
-        const rowseps: number[] = Object.keys(this.rowseps).map(parseInt); // .keys()   # list of row boundaries
+        const rowseps: number[] = Object.keys(this.rowseps).map(Number); // list of row boundaries
         rowseps.sort((a, b) => a - b);
 
         const rowindex: RowIndicies = {};
         for (let i = 0; i < rowseps.length; i += 1) {
             rowindex[rowseps[i]] = i; // row boundary -> row number mapping
         }
-        const colseps: number[] = Object.keys(this.colseps).map(parseInt); // list of column boundaries
-        rowseps.sort((a, b) => a - b);
+        const colseps: number[] = Object.keys(this.colseps).map(Number); // list of column boundaries
+        colseps.sort((a, b) => a - b); // Fix: sort colseps, not rowseps again
+
         const colindex: any = {};
         for (let i = 0; i < colseps.length; i += 1) {
             const x: number = colseps[i];
@@ -402,46 +446,46 @@ class GridTableParser extends TableParser {
             colspecs.push(colseps[i] - colseps[i - 1] - 1);
         }
         // prepare an empty table with the correct number of rows & columns
-        // untyped ..
-        const onerow = new Array(colseps.length - 1).fill(undefined);
         const rows: TableEntryData[][] = [];
         for (let i = 0; i < rowseps.length - 1; i += 1) {
-            // @ts-ignore
-            rows.push(onerow.slice());
+            // Create a new array for each row to avoid reference sharing
+            const row = new Array(colseps.length - 1).fill(undefined);
+            rows.push(row);
         }
         // keep track of # of cells remaining; should reduce to zero
         let remaining = (rowseps.length - 1) * (colseps.length - 1);
         for (const [top, left, bottom, right, block] of this.cells) {
             const rownum = rowindex[top];
             const colnum = colindex[left];
-            /* assert rows[rownum][colnum] is None, (
-                  'Cell (row %s, column %s) already used.'
-                  % (rownum + 1, colnum + 1)) */
+
+            if (rows[rownum][colnum] !== undefined) {
+                throw new Error(`Cell (row ${rownum + 1}, column ${colnum + 1}) already used.`);
+            }
+
             const morerows = rowindex[bottom] - rownum - 1;
             const morecols = colindex[right] - colnum - 1;
             remaining -= (morerows + 1) * (morecols + 1);
             // write the cell into the table
-            //          console.log(`rows[${rownum}][${colnum}] ` +
-            // `= [${morerows}, ${morecols}, ${top + 1}, ${block}]`);
             rows[rownum][colnum] = [morerows, morecols, top + 1, block];
         }
         if (remaining !== 0) {
             throw new Error('Unused cells remaining.');
         }
-        let numheadrows;
-        let bodyrows: RowData[];
+
         let headrows: RowData[] = [];
-        if (this.headBodySep) { // :          # separate head rows from body rows
-            numheadrows = rowindex[this.headBodySep];
-            headrows = rows.slice(undefined, numheadrows);
+        let bodyrows: RowData[];
+
+        if (this.headBodySep) { // separate head rows from body rows
+            const numheadrows = rowindex[this.headBodySep];
+            headrows = rows.slice(0, numheadrows); // Fix: use 0 instead of undefined
             bodyrows = rows.slice(numheadrows);
         } else {
             bodyrows = rows;
         }
         return [colspecs, headrows, bodyrows];
     }
-}
 
+}
 // GridTableParser.headBodySeparatorPat = /\\+=[=+]+=\\+ *$/;
 
 /**

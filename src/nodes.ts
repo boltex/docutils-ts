@@ -139,8 +139,9 @@ function _callDefaultDeparture(node: NodeInterface): void | {} | undefined {
     return this.default_departure(node);
 }
 
-/* This is designed to be called later, a-nd not with an object. hmm */
+/* This is designed to be called later, and not with an object. hmm */
 function _addNodeClassNames(names: string[], o: any): void {
+    console.log('CALLED _addNodeClassNames with ', names, o);
     names.forEach((_name): void => {
         const v = `visit_${_name}`;
         if (!o[v]) {
@@ -467,7 +468,7 @@ abstract class Node implements NodeInterface {
     public walkabout(visitor: Visitor): boolean {
         let callDepart = true;
         let stop = false;
-        visitor.document.reporter.debug("docutils.nodes.Node.walkabout calling dispatch_visit");
+        visitor.document.reporter.debug(`docutils.nodes.Node.walkabout calling dispatch_visit for ${this.constructor.name}`);
         try {
             try {
                 visitor.dispatchVisit(this);
@@ -506,7 +507,7 @@ abstract class Node implements NodeInterface {
         }
         if (callDepart) {
             visitor.document.reporter.debug(
-                `docutils.nodes.Node.walkabout calling dispatch_departure for ${this}`
+                `docutils.nodes.Node.walkabout calling dispatch_departure for ${this.constructor.name}`
             );
             visitor.dispatchDeparture(this);
         }
@@ -1371,7 +1372,11 @@ class Element extends Node implements ElementInterface {
                 parts.push(`${name}="True"`);
                 gotPart = true;
             } else if (Array.isArray(myVal)) {
-                const values = myVal.map((v: string): string => serialEscape(v.toString()));
+                const values = myVal.map((v) => {
+                    if (v === undefined) return "undefined";
+                    if (v === null) return "null";
+                    return serialEscape(v.toString());
+                });
                 myVal = values.join(" ");
             } else {
                 myVal = value.toString();
@@ -3301,6 +3306,7 @@ class NodeVisitor {
    * @param {nodes.document} document - document to visit
    */
     public constructor(document: Document) {
+        console.log("*************** NodeVisitor: constructor");
         if (!checkDocumentArg(document)) {
             throw new Error(`Invalid document arg: ${document}`);
         }
@@ -3396,7 +3402,8 @@ class GenericNodeVisitor extends NodeVisitor {
 
     public constructor(document: Document) {
         super(document);
-        // TODO document this !
+        // TODO document this ! (Adds visit_XXX and depart_XXX methods dynamically)
+        // For instance to attention admonition etc
         _addNodeClassNames(nodeClassNames, this);
     }
 

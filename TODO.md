@@ -36,8 +36,8 @@ Remaining: 2967 lines
 #### Tables (524 lines)
 
 - [x] `table` → `tables.RSTTable`
-- [ ] `csv-table` → `tables.CSVTable`
-- [ ] `list-table` → `tables.ListTable`
+- [x] `csv-table` → `tables.CSVTable`
+- [x] `list-table` → `tables.ListTable`
 
 #### Images
 

@@ -5,6 +5,7 @@ import * as misc from "./directives/misc.js";
 import * as body from "./directives/body.js";
 import * as references from "./directives/references.js";
 import * as admonitions from "./directives/admonitions.js";
+import * as tables from "./directives/tables.js";
 import { ApplicationError } from "../../exceptions.js";
 import { Document, NodeInterface } from "../../types.js";
 import { DirectiveConstructor, RSTLanguage } from "./types.js";
@@ -16,7 +17,7 @@ const dirMap: any = {
     misc,
     parts,
     references,
-    // TODO: tables,
+    tables,
 };
 
 const directiveRegistry: Record<string, [string, string]> = {

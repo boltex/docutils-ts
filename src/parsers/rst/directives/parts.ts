@@ -33,6 +33,7 @@ export class Contents extends Directive {
                 `topics or body elements.`);
         }
 
+        console.log("Running Contents directive");
         const document = this.stateMachine.document!;
         const language = languages.getLanguage(document.settings.languageCode, document.reporter)!;
 
@@ -176,6 +177,7 @@ export class Sectnum extends Directive {
     };
 
     public run(): nodes.Node[] {
+        console.log("Running Sectnum directive");
         const pending = new nodes.pending(parts.SectNum);
         pending.details = { ...pending.details, ...this.options };
         this.state.document?.notePending(pending);
@@ -188,6 +190,7 @@ export class Header extends Directive {
 
     public run(): nodes.Node[] {
         this.assertHasContent();
+        console.log("Running Header directive");
         const header = this.stateMachine.document!.getDecoration().getHeader();
         this.state.nestedParse(
             new StringList(this.content || []),
@@ -203,6 +206,7 @@ export class Footer extends Directive {
 
     public run(): nodes.Node[] {
         this.assertHasContent();
+        console.log("Running Footer directive");
         const footer = this.stateMachine.document!.getDecoration().getFooter();
         this.state.nestedParse(
             new StringList(this.content || []),
