@@ -2938,7 +2938,6 @@ class tbody extends Element {
 }
 
 class tgroup extends Element {
-    public stubs?: {}[];
     public constructor(rawsource?: string, children?: NodeInterface[], attributes?: Attributes) {
         super(rawsource, children, attributes);
         this.classTypes = [Part];

@@ -594,6 +594,10 @@ export class HTMLTranslator extends nodes.NodeVisitor {
     }
 
     public setClassOnChild(node: NodeInterface, class_: string, index: number = 0): void {
+        const children = node.children.filter(child => !(child instanceof nodes.Invisible));
+        if (children.length > index) {
+            children[index].attributes.classes.push(class_);
+        }
     }
 
     public visit_Text(node: NodeInterface): void {
@@ -820,6 +824,30 @@ export class HTMLTranslator extends nodes.NodeVisitor {
         // "stubs" list is an attribute of the tgroup element:
         node.parent!.attributes['stubs'].push(node.attributes.stub); // fixme
     }
+
+    /* Original Python code:
+
+
+
+    def depart_colspec(self, node) -> None:
+        # write out <colgroup> when all colspecs are processed
+        if isinstance(node.next_node(descend=False, siblings=True),
+                      nodes.colspec):
+            return
+        if ('colwidths-auto' in node.parent.parent['classes']
+            or ('colwidths-auto' in self.settings.table_style
+                and 'colwidths-given' not in node.parent.parent['classes'])):
+            return
+        total_width = sum(node.propwidth() for node in self.colspecs)
+        self.body.append(self.starttag(node, 'colgroup'))
+        for node in self.colspecs:
+            colwidth = node.propwidth() * 100.0 / total_width + 0.5
+            self.body.append(self.emptytag(node, 'col',
+                                           width='%i%%' % colwidth))
+        self.body.append('</colgroup>\n')
+
+    */
+
 
     public depart_colspec(node: NodeInterface): void {
         // write out <colgroup> when all colspecs are processed

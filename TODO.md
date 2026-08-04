@@ -4,6 +4,8 @@ Remaining: 2967 lines
 
 ## Directives
 
+- [ ] IMPORTANT: Make parser main loop and directives be "async" (check if they have '.then' member, if so, await them)
+
 #### Admonitions
 
 - [x] `attention` → `admonitions.Attention`
